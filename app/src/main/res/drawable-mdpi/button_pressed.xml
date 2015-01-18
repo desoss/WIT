@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android" >
+    <item ><!--android:drawable="@drawable/wit_logo"-->
+        <shape
+            android:shape="ring"
+            android:useLevel="false"
+            android:innerRadius="60dp"
+            android:thickness="40dp"
+            >
+            <size
+                android:width="250dp"
+                android:height="250dp" />
+            <stroke
+                android:width="5dip"
+                android:color="#ffffff"
+                android:dashWidth="11dip"
+                android:dashGap="10dip"
+                />
+            <gradient
+                android:type="radial"
+                android:gradientRadius="250"
+                android:startColor="#ff0ff8ff"
+                android:endColor="#ff189fa4"
+                android:useLevel="false"
+                />
+        </shape>
+    </item>
+    <item>
+        <shape
+            android:shape="ring"
+            android:useLevel="false"
+            android:innerRadius="90dp"
+            android:thickness="1dp"
+            >
+            <size android:width="250dp"
+                android:height="250dp"/>
+            <solid android:color="#ffffff" />
+        </shape>
+    </item>
+    <item>
+        <shape
+            android:shape="ring"
+            android:useLevel="false"
+            android:innerRadius="105dp"
+            android:thickness="1dp"
+            >
+            <size android:width="250dp"
+                android:height="250dp"/>
+            <solid android:color="#ffffff" />
+        </shape>
+    </item>
+    <item>
+        <shape
+            android:shape="ring"
+            android:useLevel="false"
+            android:innerRadius="75dp"
+            android:thickness="1dp"
+            >
+            <size android:width="250dp"
+                android:height="250dp"/>
+            <solid android:color="#ffffff" />
+        </shape>
+    </item>
+</layer-list>

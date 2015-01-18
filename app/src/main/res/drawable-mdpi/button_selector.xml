@@ -1,0 +1,6 @@
+<!-- this file allow to style the button in order to its state (focused,pressed, default)-->
+<selector xmlns:android="http://schemas.android.com/apk/res/android" >
+    <item android:state_pressed="true" android:drawable="@drawable/button_pressed"></item>
+    <item android:state_focused="true" android:drawable="@drawable/button_focused"></item>
+    <item android:drawable="@drawable/button_default"> </item>
+</selector>

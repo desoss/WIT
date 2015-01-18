@@ -1,0 +1,25 @@
+<set xmlns:android="http://schemas.android.com/apk/res/android" >
+    <rotate
+        android:duration="2000"
+        android:repeatCount="infinite"
+        android:fromDegrees="0"
+        android:pivotX="50%"
+        android:pivotY="50%"
+        android:repeatMode="reverse"
+        android:startOffset="0"
+        android:toDegrees="360"
+    />
+    <scale
+        android:fromXScale="1.0" android:fromYScale="1.0"
+        android:toXScale="0.9" android:toYScale="0.9"
+        android:pivotX="50%"
+        android:pivotY="45%"
+        android:duration="2000" android:fillBefore="false"
+    />
+    <!-- il pivotY non è al 50% perchè è necessario che trasli verso l'alto il bottone per poter centrare la scritta("SCAN" grossa a "scanning". è brutto far traslare il centro della scritta)-->
+    <alpha
+        android:fromAlpha="1.0"
+        android:toAlpha="0.6"
+        android:duration="2000"
+    />
+ </set>
