@@ -75,6 +75,12 @@ public class WitListActivity extends ActionBarActivity {
         // Applica l'algoritmo geometrico alla lista e ottieni la lista filtrata
         correctPoiList = new ArrayList<WitPOI>();
 
+        // TODO debug da togliere
+        Toast.makeText(this, "Orientation NORTH from sensor : " + String.valueOf(Math.toDegrees(userOrientation)) +
+                        "\nRotation from algorithm EAST : " + String.valueOf(Math.toDegrees(adjustAngle(userOrientation))),
+                Toast.LENGTH_LONG).show();
+
+
         for (WitPOI poi : poiList) {
             if (geometricCheck(userLatitude, userLongitude, poi.getPoiLat(), poi.getPoiLon(),userOrientation)) {
                 correctPoiList.add(poi);
@@ -91,7 +97,19 @@ public class WitListActivity extends ActionBarActivity {
 
         poiListView.setAdapter(poiListAdapter);
 
-        // TODO se non ci sono POI nella lista inserire un messaggio tipo "Sorry, we couldn't find any POI :("
+    }
+
+    /**
+     * The angle from the orientation sensor is clockwise starting from north
+     * We need an angle counterclockwise starting from east
+     *
+     * @param userOrientation
+     * @return
+     */
+    private double adjustAngle(double userOrientation){
+        double theta = -userOrientation;
+        theta += Math.PI/2;
+        return theta;
     }
 
     /**
@@ -120,10 +138,7 @@ public class WitListActivity extends ActionBarActivity {
         poiX -= userX;
         poiY -= userY;
 
-        // The angle from the orientation sensor is clockwise starting from north
-        // We need an angle counterclockwise starting from east
-        theta = -userOrientation;
-        theta += Math.PI/2;
+        theta = adjustAngle(userOrientation);
 
         // Rotate the POI around the origin (aka the user) with the rotation matrix.
         // We rotate with an angle of theta in clockwise sense.

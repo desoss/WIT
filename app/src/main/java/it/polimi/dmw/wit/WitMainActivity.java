@@ -397,8 +397,8 @@ public class WitMainActivity extends ActionBarActivity {
      */
     private void getPOIs() {
         String lat = String.valueOf(currentLocation.getLatitude());
-        String lon = String.valueOf(currentLocation.getLongitude());
-        // TODO remove
+        String lon = String.valueOf(Math.toDegrees(currentLocation.getLongitude()));
+        // TODO debug remove
         String orient = String.valueOf(orientationProvider.getOrientation((currentLocation)));
 
         Toast.makeText(this, "Latitude = "+lat+"\nLongitude = "+lon+"\nAccuracy = "+
@@ -455,6 +455,7 @@ public class WitMainActivity extends ActionBarActivity {
         int poisNumber = 0;
 
         Log.d(LOG_TAG,"JSON received! Length = "+resultJson.length());
+        Log.d(LOG_TAG,resultJson);
 
         // Pulisci la lista dei monumenti
         poiList.clear();

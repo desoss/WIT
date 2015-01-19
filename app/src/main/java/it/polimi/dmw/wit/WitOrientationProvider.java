@@ -17,6 +17,8 @@ import android.location.LocationManager;
  */
 public class WitOrientationProvider implements SensorEventListener {
 
+    // TODO inserire valore medio dei sensori
+
     /**
      * Sensori e gestori
      */
