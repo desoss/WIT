@@ -1,17 +1,27 @@
 package it.polimi.dmw.wit;
 
-import android.location.Criteria;
 import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
 import android.os.Bundle;
+import android.util.Log;
+
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.GoogleApiClient.ConnectionCallbacks;
+import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListener;
+import com.google.android.gms.location.LocationListener;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
 
 /**
- * Classe che implementa il metodo vecchio di gestione GPS
- *
- * Created by sivam on 1/17/15.
+ * Created by sivam on 1/19/15.
  */
-public class WitLocationOldStyle implements WitLocationProvider, LocationListener {
+public class WitLocationAPI implements WitLocationProvider,
+        ConnectionCallbacks,
+        OnConnectionFailedListener,
+        LocationListener {
+
+    // Nome per i messaggi del log
+    private static final String LOG_TAG = "WitLocationAPI";
 
     // Parameters to establish which location is better
 
@@ -25,49 +35,66 @@ public class WitLocationOldStyle implements WitLocationProvider, LocationListene
     // Distanza minima per aggiornare una posizione
     private static final int MIN_DISTANCE = 1;
 
-    // Members
+    private GoogleApiClient googleApiClient;
+    private LocationRequest locationRequest;
+
     Location currentLocation;
-    LocationManager locationManager;
 
-    // Il criterio per descrivere il risultato
-    Criteria accurateCriteria;
+    public WitLocationAPI(GoogleApiClient.Builder builder) {
+        locationRequest = new LocationRequest();
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
+            .setFastestInterval(100)
+            .setInterval(250);
 
-    // Costruttore
-    public WitLocationOldStyle(LocationManager locMan) {
-        locationManager = locMan;
-
-        // Critera definisce come vuoi il risultato, tipo locationRequest nel metodo nuovo
-        accurateCriteria = new Criteria();
-        accurateCriteria.setAccuracy(Criteria.ACCURACY_FINE);
-        accurateCriteria.setHorizontalAccuracy(Criteria.ACCURACY_MEDIUM);
+        googleApiClient = builder
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(LocationServices.API)
+                .build();
     }
 
-    /**
-     * Metodo per iniziare a ricevere notifiche
-     */
+
     @Override
     public void startGettingLocation() {
-        locationManager.requestLocationUpdates(MIN_TIME_BETWEEN_REQUEST, MIN_DISTANCE, accurateCriteria, this, null);
+        googleApiClient.connect();
     }
 
-    /**
-     * Smette di ricever notifiche
-     */
     @Override
     public void stopGettingLocation() {
-        locationManager.removeUpdates(this);
+        LocationServices.FusedLocationApi
+                .removeLocationUpdates(googleApiClient, this);
+        googleApiClient.disconnect();
     }
 
-    /**
-     * Metodo che viene chiamato quando una nuove location è disponibile
-     *
-     * @param location
-     */
+    @Override
+    public Location getLocation() {
+        return currentLocation;
+    }
+
+    @Override
+    public boolean hasLocation() {
+        return currentLocation != null;
+    }
+
+    @Override
+    public void onConnected(Bundle bundle) {
+        LocationServices.FusedLocationApi
+                .requestLocationUpdates(googleApiClient, locationRequest, this);
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+        Log.e(LOG_TAG,"ERROR: failed to connect to google services");
+    }
+
     @Override
     public void onLocationChanged(Location location) {
-        // Se ho una posizione migliore
-        if(isBetterLocation(location)) {
-            // Aggiorna la location
+        if (isBetterLocation(location)) {
             currentLocation = location;
         }
     }
@@ -117,33 +144,4 @@ public class WitLocationOldStyle implements WitLocationProvider, LocationListene
         return false;
     }
 
-
-    // I seguenti sono METODI del Sensor listener che non usiamo
-
-    @Override
-    public void onStatusChanged(String provider, int status, Bundle extras) {
-
-    }
-
-    @Override
-    public void onProviderEnabled(String provider) {
-
-    }
-
-    @Override
-    public void onProviderDisabled(String provider) {
-
-    }
-
-    // I seguenti sono METODI dell'interfaccia per ottenere una location
-
-    @Override
-    public Location getLocation() {
-        return currentLocation;
-    }
-
-    @Override
-    public boolean hasLocation() {
-        return currentLocation != null;
-    }
 }

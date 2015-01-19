@@ -25,6 +25,8 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.common.api.GoogleApiClient;
+
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
@@ -79,7 +81,7 @@ public class WitMainActivity extends ActionBarActivity {
     Animation scanClickedAnimation;
 
     /**
-     * Riferimenti hai sensori
+     * Riferimenti ai sensori
      */
     WitLocationProvider locationProvider;
     WitOrientationProvider orientationProvider;
@@ -286,8 +288,14 @@ public class WitMainActivity extends ActionBarActivity {
         // Resetta la posizione
         currentLocation = null;
 
-        // Inizia a cercare GPS e inizializza i provider
-        locationProvider = new WitLocationOldStyle(locationManager);
+        // Inizia a cercare GPS e inizializza il provider
+
+        // Provider vecchio
+        //locationProvider = new WitLocationOldStyle(locationManager);
+
+        // Provider nuovo
+        locationProvider = new WitLocationAPI(new GoogleApiClient.Builder(this));
+
         locationProvider.startGettingLocation();
 
         // Lo inizializzo ma non lo attivo, per l'orientamento non abbiamo
@@ -390,6 +398,12 @@ public class WitMainActivity extends ActionBarActivity {
     private void getPOIs() {
         String lat = String.valueOf(currentLocation.getLatitude());
         String lon = String.valueOf(currentLocation.getLongitude());
+        // TODO remove
+        String orient = String.valueOf(orientationProvider.getOrientation((currentLocation)));
+
+        Toast.makeText(this, "Latitude = "+lat+"\nLongitude = "+lon+"\nAccuracy = "+
+                        currentLocation.getAccuracy()+"\nOrientation = "+orient,
+                Toast.LENGTH_LONG).show();
 
         // Crea l'url con i parametri giusti per il server
         final String url = getString(R.string.get_monuments_base_url)+"?lat=" + lat + "&lon=" + lon + "&json=true&side=1&max=100";
@@ -513,8 +527,6 @@ public class WitMainActivity extends ActionBarActivity {
             new WitDownloadTask().execute(url);
 
         } catch (MalformedURLException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
             e.printStackTrace();
         }
     }
