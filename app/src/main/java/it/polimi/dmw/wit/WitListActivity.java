@@ -76,9 +76,9 @@ public class WitListActivity extends ActionBarActivity {
         correctPoiList = new ArrayList<WitPOI>();
 
         // TODO debug da togliere
-        Toast.makeText(this, "Orientation NORTH from sensor : " + String.valueOf(Math.toDegrees(userOrientation)) +
+        Toast.makeText(this, "Orientation WEST from sensor : " + String.valueOf(Math.toDegrees(userOrientation)) +
                         "\nRotation from algorithm EAST : " + String.valueOf(Math.toDegrees(adjustAngle(userOrientation))),
-                Toast.LENGTH_LONG).show();
+                Toast.LENGTH_SHORT).show();
 
 
         for (WitPOI poi : poiList) {
@@ -88,8 +88,8 @@ public class WitListActivity extends ActionBarActivity {
         }
 
         // Piccolo messaggio di informazione TODO da togliere per la versione finale
-        Toast.makeText(this, "Items are: "+String.valueOf(poiList.size())+"\nCorrect items are: "+String.valueOf(correctPoiList.size()),
-                Toast.LENGTH_LONG).show();
+//        Toast.makeText(this, "Items are: "+String.valueOf(poiList.size())+"\nCorrect items are: "+String.valueOf(correctPoiList.size()),
+//               Toast.LENGTH_LONG).show();
 
         // Inserisci la lista filtrata nella ListView
         poiListAdapter = new ArrayAdapter<WitPOI>(this, android.R.layout.simple_list_item_1, correctPoiList);
@@ -100,16 +100,21 @@ public class WitListActivity extends ActionBarActivity {
     }
 
     /**
-     * The angle from the orientation sensor is clockwise starting from north
+     * The angle from the orientation sensor is clockwise starting from west
      * We need an angle counterclockwise starting from east
      *
      * @param userOrientation
      * @return
      */
     private double adjustAngle(double userOrientation){
-        double theta = -userOrientation;
-        theta += Math.PI/2;
-        return theta;
+        double adjustedAngle = 0;
+        if (userOrientation >= 0) {
+            adjustedAngle = -userOrientation - Math.PI*3/2;
+        }
+        else {
+            adjustedAngle = userOrientation - Math.PI*3/2;
+        }
+        return adjustedAngle;
     }
 
     /**
@@ -142,8 +147,8 @@ public class WitListActivity extends ActionBarActivity {
 
         // Rotate the POI around the origin (aka the user) with the rotation matrix.
         // We rotate with an angle of theta in clockwise sense.
-        rotatedX = Math.cos(theta)*poiX + Math.sin(theta)*poiY;
-        rotatedY = - Math.sin(theta)*poiX + Math.cos(theta)*poiY;
+        rotatedX = Math.cos(theta)*poiX - Math.sin(theta)*poiY;
+        rotatedY = Math.sin(theta)*poiX + Math.cos(theta)*poiY;
 
         // Use the pois coordinate in the expressions of the sides of the cone,
         // alpha is to the left of the user, beta is to its right.
