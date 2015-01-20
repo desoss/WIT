@@ -270,47 +270,38 @@ public class WitMainActivity extends ActionBarActivity {
     protected void onStart() {
         super.onStart();
 
+        Log.d(LOG_TAG, "onStart()");
+
         // Verifica che il GPS sia acceso
         boolean gpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
         if (!gpsEnabled) {
             showGPSSettingsAlert();
         }
+        else {
+            // Resetta la posizione
+            currentLocation = null;
+
+            // Inizia a cercare GPS e inizializza il provider
+
+            // Provider vecchio
+            //locationProvider = new WitLocationOldStyle(locationManager);
+
+            // Provider nuovo
+            locationProvider = new WitLocationAPI(new GoogleApiClient.Builder(this));
+
+            locationProvider.startGettingLocation();
+
+            // Lo inizializzo ma non lo attivo, per l'orientamento non abbiamo
+            // bisogno di aspettare quindi lo attiviamo al click dello scan
+            orientationProvider = new WitOrientationProvider(sensorManager);
+        }
     }
 
     @Override
-    protected void onResume() {
-        // Always call superclass method first
-        super.onResume();
+    protected void onStop() {
+        super.onStop();
 
-        // start default animation
-        scanButton.startAnimation(scanDefaultAnimation);
-
-        // Resetta la posizione
-        currentLocation = null;
-
-        // Inizia a cercare GPS e inizializza il provider
-
-        // Provider vecchio
-        //locationProvider = new WitLocationOldStyle(locationManager);
-
-        // Provider nuovo
-        locationProvider = new WitLocationAPI(new GoogleApiClient.Builder(this));
-
-        locationProvider.startGettingLocation();
-
-        // Lo inizializzo ma non lo attivo, per l'orientamento non abbiamo
-        // bisogno di aspettare quindi lo attiviamo al click dello scan
-        orientationProvider = new WitOrientationProvider(sensorManager);
-    }
-
-    @Override
-    protected void onPause() {
-        // Always call superclass method first
-        super.onPause();
-
-        // Spegni l'animazione quando l'utente non sta guardando
-        stopAnimation();
-
+        Log.d(LOG_TAG, "onStop()");
         // Spegni i provider per non consumare batteria
         locationProvider.stopGettingLocation();
         locationProvider = null;
@@ -320,6 +311,28 @@ public class WitMainActivity extends ActionBarActivity {
             orientationEnabled = false;
         }
         orientationProvider = null;
+    }
+
+    @Override
+    protected void onResume() {
+        // Always call superclass method first
+        super.onResume();
+
+        Log.d(LOG_TAG, "onResume()");
+
+
+        // start default animation
+        scanButton.startAnimation(scanDefaultAnimation);
+    }
+
+    @Override
+    protected void onPause() {
+        // Always call superclass method first
+        super.onPause();
+        Log.d(LOG_TAG, "onPause()");
+
+        // Spegni l'animazione quando l'utente non sta guardando
+        scanButton.clearAnimation();
     }
 
     // I seguenti METODI sono per gestire l'action bar
@@ -369,7 +382,7 @@ public class WitMainActivity extends ActionBarActivity {
     }
 
     /**
-     * Metodo per fermare l'animazione di scan e risparmiare batteria
+     * Metodo per fermare l'animazione di scan e rimettere quella di default
      */
     private void stopAnimation() {
         // Stop animation
@@ -397,13 +410,8 @@ public class WitMainActivity extends ActionBarActivity {
      */
     private void getPOIs() {
         String lat = String.valueOf(currentLocation.getLatitude());
-        String lon = String.valueOf(Math.toDegrees(currentLocation.getLongitude()));
-        // TODO debug remove
-        String orient = String.valueOf(orientationProvider.getOrientation((currentLocation)));
+        String lon = String.valueOf(currentLocation.getLongitude());
 
-        Toast.makeText(this, "Latitude = "+lat+"\nLongitude = "+lon+"\nAccuracy = "+
-                        currentLocation.getAccuracy()+"\nOrientation = "+orient,
-                Toast.LENGTH_LONG).show();
 
         // Crea l'url con i parametri giusti per il server
         final String url = getString(R.string.get_monuments_base_url)+"?lat=" + lat + "&lon=" + lon + "&json=true&side=1&max=100";
@@ -498,6 +506,11 @@ public class WitMainActivity extends ActionBarActivity {
 
         // Crea un intent per far partire un'altra Activity
         Intent intent = new Intent(this, WitListActivity.class);
+
+
+        Toast.makeText(this, "Latitude = "+String.valueOf(currentLocation.getLatitude())+"\nLongitude = "+String.valueOf(currentLocation.getLongitude())+"\nAccuracy = "+
+                        currentLocation.getAccuracy()+"\nOrientation = "+String.valueOf(Math.toDegrees(orientationProvider.getOrientation(currentLocation))),
+                Toast.LENGTH_LONG).show();
 
         // Inserisci come dati
         // - la lista dei POI

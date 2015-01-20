@@ -37,6 +37,64 @@ public class WitOrientationProvider implements SensorEventListener {
     private boolean hasMagnetVector = false;
     private float[] rotationMatrix = new float[9];
     private float[] orientationVector = new float[3];
+    private AverageAngle averageValues;
+
+
+    private class AverageAngle
+    {
+        private double[] values;
+        private int currentIndex;
+        private int numberOfFrames;
+        private boolean isFull;
+        private double averageValue = Double.NaN;
+
+        public AverageAngle(int frames)
+        {
+            this.numberOfFrames = frames;
+            this.currentIndex = 0;
+            this.values = new double[frames];
+        }
+
+        public void putValue(double d)
+        {
+            values[currentIndex] = d; // numero di valori con cui fare la media
+            if (currentIndex == numberOfFrames - 1) {
+                currentIndex = 0;
+                isFull = true;
+            } else {
+                currentIndex++;
+            }
+            updateAverageValue();
+        }
+
+        public double getAverage()
+        {
+            return this.averageValue;
+        }
+
+        private void updateAverageValue()
+        {
+            int numberOfElementsToConsider = numberOfFrames;
+            if (!isFull) {
+                numberOfElementsToConsider = currentIndex + 1;
+            }
+
+            if (numberOfElementsToConsider == 1) {
+                this.averageValue = values[0];
+                return;
+            }
+
+            // Formula: http://en.wikipedia.org/wiki/Circular_mean
+            double sumSin = 0.0;
+            double sumCos = 0.0;
+            for (int i = 0; i < numberOfElementsToConsider; i++) {
+                double v = values[i];
+                sumSin += Math.sin(v);
+                sumCos += Math.cos(v);
+            }
+            this.averageValue = Math.atan2(sumSin, sumCos);
+        }
+    }
 
     /**
      * Costruttore, riceve il gestore dei sensori del sistema
@@ -47,6 +105,7 @@ public class WitOrientationProvider implements SensorEventListener {
         sensorManager = senMan;
         magnetometer = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
         accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        averageValues = new AverageAngle(10);
     }
 
     /**
@@ -85,7 +144,7 @@ public class WitOrientationProvider implements SensorEventListener {
                 (float) location.getLongitude(),
                 (float) location.getAltitude(),
                 System.currentTimeMillis());
-        return currentOrientation + geoField.getDeclination();
+        return averageValues.getAverage() + geoField.getDeclination();
     }
 
     /**
@@ -108,7 +167,7 @@ public class WitOrientationProvider implements SensorEventListener {
         if (hasAcceleration && hasMagnetVector) {
             SensorManager.getRotationMatrix(rotationMatrix, null, currentAcceleration, currentMagnetVector);
             SensorManager.getOrientation(rotationMatrix, orientationVector);
-            currentOrientation = orientationVector[0];
+            averageValues.putValue(orientationVector[0]);
         }
     }
 
