@@ -38,7 +38,9 @@ public class WitLocationAPI implements WitLocationProvider,
     private GoogleApiClient googleApiClient;
     private LocationRequest locationRequest;
 
-    Location currentLocation;
+    private Location currentLocation;
+
+    private boolean isConnected;
 
     public WitLocationAPI(GoogleApiClient.Builder builder) {
         locationRequest = new LocationRequest();
@@ -51,6 +53,7 @@ public class WitLocationAPI implements WitLocationProvider,
                 .addOnConnectionFailedListener(this)
                 .addApi(LocationServices.API)
                 .build();
+        isConnected = false;
     }
 
 
@@ -63,7 +66,10 @@ public class WitLocationAPI implements WitLocationProvider,
     public void stopGettingLocation() {
         LocationServices.FusedLocationApi
                 .removeLocationUpdates(googleApiClient, this);
-        googleApiClient.disconnect();
+
+        if (isConnected) {
+            googleApiClient.disconnect();
+        }
     }
 
     @Override
@@ -78,17 +84,18 @@ public class WitLocationAPI implements WitLocationProvider,
 
     @Override
     public void onConnected(Bundle bundle) {
+        isConnected = true;
         LocationServices.FusedLocationApi
                 .requestLocationUpdates(googleApiClient, locationRequest, this);
     }
 
     @Override
     public void onConnectionSuspended(int i) {
-
     }
 
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
+        isConnected = false;
         Log.e(LOG_TAG,"ERROR: failed to connect to google services");
     }
 
