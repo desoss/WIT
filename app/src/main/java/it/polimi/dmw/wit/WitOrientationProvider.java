@@ -144,7 +144,7 @@ public class WitOrientationProvider implements SensorEventListener {
                 (float) location.getLongitude(),
                 (float) location.getAltitude(),
                 System.currentTimeMillis());
-        return averageValues.getAverage() + geoField.getDeclination();
+        return averageValues.getAverage() + Math.toRadians(geoField.getDeclination());
     }
 
     /**

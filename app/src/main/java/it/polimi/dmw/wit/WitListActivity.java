@@ -3,6 +3,7 @@ package it.polimi.dmw.wit;
 import android.content.Intent;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ArrayAdapter;
@@ -76,15 +77,16 @@ public class WitListActivity extends ActionBarActivity {
         correctPoiList = new ArrayList<WitPOI>();
 
         // TODO debug da togliere
-        Toast.makeText(this, "Orientation WEST from sensor : " + String.valueOf(Math.toDegrees(userOrientation)) +
+        Toast.makeText(this, "Orientation NORTH from sensor : " + String.valueOf(Math.toDegrees(userOrientation)) +
                         "\nRotation from algorithm EAST : " + String.valueOf(Math.toDegrees(adjustAngle(userOrientation))),
-                Toast.LENGTH_SHORT).show();
+                Toast.LENGTH_LONG).show();
 
 
         for (WitPOI poi : poiList) {
             if (geometricCheck(userLatitude, userLongitude, poi.getPoiLat(), poi.getPoiLon(),userOrientation)) {
                 correctPoiList.add(poi);
             }
+            Log.d("LIST", poi.getPoiName());
         }
 
         // Piccolo messaggio di informazione TODO da togliere per la versione finale
@@ -108,11 +110,13 @@ public class WitListActivity extends ActionBarActivity {
      */
     private double adjustAngle(double userOrientation){
         double adjustedAngle = 0;
+        // Tra 0 e +180 -> -90  -270
         if (userOrientation >= 0) {
-            adjustedAngle = -userOrientation - Math.PI*3/2;
+            adjustedAngle = (userOrientation - Math.PI/2);
         }
+        // Tra 0 e -180 -> -90
         else {
-            adjustedAngle = userOrientation - Math.PI*3/2;
+            adjustedAngle = (userOrientation - Math.PI/2);
         }
         return adjustedAngle;
     }
