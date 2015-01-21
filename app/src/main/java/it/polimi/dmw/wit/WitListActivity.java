@@ -22,7 +22,7 @@ public class WitListActivity extends ActionBarActivity {
      * Ampiezza del cono di visione, per adesso ho fatto un paio di prove,
      * andrebbe verificata
      */
-    private final static double coneWidth = Math.PI/10;
+    private final static double coneWidth = Math.PI/6;
 
     /**
      * Membri per gestire la ListView
@@ -83,10 +83,9 @@ public class WitListActivity extends ActionBarActivity {
 
 
         for (WitPOI poi : poiList) {
-            if (geometricCheck(userLatitude, userLongitude, poi.getPoiLat(), poi.getPoiLon(),userOrientation)) {
+            if (geometricCheck(userLongitude, userLatitude, poi.getPoiLon(), poi.getPoiLat(),userOrientation)) {
                 correctPoiList.add(poi);
             }
-            Log.d("LIST", poi.getPoiName());
         }
 
         // Piccolo messaggio di informazione TODO da togliere per la versione finale
@@ -109,16 +108,8 @@ public class WitListActivity extends ActionBarActivity {
      * @return
      */
     private double adjustAngle(double userOrientation){
-        double adjustedAngle = 0;
         // Tra 0 e +180 -> -90  -270
-        if (userOrientation >= 0) {
-            adjustedAngle = (userOrientation - Math.PI/2);
-        }
-        // Tra 0 e -180 -> -90
-        else {
-            adjustedAngle = (userOrientation - Math.PI/2);
-        }
-        return adjustedAngle;
+        return (userOrientation - Math.PI/2);
     }
 
     /**
