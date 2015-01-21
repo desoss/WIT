@@ -64,10 +64,10 @@ public class WitLocationAPI implements WitLocationProvider,
 
     @Override
     public void stopGettingLocation() {
-        LocationServices.FusedLocationApi
-                .removeLocationUpdates(googleApiClient, this);
-
         if (isConnected) {
+            LocationServices.FusedLocationApi
+                    .removeLocationUpdates(googleApiClient, this);
+
             googleApiClient.disconnect();
         }
     }
