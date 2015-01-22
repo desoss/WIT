@@ -411,7 +411,7 @@ public class WitListActivity extends ActionBarActivity {
         URL url = null;
         try {
             // TODO cambiare il 55 con "smallid, ho messo 55 per i test"
-            url = new URL("http://api.wikimapia.org/?key=example&function=place.getbyid&id=" + 55 + "&format=json&language=it");
+            url = new URL("http://api.wikimapia.org/?key=example&function=place.getbyid&id=" + smallid + "&format=json&language=it");
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
