@@ -73,6 +73,12 @@ public class WitListActivity extends ActionBarActivity {
 
     private JSONObject jSondetail;
 
+    /**
+     * Per limitare le richieste al server se ho più di 2 piazze davanti :-D
+     */
+
+    private int numberOfRequest=0;
+
 
     /**
      * Classe privata per downloadare il JSON senza bloccare la user interface, viene eseguita
@@ -229,6 +235,32 @@ public class WitListActivity extends ActionBarActivity {
         return smallid;
     }
 
+    /**
+     * Funzione che serve a fare una nuova richiesta al server con l'id del POI in posizione successiva se quello in prima è una piazza
+     */
+
+    public void isNotBuilding(){
+
+
+        int size=correctPoiList.size();
+        System.out.println(numberOfRequest+1);
+
+
+        if(numberOfRequest<2&&numberOfRequest+1<size){
+            int id = correctPoiList.get(numberOfRequest+1).getPoiId();
+
+            URL url = null;
+            try {
+                url = new URL("http://api.wikimapia.org/?key=example&function=place.getbyid&id=" + id + "&format=json&language=it");
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            }
+            new WitDownloadTask().execute(url);}
+        numberOfRequest++;
+
+    }
+
+
     public void printDetail(String detail) throws JSONException {
         // CONVERT RESPONSE STRING TO JSON ARRAY
         jSondetail = new JSONObject(detail);
@@ -240,120 +272,134 @@ public class WitListActivity extends ActionBarActivity {
                 System.out.println(jSondetail.getString("id"));
                 System.out.println(jSondetail.getString("title"));
                 System.out.println(jSondetail.getString("description"));
+                System.out.println(jSondetail.getString("is_building"));
+
 
             } catch (JSONException e) {
                 e.printStackTrace();
             }
 
-            //controllo che campi non vuoti
-            //inoltre json non ha sempre gli stessi campi, quindi svolgiamo le funzioni in un try catch.
+            Boolean isBuilding = jSondetail.getBoolean("is_building");
 
-            //INIZIO PER DESCRIZIONE
-            String description = "";
-            try {
-                description = description + jSondetail.getString("description");
 
-            } catch (JSONException e) {
-            }
-            if (description == "") {
-                description = "Campo non presente";
-            }
-            //FINE PER DESCRIZIONE
+            //controllo che il POI sia un edificio se no faccio una nuova richiesta
+            if (isBuilding) {
+                //controllo che campi non vuoti
+                //inoltre json non ha sempre gli stessi campi, quindi svolgiamo le funzioni in un try catch.
 
-            //INIZIO PER WIKI
-            String wiki = "";
-            try {
-                wiki = wiki + jSondetail.getString("wikipedia");
+                //INIZIO PER DESCRIZIONE
+                String description = "";
+                try {
+                    description = description + jSondetail.getString("description");
 
-            } catch (JSONException e) {
-                wiki = "Campo non presente";
-            }
+                } catch (JSONException e) {
+                }
+                if (description == "") {
+                    description = "Campo non presente";
+                }
+                //FINE PER DESCRIZIONE
 
-            if (wiki == "") {
-                wiki = "Campo non presente";
-            }
-            //FINE PER WIKI
+                //INIZIO PER WIKI
+                String wiki = "";
+                try {
+                    wiki = wiki + jSondetail.getString("wikipedia");
 
-            //Prendere link foto INIZIO
-            String photos = "";
-            try {
-                photos = photos + jSondetail.getString("photos");
+                } catch (JSONException e) {
+                    wiki = "Campo non presente";
+                }
 
-            } catch (JSONException e) {
-            }
+                if (wiki == "") {
+                    wiki = "Campo non presente";
+                }
+                //FINE PER WIKI
 
-            ArrayList<String> linkapp = new ArrayList<String>();
-            ArrayList<String> link = new ArrayList<String>();
-            if (photos != "") {
-                //prendi i link
-                int i = 0;
-                int pos = 0;
-                while (i < photos.length()) {
-                    i = photos.indexOf("http", i);
-                    if (i != -1) {
-                        int stop = photos.indexOf("jpg", i) + 3;
+                //Prendere link foto INIZIO
+                String photos = "";
+                try {
+                    photos = photos + jSondetail.getString("photos");
 
-                        if (stop != -1) {
-                            linkapp.add(pos, photos.substring(i, stop));
-                            i = i + linkapp.get(pos).length();
-                            pos++;
+                } catch (JSONException e) {
+                }
+
+                ArrayList<String> linkapp = new ArrayList<String>();
+                ArrayList<String> link = new ArrayList<String>();
+                if (photos != "") {
+                    //prendi i link
+                    int i = 0;
+                    int pos = 0;
+                    while (i < photos.length()) {
+                        i = photos.indexOf("http", i);
+                        if (i != -1) {
+                            int stop = photos.indexOf("jpg", i) + 3;
+
+                            if (stop != -1) {
+                                linkapp.add(pos, photos.substring(i, stop));
+                                i = i + linkapp.get(pos).length();
+                                pos++;
+                            } else {
+                                i = photos.length();
+                            }
                         } else {
                             i = photos.length();
                         }
-                    } else {
-                        i = photos.length();
                     }
-                }
 
 
-                //PROBLEMA FORMATO: Wikimapia mi restituisce i link alle foto con un escape (\/), devo sostituire tutti i \ con ""
-                //Inoltre ho foto "doppioni"
+                    //PROBLEMA FORMATO: Wikimapia mi restituisce i link alle foto con un escape (\/), devo sostituire tutti i \ con ""
+                    //Inoltre ho foto "doppioni"
 
-                String app;
-                int j=0;
-                while (j<linkapp.size()) {
-                    link.add(linkapp.get(j).replaceAll("\\\\", ""));
-                    app = linkapp.get(j).substring(linkapp.get(j).indexOf("wikimapia.org"), linkapp.get(j).indexOf("_"));
-                    boolean diverso = false;
-                    while (!diverso) {
-                        if (j < linkapp.size() - 1) {
-                            String confronto = linkapp.get(j).substring(linkapp.get(j).indexOf("wikimapia.org"), linkapp.get(j).indexOf("_"));
-                            if (app.equals(confronto)) {
-                                j++;
+                    String app;
+                    int j = 0;
+                    while (j < linkapp.size()) {
+                        link.add(linkapp.get(j).replaceAll("\\\\", ""));
+                        app = linkapp.get(j).substring(linkapp.get(j).indexOf("wikimapia.org"), linkapp.get(j).indexOf("_"));
+                        boolean diverso = false;
+                        while (!diverso) {
+                            if (j < linkapp.size() - 1) {
+                                String confronto = linkapp.get(j).substring(linkapp.get(j).indexOf("wikimapia.org"), linkapp.get(j).indexOf("_"));
+                                if (app.equals(confronto)) {
+                                    j++;
+                                } else {
+                                    diverso = true;
+                                }
                             } else {
                                 diverso = true;
                             }
-                        } else {
-                            diverso = true;
                         }
+                        j++;
                     }
-                    j++;
                 }
-            }
-            //FINE PRENDERE LINK, in ogni posizione i di "link" ora avrò una foto.
+                //FINE PRENDERE LINK, in ogni posizione i di "link" ora avrò una foto.
 
-            // Mostra da 0 a 4 immagini
-            if (link.size()>0) {
-                //chiamo il download dell'immagine che viene inserita anche nell'imageView.
-                new DownloadImageTask((ImageView) findViewById(R.id.imageView))
-                        .execute(link.get(0));
+                // Mostra da 0 a 4 immagini
+                if (link.size() > 0) {
+                    //chiamo il download dell'immagine che viene inserita anche nell'imageView.
+                    new DownloadImageTask((ImageView) findViewById(R.id.imageView))
+                            .execute(link.get(0));
 
-                if (link.size()>1)
-                {
-                    new DownloadImageTask((ImageView) findViewById(R.id.imageView1))
-                            .execute(link.get(1));
+                    if (link.size() > 1) {
+                        new DownloadImageTask((ImageView) findViewById(R.id.imageView1))
+                                .execute(link.get(1));
+                    }
                 }
+
+                //richiamo oggetti e li scrivo
+                TextView T1 = (TextView) findViewById(R.id.textView3);
+                T1.setText("Nome: " + jSondetail.getString("title"));
+                T1 = (TextView) findViewById(R.id.textView4);
+                T1.setText("Descrizione: " + description);
+                T1 = (TextView) findViewById(R.id.textView5);
+                T1.setText("Wikipedia: " + wiki);
+                Linkify.addLinks(T1, Linkify.WEB_URLS);
             }
 
-            //richiamo oggetti e li scrivo
-            TextView T1 = (TextView) findViewById(R.id.textView3);
-            T1.setText("Nome: " + jSondetail.getString("title"));
-            T1 = (TextView) findViewById(R.id.textView4);
-            T1.setText("Descrizione: " + description);
-            T1 = (TextView) findViewById(R.id.textView5);
-            T1.setText("Wikipedia: " + wiki);
-            Linkify.addLinks(T1, Linkify.WEB_URLS);
+            else {
+                isNotBuilding(); //mando una nuova richiesta
+            }
+
         }
+
+
     }
 
     @Override
