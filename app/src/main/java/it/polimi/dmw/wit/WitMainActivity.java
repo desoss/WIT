@@ -93,9 +93,10 @@ public class WitMainActivity extends ActionBarActivity {
     SensorManager sensorManager;
 
     /**
-     * Flag per gestire l'orientazione
+     * Flag per gestire l'orientazione e gps
      */
     boolean orientationEnabled = false;
+    boolean gpsEnabled = false;
 
     /**
      * Migliore location ricevute
@@ -273,7 +274,7 @@ public class WitMainActivity extends ActionBarActivity {
         Log.d(LOG_TAG, "onStart()");
 
         // Verifica che il GPS sia acceso
-        boolean gpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+        gpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
         if (!gpsEnabled) {
             showGPSSettingsAlert();
         }
@@ -302,9 +303,12 @@ public class WitMainActivity extends ActionBarActivity {
         super.onStop();
 
         Log.d(LOG_TAG, "onStop()");
-        // Spegni i provider per non consumare batteria
-        locationProvider.stopGettingLocation();
-        locationProvider = null;
+
+        if (gpsEnabled) {
+            // Spegni i provider per non consumare batteria
+            locationProvider.stopGettingLocation();
+            locationProvider = null;
+        }
 
         if (orientationEnabled) {
             orientationProvider.stopGettingOrientation();
@@ -323,6 +327,8 @@ public class WitMainActivity extends ActionBarActivity {
 
         // start default animation
         scanButton.startAnimation(scanDefaultAnimation);
+        scanText.setText(R.string.scan_button_text);
+
     }
 
     @Override
@@ -370,15 +376,28 @@ public class WitMainActivity extends ActionBarActivity {
         scanText.setText(R.string.scanning_button_text);
         scanButton.startAnimation(scanClickedAnimation);
 
-        // Attiva il sensore di orientamento
-        if (!orientationEnabled) {
-            orientationProvider.startGettingOrientation();
-            orientationEnabled = true;
+        // Verifico se ho una connessione internet
+        ConnectivityManager connMgr = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
+        // Se sono connesso
+        if (networkInfo != null && networkInfo.isConnected()) {
+            // Attiva il sensore di orientamento
+            if (!orientationEnabled) {
+                orientationProvider.startGettingOrientation();
+                orientationEnabled = true;
+            }
+
+            // Fa partire il timeout thread che a sua volta farà il check periodico della Location
+            WitTimeoutThread timeoutThread = new WitTimeoutThread(new TimeoutHandler());
+            timeoutThread.start();
+
+        } else {
+            // display error
+            showWirelessSettingsAlert();
+            stopAnimation();
+
         }
 
-        // Fa partire il timeout thread che a sua volta farà il check periodico della Location
-        WitTimeoutThread timeoutThread = new WitTimeoutThread(new TimeoutHandler());
-        timeoutThread.start();
     }
 
     /**
@@ -416,19 +435,7 @@ public class WitMainActivity extends ActionBarActivity {
         // Crea l'url con i parametri giusti per il server
         final String url = getString(R.string.get_monuments_base_url)+"?lat=" + lat + "&lon=" + lon + "&json=true&side=1&max=100";
 
-        // Verifico se ho una connessione internet
-        ConnectivityManager connMgr = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
-
-        // Se sono connesso
-        if (networkInfo != null && networkInfo.isConnected()) {
-            // mando la richiesta al server
-            getMonumentsFromServer(url);
-
-        } else {
-            // display error
-            showWirelessSettingsAlert();
-        }
+        getMonumentsFromServer(url);
     }
 
     /**
@@ -544,8 +551,6 @@ public class WitMainActivity extends ActionBarActivity {
             e.printStackTrace();
         }
     }
-
-    // TODO unire i 2 metodi dei POPUP
 
     /**
      * Mostra un dialog per attivare il WiFi
