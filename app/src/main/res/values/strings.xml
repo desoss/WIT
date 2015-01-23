@@ -10,5 +10,7 @@
     <string name="scanning_button_text">Scanning...</string>
     <string name="get_monuments_base_url">http://desoss.altervista.org/wit-server/android_wikimapia_request.php</string>
 
+    <string name="poi_title_text">Not found</string>
+    <string name="poi_desc_text">Sorry, we couldn\'t find any monument.</string>
 
 </resources>

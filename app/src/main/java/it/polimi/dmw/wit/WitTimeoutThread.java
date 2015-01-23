@@ -20,6 +20,7 @@ public class WitTimeoutThread extends Thread {
     // Numero totale di richieste di update e intervallo tra richieste
     private static final int REQUEST_NUMBER = 30;
     private static final int REQUEST_INTERVAL = 500;
+    private static final int MIN_REQUEST_INTERVAL = 0;
 
     // Codici per comunicare con l'activity
     public static final int CHECK_LOCATION_CODE = 0;
@@ -41,14 +42,14 @@ public class WitTimeoutThread extends Thread {
             // a intervalli di tempo regolari
             // empty message è un messaggio che contiene solo il codice.
 
-            if (!handler.sendEmptyMessageDelayed(CHECK_LOCATION_CODE, i*REQUEST_INTERVAL)) {
+            if (!handler.sendEmptyMessageDelayed(CHECK_LOCATION_CODE,MIN_REQUEST_INTERVAL+ i*REQUEST_INTERVAL)) {
                 // Se il messaggio non è consegnato scrive sul log
                 Log.e(LOG_TAG,"ERROR: a request message was not delivered");
             }
         }
 
         // Imposta il messaggio di timeout
-        if (!handler.sendEmptyMessageDelayed(TIMEOUT_CODE, REQUEST_NUMBER*REQUEST_INTERVAL)){
+        if (!handler.sendEmptyMessageDelayed(TIMEOUT_CODE, MIN_REQUEST_INTERVAL+ REQUEST_NUMBER*REQUEST_INTERVAL)){
             Log.e(LOG_TAG,"ERROR: timeout message was not delivered");
         }
     }

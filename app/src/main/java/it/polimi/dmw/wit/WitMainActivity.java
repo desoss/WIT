@@ -73,6 +73,11 @@ public class WitMainActivity extends ActionBarActivity {
     public final static String EXTRA_POI_LIST = "it.polimi.dmw.wit.POI_LIST";
 
     /**
+     * Minimum accuracy for a Location to be valid, in meters
+     */
+    public final static int MIN_ACCURACY = 30;
+
+    /**
      * Riferimenti alla User Interface
      */
     TextView scanText;
@@ -225,10 +230,13 @@ public class WitMainActivity extends ActionBarActivity {
 
                     // Se non hai ancora una location e il provider ha trovato una location
                     if ((currentLocation == null) && locationProvider.hasLocation()) {
-                        // Aggiorna la currentLocation
-                        currentLocation = locationProvider.getLocation();
-                        // Vai a mandare la richiesta al server
-                        getPOIs();
+                        Location foundLocation = locationProvider.getLocation();
+                        if (foundLocation.getAccuracy() <= MIN_ACCURACY) {
+                            // Aggiorna la currentLocation
+                            currentLocation = foundLocation;
+                            // Vai a mandare la richiesta al server
+                            getPOIs();
+                        }
                     }
                     break;
                 case WitTimeoutThread.TIMEOUT_CODE:

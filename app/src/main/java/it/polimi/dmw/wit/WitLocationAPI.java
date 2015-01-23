@@ -114,7 +114,7 @@ public class WitLocationAPI implements WitLocationProvider,
      * @return
      */
     private boolean isBetterLocation(Location location) {
-        if (currentLocation == null) {
+        if (currentLocation == null ) {
             // A new location is always better than no location
             return true;
         }
