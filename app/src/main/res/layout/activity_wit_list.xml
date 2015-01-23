@@ -11,6 +11,7 @@
         android:id="@+id/linearLayout1"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
+        android:layout_weight="1"
         android:orientation="vertical"
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true">
@@ -19,11 +20,20 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceLarge"
-            android:text="Tutti i monumenti nelle vicinanze:"
+            android:text="Monumenti Vicini:"
             android:id="@+id/textView"
             android:layout_alignParentTop="true"
             android:layout_alignParentLeft="true"
             android:layout_alignParentStart="true" />
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:layout_below="@+id/textView2"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true">
 
         <ListView
         android:layout_width="1200px"
@@ -34,12 +44,14 @@
         android:layout_below="@+id/textView"
         android:layout_alignParentLeft="true" />
 
+    </LinearLayout>
+
         <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:text="Monumento più vicino:"
-        android:layout_marginTop="25dp"
+        android:layout_marginTop="5dp"
         android:id="@+id/textView2"
         android:layout_centerVertical="true"
         android:layout_alignParentLeft="true"

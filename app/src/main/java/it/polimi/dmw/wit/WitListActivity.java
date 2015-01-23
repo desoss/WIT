@@ -279,11 +279,11 @@ public class WitListActivity extends ActionBarActivity {
                 e.printStackTrace();
             }
 
-            Boolean isBuilding = jSondetail.getBoolean("is_building");
+            //Boolean isBuilding = jSondetail.getBoolean("is_building");
 
 
             //controllo che il POI sia un edificio se no faccio una nuova richiesta
-            if (isBuilding) {
+           // if (isBuilding) {
                 //controllo che campi non vuoti
                 //inoltre json non ha sempre gli stessi campi, quindi svolgiamo le funzioni in un try catch.
 
@@ -391,11 +391,11 @@ public class WitListActivity extends ActionBarActivity {
                 T1 = (TextView) findViewById(R.id.textView5);
                 T1.setText("Wikipedia: " + wiki);
                 Linkify.addLinks(T1, Linkify.WEB_URLS);
-            }
+            //}
 
-            else {
-                isNotBuilding(); //mando una nuova richiesta
-            }
+            //else {
+              //  isNotBuilding(); //mando una nuova richiesta
+           // }
 
         }
 
