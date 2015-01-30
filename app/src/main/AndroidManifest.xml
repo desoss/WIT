@@ -28,7 +28,8 @@
         <activity
             android:name=".WitListActivity"
             android:label="@string/title_activity_wit_list"
-            android:parentActivityName=".WitMainActivity" >
+            android:parentActivityName=".WitMainActivity"
+            android:screenOrientation="portrait" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="it.polimi.dmw.wit.WitMainActivity" />

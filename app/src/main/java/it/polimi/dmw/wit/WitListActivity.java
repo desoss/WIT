@@ -3,21 +3,20 @@ package it.polimi.dmw.wit;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
-import android.text.util.Linkify;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.ArrayAdapter;
 import android.widget.ImageView;
-import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.json.JSONTokener;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -34,7 +33,8 @@ import java.util.ArrayList;
  */
 public class WitListActivity extends ActionBarActivity {
 
-    // TODO set the cone width to select pois in front of the user
+    private final static String LOG_TAG = "WitListActivity";
+
     /**
      * Ampiezza del cono di visione, per adesso ho fatto un paio di prove,
      * andrebbe verificata
@@ -42,10 +42,14 @@ public class WitListActivity extends ActionBarActivity {
     private final static double coneWidth = Math.PI/6;
 
     /**
-     * Membri per gestire la ListView
+     * Membri per gestire le View
      */
-    private ListView poiListView;
-    private ArrayAdapter<WitPOI> poiListAdapter;
+    private ImageView mainImage;
+    private TextView titleText;
+    private TextView descText;
+
+    String title;
+    String description;
 
     /**
      * Lista di POI e lista dei POI filtrata
@@ -70,16 +74,6 @@ public class WitListActivity extends ActionBarActivity {
      */
     double userOrientation;
 
-
-    private JSONObject jSondetail;
-
-    /**
-     * Per limitare le richieste al server se ho più di 2 piazze davanti :-D
-     */
-
-    private int numberOfRequest=0;
-
-
     /**
      * Classe privata per downloadare il JSON senza bloccare la user interface, viene eseguita
      * su un thread a parte. E' una classe interna così può chiamare i metodi dell'activity
@@ -99,7 +93,6 @@ public class WitListActivity extends ActionBarActivity {
             sb = null;
             line = "";
         }
-
 
         /**
          * Metodo che viene chiamato quando parte il thread secondario. Fa la richiesta e
@@ -162,11 +155,9 @@ public class WitListActivity extends ActionBarActivity {
                     }
                 }
             }
-
             // Dallo string builder esce la string con il JSON
             return sb.toString();
         }
-
 
         /**
          * Questo viene chiamato quando il thread a finito e gli viene passato il risultato
@@ -180,232 +171,99 @@ public class WitListActivity extends ActionBarActivity {
             // I super lasciamoli che fa serio
             super.onPostExecute(s);
             // Chiama il metodo dell'activity per stampare i dettagli
-            try {
-                printDetail(s);
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
+            parseJsonDetail(s);
 
         }
 
     }
-
-
     /**
      * Classe privata per downloadare le immagini da stampare. Viene eseguita
      * su un thread a parte. E' una classe interna così può chiamare i metodi dell'activity
      * direttamente
      */
-    private class DownloadImageTask extends AsyncTask<String, Void, Bitmap> {
-        ImageView bmImage;
+    private class DownloadImageTask extends AsyncTask<URL, Void, Bitmap> {
 
-        public DownloadImageTask(ImageView bmImage) {
-            this.bmImage = bmImage;
-        }
-
-        protected Bitmap doInBackground(String... urls) {
-            String urldisplay = urls[0];
-            Bitmap mIcon11 = null;
+        protected Bitmap doInBackground(URL... urls) {
+            Bitmap downloadBitmap = null;
             try {
-                InputStream in = new java.net.URL(urldisplay).openStream();
-                mIcon11 = BitmapFactory.decodeStream(in);
+                InputStream in = urls[0].openStream();
+                downloadBitmap = BitmapFactory.decodeStream(in);
             } catch (Exception e) {
-                Log.e("Error", e.getMessage());
+                Log.e(LOG_TAG, e.getMessage());
                 e.printStackTrace();
             }
-            return mIcon11;
+            return downloadBitmap;
         }
 
         protected void onPostExecute(Bitmap result) {
-            bmImage.setImageBitmap(result);
+            mainImage.setImageBitmap(result);
         }
-    }
-
-    private int near(ArrayList<WitPOI> correctPL) {
-        double small = correctPL.get(0).getDistance();
-        int smallid = correctPL.get(0).getPoiId();
-
-        for (int i = 1; i < correctPL.size(); i++) {
-            if (small > correctPL.get(i).getDistance()) {
-                small = correctPL.get(i).getDistance();
-                smallid = correctPL.get(i).getPoiId();
-            }
-        }
-        System.out.println(smallid + " " + small);
-        return smallid;
     }
 
     /**
-     * Funzione che serve a fare una nuova richiesta al server con l'id del POI in posizione successiva se quello in prima è una piazza
+     * Parsa il json dei dettagli e trova:
+     *  titolo
+     *  descrizione
+     *  una foto
+     *
+     * @param resultJson
      */
+    private void parseJsonDetail(String resultJson) {
+        /*
+            struttura JSON
 
-    public void isNotBuilding(){
-
-
-        int size=correctPoiList.size();
-        System.out.println(numberOfRequest+1);
-
-
-        if(numberOfRequest<2&&numberOfRequest+1<size){
-            int id = correctPoiList.get(numberOfRequest+1).getPoiId();
-
-            URL url = null;
-            try {
-                url = new URL("http://api.wikimapia.org/?key=example&function=place.getbyid&id=" + id + "&format=json&language=it");
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-            }
-            new WitDownloadTask().execute(url);}
-        numberOfRequest++;
-
-    }
-
-
-    public void printDetail(String detail) throws JSONException {
-        // CONVERT RESPONSE STRING TO JSON ARRAY
-        jSondetail = new JSONObject(detail);
-
-
-        //Ho il json dei dettagli.
-        if (jSondetail != null) {
-            try {
-                System.out.println(jSondetail.getString("id"));
-                System.out.println(jSondetail.getString("title"));
-                System.out.println(jSondetail.getString("description"));
-                System.out.println(jSondetail.getString("is_building"));
-
-
-            } catch (JSONException e) {
-                e.printStackTrace();
+            {
+                title : "",
+                description : "",
+                photos : []
+                ...
             }
 
-            //Boolean isBuilding = jSondetail.getBoolean("is_building");
 
+         */
 
-            //controllo che il POI sia un edificio se no faccio una nuova richiesta
-           // if (isBuilding) {
-                //controllo che campi non vuoti
-                //inoltre json non ha sempre gli stessi campi, quindi svolgiamo le funzioni in un try catch.
+        JSONTokener tokener = null;
+        JSONObject documentObject = null;
+        JSONObject photo = null;
+        JSONArray photos = null;
 
-                //INIZIO PER DESCRIZIONE
-                String description = "";
-                try {
-                    description = description + jSondetail.getString("description");
+        Log.d(LOG_TAG,"JSON received! Length = "+resultJson.length());
+        Log.d(LOG_TAG,resultJson);
 
-                } catch (JSONException e) {
+        // Inizializza il tokener
+        tokener = new JSONTokener(resultJson);
+        try {
+            // Prendi il primo oggetto JSON,
+            documentObject = (JSONObject)tokener.nextValue();
+
+            // Prendi i campi di interesse
+            title = documentObject.getString("title");
+            description = documentObject.getString("description");
+
+            titleText.setText(title);
+            descText.setText(description);
+
+            // Se l'array dei places non è vuoto
+            if (!documentObject.isNull("photos")) {
+                // Prendi l'array delle photo
+                photos = documentObject.getJSONArray("photos");
+                photo = photos.getJSONObject(0);
+                if (photo != null) {
+                    URL photoURL = new URL(photo.getString("960_url"));
+                    new DownloadImageTask().execute(photoURL);
                 }
-                if (description == "") {
-                    description = "Campo non presente";
-                }
-                //FINE PER DESCRIZIONE
-
-                //INIZIO PER WIKI
-                String wiki = "";
-                try {
-                    wiki = wiki + jSondetail.getString("wikipedia");
-
-                } catch (JSONException e) {
-                    wiki = "Campo non presente";
-                }
-
-                if (wiki == "") {
-                    wiki = "Campo non presente";
-                }
-                //FINE PER WIKI
-
-                //Prendere link foto INIZIO
-                String photos = "";
-                try {
-                    photos = photos + jSondetail.getString("photos");
-
-                } catch (JSONException e) {
-                }
-
-                ArrayList<String> linkapp = new ArrayList<String>();
-                ArrayList<String> link = new ArrayList<String>();
-                if (photos != "") {
-                    //prendi i link
-                    int i = 0;
-                    int pos = 0;
-                    while (i < photos.length()) {
-                        i = photos.indexOf("http", i);
-                        if (i != -1) {
-                            int stop = photos.indexOf("jpg", i) + 3;
-
-                            if (stop != -1) {
-                                linkapp.add(pos, photos.substring(i, stop));
-                                i = i + linkapp.get(pos).length();
-                                pos++;
-                            } else {
-                                i = photos.length();
-                            }
-                        } else {
-                            i = photos.length();
-                        }
-                    }
-
-
-                    //PROBLEMA FORMATO: Wikimapia mi restituisce i link alle foto con un escape (\/), devo sostituire tutti i \ con ""
-                    //Inoltre ho foto "doppioni"
-
-                    String app;
-                    int j = 0;
-                    while (j < linkapp.size()) {
-                        link.add(linkapp.get(j).replaceAll("\\\\", ""));
-                        app = linkapp.get(j).substring(linkapp.get(j).indexOf("wikimapia.org"), linkapp.get(j).indexOf("_"));
-                        boolean diverso = false;
-                        while (!diverso) {
-                            if (j < linkapp.size() - 1) {
-                                String confronto = linkapp.get(j).substring(linkapp.get(j).indexOf("wikimapia.org"), linkapp.get(j).indexOf("_"));
-                                if (app.equals(confronto)) {
-                                    j++;
-                                } else {
-                                    diverso = true;
-                                }
-                            } else {
-                                diverso = true;
-                            }
-                        }
-                        j++;
-                    }
-                }
-                //FINE PRENDERE LINK, in ogni posizione i di "link" ora avrò una foto.
-
-                // Mostra da 0 a 4 immagini
-                if (link.size() > 0) {
-                    //chiamo il download dell'immagine che viene inserita anche nell'imageView.
-                    new DownloadImageTask((ImageView) findViewById(R.id.imageView))
-                            .execute(link.get(0));
-
-                    if (link.size() > 1) {
-                        new DownloadImageTask((ImageView) findViewById(R.id.imageView1))
-                                .execute(link.get(1));
-                    }
-                }
-
-                //richiamo oggetti e li scrivo
-                TextView T1 = (TextView) findViewById(R.id.textView3);
-                T1.setText("Nome: " + jSondetail.getString("title"));
-                T1 = (TextView) findViewById(R.id.textView4);
-                T1.setText("Descrizione: " + description);
-                T1 = (TextView) findViewById(R.id.textView5);
-                T1.setText("Wikipedia: " + wiki);
-                Linkify.addLinks(T1, Linkify.WEB_URLS);
-            //}
-
-            //else {
-              //  isNotBuilding(); //mando una nuova richiesta
-           // }
-
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
         }
-
-
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_wit_list);
+        setContentView(R.layout.activity_wit_detail);
 
         // Prendi l'intent che ha aperto questa activity, cioè
         // quello che viene dalla main activity
@@ -419,50 +277,41 @@ public class WitListActivity extends ActionBarActivity {
         userLongitude = intent.getDoubleExtra(WitMainActivity.EXTRA_USER_LON, 0.0);
         userOrientation = intent.getDoubleExtra(WitMainActivity.EXTRA_USER_ORIENTATION, 0.0);
 
-        // Salva il riferimento alla ListView dell'interfaccia
-        poiListView = (ListView)findViewById(R.id.poi_list);
+        mainImage = (ImageView)findViewById(R.id.poi_img);
+        titleText = (TextView)findViewById(R.id.poi_name_text);
+        descText = (TextView)findViewById(R.id.poi_desc_text);
+
+        title = getString(R.string.not_found_title_text);
+        description = getString(R.string.not_found_desc_text);
 
         // Applica l'algoritmo geometrico alla lista e ottieni la lista filtrata
         correctPoiList = new ArrayList<WitPOI>();
 
-        // TODO debug da togliere
-        Toast.makeText(this, "Orientation NORTH from sensor : " + String.valueOf(Math.toDegrees(userOrientation)) +
-                        "\nRotation from algorithm EAST : " + String.valueOf(Math.toDegrees(adjustAngle(userOrientation))),
-                Toast.LENGTH_LONG).show();
+        Log.d(LOG_TAG, "Orientation NORTH from sensor : " + String.valueOf(Math.toDegrees(userOrientation)));
+        Log.d(LOG_TAG, "Rotation from algorithm EAST : " + String.valueOf(Math.toDegrees(adjustAngle(userOrientation))));
 
-
+        // TODO rimettere filtering
         for (WitPOI poi : poiList) {
             if (geometricCheck(userLongitude, userLatitude, poi.getPoiLon(), poi.getPoiLat(),userOrientation)) {
                 correctPoiList.add(poi);
             }
         }
 
-        // Piccolo messaggio di informazione TODO da togliere per la versione finale
-//        Toast.makeText(this, "Items are: "+String.valueOf(poiList.size())+"\nCorrect items are: "+String.valueOf(correctPoiList.size()),
-//               Toast.LENGTH_LONG).show();
+        if (correctPoiList.size()>0) {
+            try {
+                URL detailUrl = new URL("http://api.wikimapia.org/?key=example&function=place.getbyid&id=" + correctPoiList.get(0).getPoiId() + "&format=json&language=en");
 
-        // Inserisci la lista filtrata nella ListView
-        poiListAdapter = new ArrayAdapter<WitPOI>(this, android.R.layout.simple_list_item_1, correctPoiList);
-        poiListAdapter.notifyDataSetChanged();
-
-        poiListView.setAdapter(poiListAdapter);
-
-        //Se ho elementi nella lista allora prendo il più vicino
-        int smallid = 0;
-        if (correctPoiList.size() > 0) {
-            smallid = near(correctPoiList);
-        }
-
-        //Hai ID più vicino, ora vai a lavorare sul link.
-        URL url = null;
-        try {
-            // TODO cambiare il 55 con "smallid, ho messo 55 per i test"
-            url = new URL("http://api.wikimapia.org/?key=example&function=place.getbyid&id=" + smallid + "&format=json&language=it");
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
-        new WitDownloadTask().execute(url);
-
+                new WitDownloadTask().execute(detailUrl);
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            }
+       }
+       else {
+           Drawable sadFace = getResources().getDrawable(R.drawable.sadface);
+           mainImage.setImageDrawable(sadFace);
+           titleText.setText(title);
+           descText.setText(description);
+       }
     }
 
     /**

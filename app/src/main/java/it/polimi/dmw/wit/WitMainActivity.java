@@ -26,6 +26,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.games.Players;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -220,34 +221,42 @@ public class WitMainActivity extends ActionBarActivity {
      * Gestore dei messaggi tra timeoutThread e activity
      */
     private class TimeoutHandler extends Handler {
+
+        private boolean messagesEnabled = true;
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
 
-            // In base al codice del messaggio ricevuto
-            switch (msg.what) {
-                case WitTimeoutThread.CHECK_LOCATION_CODE:
-
-                    // Se non hai ancora una location e il provider ha trovato una location
-                    if ((currentLocation == null) && locationProvider.hasLocation()) {
-                        Location foundLocation = locationProvider.getLocation();
-                        if (foundLocation.getAccuracy() <= MIN_ACCURACY) {
-                            // Aggiorna la currentLocation
-                            currentLocation = foundLocation;
-                            // Vai a mandare la richiesta al server
-                            getPOIs();
+            if (messagesEnabled) {
+                // In base al codice del messaggio ricevuto
+                switch (msg.what) {
+                    case WitTimeoutThread.CHECK_LOCATION_CODE:
+                        Log.d(LOG_TAG, "Check location message received");
+                        // Se non hai ancora una location e il provider ha trovato una location
+                        if ((currentLocation == null) && locationProvider.hasLocation()) {
+                            Log.d(LOG_TAG, "Location found");
+                            Location foundLocation = locationProvider.getLocation();
+                            if (foundLocation.getAccuracy() <= MIN_ACCURACY) {
+                                Log.d(LOG_TAG, "Location is accurate");
+                                Log.d(LOG_TAG, "Starting server request");
+                                // Aggiorna la currentLocation
+                                currentLocation = foundLocation;
+                                messagesEnabled = false;
+                                // Vai a mandare la richiesta al server
+                                getPOIs();
+                            }
                         }
-                    }
-                    break;
-                case WitTimeoutThread.TIMEOUT_CODE:
-
-                    // Se hai un messaggio di timeout e non hai ancora nessuna location
-                    if (currentLocation == null) {
-                        // Notifica il timeout
-                        reportTimeout();
-                    }
-                    break;
-                default:
+                        break;
+                    case WitTimeoutThread.TIMEOUT_CODE:
+                        Log.d(LOG_TAG, "Timeout message received");
+                        // Se hai un messaggio di timeout e non hai ancora nessuna location
+                        if (currentLocation == null) {
+                            // Notifica il timeout
+                            reportTimeout();
+                        }
+                        break;
+                    default:
+                }
             }
         }
     }
@@ -398,7 +407,6 @@ public class WitMainActivity extends ActionBarActivity {
             // Fa partire il timeout thread che a sua volta farà il check periodico della Location
             WitTimeoutThread timeoutThread = new WitTimeoutThread(new TimeoutHandler());
             timeoutThread.start();
-
         } else {
             // display error
             showWirelessSettingsAlert();
@@ -522,10 +530,10 @@ public class WitMainActivity extends ActionBarActivity {
         // Crea un intent per far partire un'altra Activity
         Intent intent = new Intent(this, WitListActivity.class);
 
-
-        Toast.makeText(this, "Latitude = "+String.valueOf(currentLocation.getLatitude())+"\nLongitude = "+String.valueOf(currentLocation.getLongitude())+"\nAccuracy = "+
-                        currentLocation.getAccuracy()+"\nOrientation = "+String.valueOf(Math.toDegrees(orientationProvider.getOrientation(currentLocation))),
-                Toast.LENGTH_LONG).show();
+        Log.d(LOG_TAG,"Latitude = "+String.valueOf(currentLocation.getLatitude()));
+        Log.d(LOG_TAG,"Longitude = "+String.valueOf(currentLocation.getLongitude()));
+        Log.d(LOG_TAG,"Accuracy = "+currentLocation.getAccuracy());
+        Log.d(LOG_TAG,"Orientation = "+String.valueOf(Math.toDegrees(orientationProvider.getOrientation(currentLocation))));
 
         // Inserisci come dati
         // - la lista dei POI
