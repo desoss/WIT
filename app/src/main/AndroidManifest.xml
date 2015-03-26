@@ -10,7 +10,7 @@
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
-        android:theme="@style/AppTheme" >
+        android:theme="@android:style/Theme.WithActionBar" >
 
         <meta-data android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
@@ -29,10 +29,32 @@
             android:name=".WitListActivity"
             android:label="@string/title_activity_wit_list"
             android:parentActivityName=".WitMainActivity"
+
+
+        android:screenOrientation="portrait" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="it.polimi.dmw.wit.WitMainActivity" />
+        </activity>
+        <activity
+            android:name=".WitPOIsList"
+            android:label="@string/title_activity_POIs_list"
+            android:parentActivityName=".WitMainActivity"
+
             android:screenOrientation="portrait" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="it.polimi.dmw.wit.WitMainActivity" />
+        </activity>
+        <activity
+            android:name=".WitSavedPOI"
+            android:label="@string/title_activity_Saved_POI"
+            android:parentActivityName=".WitPOIsList"
+
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="it.polimi.dmw.wit.WitPOIsList" />
         </activity>
     </application>
 
