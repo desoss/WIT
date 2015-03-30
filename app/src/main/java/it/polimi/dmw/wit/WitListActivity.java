@@ -2,7 +2,6 @@ package it.polimi.dmw.wit;
 
 import android.app.Activity;
 import android.app.Fragment;
-import android.app.FragmentManager;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.content.res.TypedArray;
@@ -13,7 +12,6 @@ import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -45,8 +43,6 @@ import java.util.Calendar;
 import it.polimi.dmw.wit.Menu.NavDrawerItem;
 import it.polimi.dmw.wit.Menu.NavDrawerListAdapter;
 import it.polimi.dmw.wit.database.DbAdapter;
-
-import android.content.Context;
 
 
 /**

@@ -3,7 +3,6 @@ package it.polimi.dmw.wit;
 
 import android.app.Activity;
 import android.app.Fragment;
-import android.app.FragmentManager;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.content.res.TypedArray;
@@ -23,8 +22,8 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 
-import it.polimi.dmw.wit.menu.NavDrawerItem;
-import it.polimi.dmw.wit.menu.NavDrawerListAdapter;
+import it.polimi.dmw.wit.Menu.NavDrawerItem;
+import it.polimi.dmw.wit.Menu.NavDrawerListAdapter;
 import it.polimi.dmw.wit.database.DbAdapter;
 
 public class WitSavedPOI extends Activity {
