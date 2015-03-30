@@ -81,7 +81,7 @@ public class WitListActivity extends Activity {
      * Ampiezza del cono di visione, per adesso ho fatto un paio di prove,
      * andrebbe verificata
      */
-    private final static double coneWidth = Math.PI/6;
+    private final static double coneWidth = Math.PI/4;
 
     /**
      * Membri per gestire le View
@@ -288,8 +288,13 @@ public class WitListActivity extends Activity {
 
             // Prendi i campi di interesse
             title = documentObject.getString("title");
-            description = documentObject.getString("description");
-            wikiLink = documentObject.getString("wikipedia");
+            if(documentObject.getString("description")!=null) {
+                description = documentObject.getString("description");
+            }
+
+            if(documentObject.getString("wikipedia")!=null) {
+                wikiLink = documentObject.getString("wikipedia");
+            }
 
             titleText.setText(title);
             descText.setText(description);
@@ -300,7 +305,9 @@ public class WitListActivity extends Activity {
             if (!documentObject.isNull("photos")) {
                 // Prendi l'array delle photo
                 photos = documentObject.getJSONArray("photos");
-                photo = photos.getJSONObject(0);
+                if(photos.length()>0){
+                photo = photos.getJSONObject(0);}
+
                 if (photo != null) {
                     URL photoURL = new URL(photo.getString("960_url"));
                     new DownloadImageTask().execute(photoURL);

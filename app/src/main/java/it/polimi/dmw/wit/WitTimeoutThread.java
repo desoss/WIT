@@ -21,10 +21,18 @@ public class WitTimeoutThread extends Thread {
     private static final int REQUEST_NUMBER = 30;
     private static final int REQUEST_INTERVAL = 500;
     private static final int MIN_REQUEST_INTERVAL = 0;
+    private static final int TIMEOUT_TEN = 10000; //10 secondi
+    private static final int TIMEOUT_FIVE = 5000; //5 secondi
+
+
 
     // Codici per comunicare con l'activity
     public static final int CHECK_LOCATION_CODE = 0;
     public static final int TIMEOUT_CODE = 1;
+    public static final int TIMEOUT_10 = 2;
+    public static final int TIMEOUT_5 = 3;
+
+
 
     // Handler che gestisce i messaggi tra thread e activity
     private Handler handler;
@@ -42,10 +50,27 @@ public class WitTimeoutThread extends Thread {
             // a intervalli di tempo regolari
             // empty message è un messaggio che contiene solo il codice.
 
-            if (!handler.sendEmptyMessageDelayed(CHECK_LOCATION_CODE,MIN_REQUEST_INTERVAL+ i*REQUEST_INTERVAL)) {
-                // Se il messaggio non è consegnato scrive sul log
-                Log.e(LOG_TAG,"ERROR: a request message was not delivered");
+            if (REQUEST_INTERVAL * i <= TIMEOUT_FIVE) {
+
+                if (!handler.sendEmptyMessageDelayed(CHECK_LOCATION_CODE, MIN_REQUEST_INTERVAL + i * REQUEST_INTERVAL)) {
+                    // Se il messaggio non è consegnato scrive sul log
+                    Log.e(LOG_TAG, "ERROR: a request message was not delivered");
+                }
             }
+            if (REQUEST_INTERVAL * i > TIMEOUT_FIVE&&REQUEST_INTERVAL * i <=TIMEOUT_TEN) {
+
+                if (!handler.sendEmptyMessageDelayed(TIMEOUT_5, MIN_REQUEST_INTERVAL + i * REQUEST_INTERVAL)) {
+                    // Se il messaggio non è consegnato scrive sul log
+                    Log.e(LOG_TAG, "ERROR: a request message was not delivered");
+                }
+            }
+             if (REQUEST_INTERVAL * i > TIMEOUT_TEN){
+                if (!handler.sendEmptyMessageDelayed(TIMEOUT_10, MIN_REQUEST_INTERVAL + i * REQUEST_INTERVAL)) {
+                    // Se il messaggio non è consegnato scrive sul log
+                    Log.e(LOG_TAG, "ERROR: a request message was not delivered");
+                }
+            }
+
         }
 
         // Imposta il messaggio di timeout

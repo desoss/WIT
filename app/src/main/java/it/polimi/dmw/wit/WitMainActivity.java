@@ -107,6 +107,10 @@ public class WitMainActivity extends Activity {
      * Minimum accuracy for a Location to be valid, in meters
      */
     public final static int MIN_ACCURACY = 30;
+    public final static int MEDIUM_ACCURACY = 10;
+    public final static int MAX_ACCURACY = 5;
+
+
 
     /**
      * Riferimenti alla User Interface
@@ -261,13 +265,47 @@ public class WitMainActivity extends Activity {
                 // In base al codice del messaggio ricevuto
                 switch (msg.what) {
                     case WitTimeoutThread.CHECK_LOCATION_CODE:
-                        Log.d(LOG_TAG, "Check location message received");
+                        Log.d(LOG_TAG, "Check location <5m message received");
+                        // Se non hai ancora una location e il provider ha trovato una location
+                        if ((currentLocation == null) && locationProvider.hasLocation()) {
+                            Location foundLocation = locationProvider.getLocation();
+                            Log.d(LOG_TAG, "Location found A: "+foundLocation.getAccuracy());
+                            if (foundLocation.getAccuracy() <= MAX_ACCURACY) { //se ho accuratezza <=5m uso la location se no aspetto
+                                Log.d(LOG_TAG, "Location accurated is founded before 10s A: "+foundLocation.getAccuracy());
+                                Log.d(LOG_TAG, "Starting server request");
+                                // Aggiorna la currentLocation
+                                currentLocation = foundLocation;
+                                messagesEnabled = false;
+                                // Vai a mandare la richiesta al server
+                                getPOIs();
+                            }
+                        }
+                        break;
+                    case WitTimeoutThread.TIMEOUT_5:
+                        Log.d(LOG_TAG, "Check location after 5s message received");
                         // Se non hai ancora una location e il provider ha trovato una location
                         if ((currentLocation == null) && locationProvider.hasLocation()) {
                             Log.d(LOG_TAG, "Location found");
                             Location foundLocation = locationProvider.getLocation();
-                            if (foundLocation.getAccuracy() <= MIN_ACCURACY) {
-                                Log.d(LOG_TAG, "Location is accurate");
+                            if (foundLocation.getAccuracy() <= MEDIUM_ACCURACY) { //se ho accuratezza <=10m uso la location
+                                Log.d(LOG_TAG, "Location found after 5s A: "+foundLocation.getAccuracy());
+                                Log.d(LOG_TAG, "Starting server request");
+                                // Aggiorna la currentLocation
+                                currentLocation = foundLocation;
+                                messagesEnabled = false;
+                                // Vai a mandare la richiesta al server
+                                getPOIs();
+                            }
+                        }
+                        break;
+                    case WitTimeoutThread.TIMEOUT_10:
+                        Log.d(LOG_TAG, "Check location after 10s message received");
+                        // Se non hai ancora una location e il provider ha trovato una location
+                        if ((currentLocation == null) && locationProvider.hasLocation()) {
+                            Log.d(LOG_TAG, "Location found");
+                            Location foundLocation = locationProvider.getLocation();
+                            if (foundLocation.getAccuracy() <= MIN_ACCURACY) { //se ho accuratezza <30m uso la location
+                                Log.d(LOG_TAG, "Location found after 10s A: "+foundLocation.getAccuracy());
                                 Log.d(LOG_TAG, "Starting server request");
                                 // Aggiorna la currentLocation
                                 currentLocation = foundLocation;
@@ -857,12 +895,5 @@ public class WitMainActivity extends Activity {
             mDrawerLayout.closeDrawer(mDrawerList);
 
     }
-
-
-
-
-
-
-
 
 }
