@@ -19,14 +19,18 @@ public class WitPOI implements Parcelable{
     private double distance;
     private double poiLat;
     private double poiLon;
+    private float [] x;
+    private float [] y;
 
     // Costruttore
-    public WitPOI(int id, String name, double dist, double lat, double lon) {
+    public WitPOI(int id, String name, double dist, double lat, double lon, float [] x, float [] y) {
         poiId = id;
         poiName = name;
         distance = dist;
         poiLat = lat;
         poiLon = lon;
+        this.x = x;
+        this.y = y;
     }
 
     // Quando un oggetto viene inserito in una ListView
@@ -57,6 +61,10 @@ public class WitPOI implements Parcelable{
         return poiId;
     }
 
+    public float [] getX() { return x;}
+
+    public float [] getY() { return y;}
+
     // I METODI seguenti servono per renderlo serializzabile e passarlo tra activity diverse
 
     public static final Parcelable.Creator<WitPOI> CREATOR
@@ -81,6 +89,8 @@ public class WitPOI implements Parcelable{
         distance = in.readDouble();
         poiLat = in.readDouble();
         poiLon = in.readDouble();
+        x = in.createFloatArray();
+        y = in.createFloatArray();
     }
 
     @Override
@@ -101,5 +111,8 @@ public class WitPOI implements Parcelable{
         dest.writeDouble(distance);
         dest.writeDouble(poiLat);
         dest.writeDouble(poiLon);
+        dest.writeFloatArray(x);
+        dest.writeFloatArray(y);
+
     }
 }

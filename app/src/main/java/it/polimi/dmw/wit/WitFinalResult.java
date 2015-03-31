@@ -42,13 +42,15 @@ import java.util.Calendar;
 
 import it.polimi.dmw.wit.Menu.NavDrawerItem;
 import it.polimi.dmw.wit.Menu.NavDrawerListAdapter;
+import it.polimi.dmw.wit.Polygon.Point;
+import it.polimi.dmw.wit.Polygon.Polygon;
 import it.polimi.dmw.wit.database.DbAdapter;
 
 
 /**
  * Activity per gestire e visualizzare la lista dei risultati
  */
-public class WitListActivity extends Activity {
+public class WitFinalResult extends Activity {
 
 
     private DrawerLayout mDrawerLayout;
@@ -437,7 +439,9 @@ public class WitListActivity extends Activity {
 
         // TODO rimettere filtering
         for (WitPOI poi : poiList) {
-            if (geometricCheck(userLongitude, userLatitude, poi.getPoiLon(), poi.getPoiLat(),userOrientation)) {
+            //if (geometricCheck(userLongitude, userLatitude, poi.getPoiLon(), poi.getPoiLat(),userOrientation)) {
+            Log.d(LOG_TAG, poi.getPoiName());
+            if (polygonCheck(userLatitude, userLongitude, poi.getX(), poi.getY(),userOrientation)){
                 correctPoiList.add(poi);
             }
         }
@@ -512,6 +516,45 @@ public class WitListActivity extends Activity {
         // Check if the point is inside the cone, sides are valid.
         return (alpha <= 0 && beta >= 0);
     }
+
+
+    private boolean polygonCheck(double userX, double userY, float[] poiX, float[] poiY, double userOrientation){
+        double lat;
+        double lon;
+        double x = Math.toRadians(userX);
+        double y = Math.toRadians(userY);
+        float earthR = (float)6371.009 ; //raggio terrestre approssimato
+        Polygon polygon;
+        Polygon.Builder builder = new Polygon.Builder();
+        Log.d(LOG_TAG, "Lat long iniziali"+userX+" , "+userY);
+        Log.d(LOG_TAG, "O: "+userOrientation+" "+earthR);
+
+
+        for(int i=0; i<poiX.length; i++){
+            builder.addVertex(new Point(poiX[i],poiY[i]));
+        }
+        polygon=builder.build();
+        //elimino un posto se ci sono dentro
+        if(polygon.contains(new Point((float)userX,(float)userY))){
+            return false;
+
+        }
+        //prendo 200 campioni a distanza 1m partendo dalla posizione dell'utente in direzione data da userOrientation
+        for(int j=1; j<=200; j++){
+            float d = (float)(j*0.001); //converto i metri in km
+            // formule per trovare lat e lon dato un punto, la distanza e l'angolo http://www.movable-type.co.uk/scripts/latlong.html
+            lat = (Math.asin( Math.sin(x)*Math.cos(d/earthR) + Math.cos(x)*Math.sin(d/earthR)*Math.cos(userOrientation)));
+            lon = (y + Math.atan2(Math.sin(userOrientation)*Math.sin(d/earthR)*Math.cos(x), Math.cos(d/earthR)-Math.sin(x)*Math.sin(lat)));
+            lat = Math.toDegrees(lat);
+            lon = Math.toDegrees(lon);
+            Log.d(LOG_TAG, "lat: "+lat+"lon: "+lon);
+            if(polygon.contains(new Point((float)lat,(float)lon))){
+                return true;
+            }
+        }
+        Log.d(LOG_TAG, "-------------------------");
+         return false;
+        }
 
     // I seguenti sono METODI per gestire l'actionbar in alto
 

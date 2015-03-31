@@ -169,11 +169,12 @@ public class WitPOIsList extends Activity {
 
           values[count]=cursor.getString(cursor.getColumnIndex(DbAdapter.KEY_NAME));
           idPOI[count]=cursor.getInt(cursor.getColumnIndex(DbAdapter.KEY_ID));
-          count++;
+            Log.d( LOG_TAG,"nome POI = " +values[count]+idPOI[count]);
 
-             n = cursor.getString( cursor.getColumnIndex(DbAdapter.KEY_NAME) );
-            int a=cursor.getInt(cursor.getColumnIndex(DbAdapter.KEY_ID));
-            Log.d( LOG_TAG,"nome POI = " + n+a);
+            count++;
+
+           //  n = cursor.getString( cursor.getColumnIndex(DbAdapter.KEY_NAME) );
+           // int a=cursor.getInt(cursor.getColumnIndex(DbAdapter.KEY_ID));
 
         }
         cursor.close();
@@ -207,7 +208,7 @@ public class WitPOIsList extends Activity {
                 intent.putExtra(EXTRA_POI,idPOI[position]);
                 startActivity(intent);
 
-                Log.d( LOG_TAG,"nome POI = " + idPOI[position]);
+                Log.d( LOG_TAG,"nome POI = "+ values[position]+ idPOI[position]);
 
 
             }
@@ -324,13 +325,4 @@ public class WitPOIsList extends Activity {
 
 
 
-
-
-
-
-
-
 }
-
-
-

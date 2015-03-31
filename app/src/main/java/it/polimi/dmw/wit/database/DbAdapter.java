@@ -18,6 +18,8 @@ public class DbAdapter {
 
     // Database fields
     private static final String DATABASE_TABLE = "pois";
+    private static final String DATABASE_TABLE2 = "pois2"; //senza duplicati
+
 
     public static final String KEY_ID = "_id";
     public static final String KEY_NAME = "name";
@@ -48,9 +50,10 @@ public class DbAdapter {
     }
 
     //create a contact
-    public long savePOI(String name, String description, String date) {
+    public void savePOI(String name, String description, String date) {
         ContentValues initialValues = createContentValues(name, description, date);
-        return database.insertOrThrow(DATABASE_TABLE, null, initialValues);
+         database.insertOrThrow(DATABASE_TABLE, null, initialValues);
+
     }
 
     //update a contact
@@ -77,4 +80,5 @@ public class DbAdapter {
 
         return mCursor;
     }
+
 }

@@ -677,6 +677,11 @@ public class WitMainActivity extends Activity {
         JSONObject documentObject = null;
         JSONObject place = null;
         JSONArray places = null;
+        JSONArray polygon = null;
+        JSONObject coords = null;
+        float[] x;
+        float[] y;
+
 
         // Contiene il numero di monumenti ritornati
         int poisNumber = 0;
@@ -696,6 +701,7 @@ public class WitMainActivity extends Activity {
 
             // Verifica quanti monumenti ho
             poisNumber = documentObject.getInt("found");
+            Log.d(LOG_TAG,"Trovati: "+poisNumber);
 
             // Se l'array dei places non è vuoto
             if (!documentObject.isNull("places")) {
@@ -709,6 +715,21 @@ public class WitMainActivity extends Activity {
                 // Prendi l'oggetto corrispondente al monumenti i-esimo
                 // sarebbe l'oggetto con i campi id, name, distance, lat, lon e l'array polygon
                 place = places.getJSONObject(i);
+                polygon = place.getJSONArray("polygon");
+                x = new float [polygon.length()];
+                y = new float [polygon.length()];
+                Log.d(LOG_TAG,place.getString("name"));
+
+
+                //salvo in due array x e y le coordinate dei punti del poligono di ogni place
+                for(int j=0; j<polygon.length();j++){
+                    coords = polygon.getJSONObject(j);
+                    x[j] = Float.parseFloat(coords.getString("y"));
+                    y[j] = Float.parseFloat(coords.getString("x"));
+                    Log.d(LOG_TAG,"x: "+x[j]+" y: "+y[j]);
+
+                }
+                Log.d(LOG_TAG,"-------------------------------");
 
                 // Crea un oggetto WitPOI per ogni monumento del JSON
                 poiList.add(new WitPOI(
@@ -716,7 +737,9 @@ public class WitMainActivity extends Activity {
                         place.getString("name"),
                         place.getDouble("distance"),
                         place.getDouble("lat"),
-                        place.getDouble("lon")
+                        place.getDouble("lon"),
+                        x,
+                        y
                 ));
             }
         } catch (JSONException e) {
@@ -724,7 +747,7 @@ public class WitMainActivity extends Activity {
         }
 
         // Crea un intent per far partire un'altra Activity
-        Intent intent = new Intent(this, WitListActivity.class);
+        Intent intent = new Intent(this, WitFinalResult.class);
 
         Log.d(LOG_TAG,"Latitude = "+String.valueOf(currentLocation.getLatitude()));
         Log.d(LOG_TAG,"Longitude = "+String.valueOf(currentLocation.getLongitude()));

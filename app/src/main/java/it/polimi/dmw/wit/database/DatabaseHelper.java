@@ -12,6 +12,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     // Lo statement SQL di creazione del database
     private static final String DATABASE_CREATE = "create table pois (_id integer primary key autoincrement, name text not null, description text not null,date text not null);";
+    private static final String DATABASE_CREATE2 = "create table pois2 (_id integer primary key autoincrement, name text not null, description text not null,date text not null);";
 
     // Costruttore
     public DatabaseHelper(Context context) {
@@ -21,7 +22,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     // Questo metodo viene chiamato durante la creazione del database
     @Override
     public void onCreate(SQLiteDatabase database) {
-        database.execSQL(DATABASE_CREATE);
+
+       database.execSQL(DATABASE_CREATE);
+       database.execSQL(DATABASE_CREATE2);
+
     }
 
     // Questo metodo viene chiamato durante l'upgrade del database, ad esempio quando viene incrementato il numero di versione
