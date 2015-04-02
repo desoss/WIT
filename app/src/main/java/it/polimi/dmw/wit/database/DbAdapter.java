@@ -76,7 +76,7 @@ public class DbAdapter {
     public Cursor fetchPOIsByID(int filter) {
         Cursor mCursor = database.query(true, DATABASE_TABLE, new String[]{
                         KEY_ID, KEY_NAME, KEY_DESCRIPTION, KEY_DATE},
-                KEY_ID + " like '%" + filter + "%'", null, null, null, null, null);
+                KEY_ID + "=" + filter, null, null, null, null, null);
 
         return mCursor;
     }
