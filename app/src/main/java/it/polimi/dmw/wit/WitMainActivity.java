@@ -78,6 +78,8 @@ public class WitMainActivity extends Activity {
     private ArrayList<NavDrawerItem> navDrawerItems;
     private NavDrawerListAdapter adapter;
 
+    private boolean stop;
+
 
 
 
@@ -99,7 +101,7 @@ public class WitMainActivity extends Activity {
      */
     public final static int MIN_ACCURACY = 30;
     public final static int MEDIUM_ACCURACY = 10;
-    public final static int MAX_ACCURACY = 5; //VALORE CORRETTO 5 METTERE>16 PER VELOCIZZARE PROVE CON FAKE LOCATION
+    public final static int MAX_ACCURACY = 5; //VALORE CORRETTO 5 METTERE>16 SOLO PER VELOCIZZARE PROVE CON FAKE LOCATION
 
 
 
@@ -238,7 +240,13 @@ public class WitMainActivity extends Activity {
             super.onPostExecute(s);
 
             // Chiama il metodo dell'activity per gestire il JSON
-            parseJsonPOIs(s);
+
+            if(stop){
+                onPause();
+            }
+            else{
+            parseJsonPOIs(s);}
+
         }
     }
 
@@ -252,13 +260,13 @@ public class WitMainActivity extends Activity {
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
 
-            if (messagesEnabled) {
+            if (messagesEnabled&&!stop) {
                 // In base al codice del messaggio ricevuto
                 switch (msg.what) {
                     case WitTimeoutThread.CHECK_LOCATION_CODE:
                         Log.d(LOG_TAG, "Check location <5m message received");
                         // Se non hai ancora una location e il provider ha trovato una location
-                        if ((currentLocation == null) && locationProvider.hasLocation()) {
+                         if ((currentLocation == null) && locationProvider.hasLocation()) {
                             Location foundLocation = locationProvider.getLocation();
                             Log.d(LOG_TAG, "Location found A: "+foundLocation.getAccuracy());
                             if (foundLocation.getAccuracy() <= MAX_ACCURACY) { //se ho accuratezza <=5m uso la location se no aspetto
@@ -448,6 +456,7 @@ public class WitMainActivity extends Activity {
         super.onStart();
 
         Log.d(LOG_TAG, "onStart()");
+        stop=false;
 
         // Verifica che il GPS sia acceso
         gpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
@@ -477,6 +486,7 @@ public class WitMainActivity extends Activity {
     @Override
     protected void onStop() {
         super.onStop();
+        stop=true;
 
         Log.d(LOG_TAG, "onStop()");
 
@@ -647,7 +657,8 @@ public class WitMainActivity extends Activity {
         // Crea l'url con i parametri giusti per il server
         final String url = getString(R.string.get_monuments_base_url)+"?lat=" + lat + "&lon=" + lon + "&json=true&side=1&max=100";
 
-        getMonumentsFromServer(url);
+            getMonumentsFromServer(url);
+
     }
 
     /**
@@ -775,6 +786,7 @@ public class WitMainActivity extends Activity {
     private void getMonumentsFromServer(String serverUrl) {
 
         Log.d("WitMainActivity","SERVER URL: "+serverUrl);
+
 
         try {
             URL url = new URL(serverUrl);

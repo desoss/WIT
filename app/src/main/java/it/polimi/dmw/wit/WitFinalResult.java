@@ -453,7 +453,7 @@ public class WitFinalResult extends Activity {
 
         if (correctPoiList.size()>0) {
             try {
-                URL detailUrl = new URL("http://api.wikimapia.org/?key=example&function=place.getbyid&id=" + correctPoiList.get(0).getPoiId() + "&format=json&language=en");
+                URL detailUrl = new URL("http://api.wikimapia.org/?key=example&function=place.getbyid&id=" + correctPoiList.get(0).getPoiId() + "&format=json&language=it");
 
                 new WitDownloadTask().execute(detailUrl);
             } catch (MalformedURLException e) {
