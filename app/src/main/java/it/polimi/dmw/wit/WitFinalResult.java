@@ -73,7 +73,7 @@ public class WitFinalResult extends Activity {
 
 
 
-    private final static String LOG_TAG = "WitListActivity";
+    private final static String LOG_TAG = "WitFinalResult";
 
     /**
      * Ampiezza del cono di visione, per adesso ho fatto un paio di prove,
@@ -290,9 +290,12 @@ public class WitFinalResult extends Activity {
                 description = documentObject.getString("description");
             }
 
-            if(documentObject.getString("wikipedia")!=null) {
-                wikiLink = documentObject.getString("wikipedia");
-            }
+           try{
+                wikiLink = documentObject.getString("wikipedia"); }
+           catch (JSONException e){
+               Log.d(LOG_TAG,"No link a Wikipedia");
+           }
+
 
             titleText.setText(title);
             descText.setText(description);
@@ -436,13 +439,15 @@ public class WitFinalResult extends Activity {
 
         Log.d(LOG_TAG, "Orientation NORTH from sensor : " + String.valueOf(Math.toDegrees(userOrientation)));
         Log.d(LOG_TAG, "Rotation from algorithm EAST : " + String.valueOf(Math.toDegrees(adjustAngle(userOrientation))));
-
+        int h=0;
         // TODO rimettere filtering
         for (WitPOI poi : poiList) {
             //if (geometricCheck(userLongitude, userLatitude, poi.getPoiLon(), poi.getPoiLat(),userOrientation)) {
-            Log.d(LOG_TAG, poi.getPoiName());
+           h++;
+            Log.d(LOG_TAG, poi.getPoiName()+" "+h);
             if (polygonCheck(userLatitude, userLongitude, poi.getX(), poi.getY(),userOrientation)){
                 correctPoiList.add(poi);
+                Log.d(LOG_TAG, "POI aggiunto: "+poi.getPoiName());
             }
         }
 
@@ -526,33 +531,36 @@ public class WitFinalResult extends Activity {
         float earthR = (float)6371.009 ; //raggio terrestre approssimato
         Polygon polygon;
         Polygon.Builder builder = new Polygon.Builder();
-        Log.d(LOG_TAG, "Lat long iniziali"+userX+" , "+userY);
-        Log.d(LOG_TAG, "O: "+userOrientation+" "+earthR);
+      //  Log.d(LOG_TAG, "Lat long iniziali"+userX+" , "+userY);
+       // Log.d(LOG_TAG, "O: "+userOrientation+" "+earthR);
 
 
         for(int i=0; i<poiX.length; i++){
             builder.addVertex(new Point(poiX[i],poiY[i]));
+           // Log.d(LOG_TAG,poiX[i]+" , "+poiY[i]);
+
         }
         polygon=builder.build();
         //elimino un posto se ci sono dentro
         if(polygon.contains(new Point((float)userX,(float)userY))){
+            Log.d(LOG_TAG, "ci sono dentro lo scarto");
             return false;
 
         }
-        //prendo 200 campioni a distanza 1m partendo dalla posizione dell'utente in direzione data da userOrientation
-        for(int j=1; j<=200; j++){
+        //prendo 500 campioni a distanza 1m partendo dalla posizione dell'utente in direzione data da userOrientation
+        for(int j=1; j<=500; j++){
             float d = (float)(j*0.001); //converto i metri in km
             // formule per trovare lat e lon dato un punto, la distanza e l'angolo http://www.movable-type.co.uk/scripts/latlong.html
             lat = (Math.asin( Math.sin(x)*Math.cos(d/earthR) + Math.cos(x)*Math.sin(d/earthR)*Math.cos(userOrientation)));
             lon = (y + Math.atan2(Math.sin(userOrientation)*Math.sin(d/earthR)*Math.cos(x), Math.cos(d/earthR)-Math.sin(x)*Math.sin(lat)));
             lat = Math.toDegrees(lat);
             lon = Math.toDegrees(lon);
-            Log.d(LOG_TAG, "lat: "+lat+"lon: "+lon);
+          //  Log.d(LOG_TAG, "lat: "+lat+"lon: "+lon);
             if(polygon.contains(new Point((float)lat,(float)lon))){
                 return true;
             }
         }
-        Log.d(LOG_TAG, "-------------------------");
+       Log.d(LOG_TAG, "-------------------------");
          return false;
         }
 
@@ -652,10 +660,10 @@ public class WitFinalResult extends Activity {
         Cursor cursor = dbAdapter.fetchAllPOIs();
         String n;
 
-        while ( cursor.moveToNext() ) {
+    /*    while ( cursor.moveToNext() ) {
             n = cursor.getString( cursor.getColumnIndex(DbAdapter.KEY_NAME) );
             Log.d(LOG_TAG, "nome POI = " + n);
-        }
+        } */
         cursor.close();
 
 
@@ -705,9 +713,3 @@ public class WitFinalResult extends Activity {
             mDrawerLayout.closeDrawer(mDrawerList);
         }
     }
-
-
-
-
-
-

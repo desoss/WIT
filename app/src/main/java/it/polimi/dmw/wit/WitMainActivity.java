@@ -99,7 +99,7 @@ public class WitMainActivity extends Activity {
      */
     public final static int MIN_ACCURACY = 30;
     public final static int MEDIUM_ACCURACY = 10;
-    public final static int MAX_ACCURACY = 5;
+    public final static int MAX_ACCURACY = 5; //VALORE CORRETTO 5 METTERE>16 PER VELOCIZZARE PROVE CON FAKE LOCATION
 
 
 
@@ -718,7 +718,7 @@ public class WitMainActivity extends Activity {
                 polygon = place.getJSONArray("polygon");
                 x = new float [polygon.length()];
                 y = new float [polygon.length()];
-                Log.d(LOG_TAG,place.getString("name"));
+             //   Log.d(LOG_TAG,place.getString("name"));
 
 
                 //salvo in due array x e y le coordinate dei punti del poligono di ogni place
@@ -726,10 +726,10 @@ public class WitMainActivity extends Activity {
                     coords = polygon.getJSONObject(j);
                     x[j] = Float.parseFloat(coords.getString("y"));
                     y[j] = Float.parseFloat(coords.getString("x"));
-                    Log.d(LOG_TAG,"x: "+x[j]+" y: "+y[j]);
+                  //  Log.d(LOG_TAG,"x: "+x[j]+" y: "+y[j]);
 
                 }
-                Log.d(LOG_TAG,"-------------------------------");
+               // Log.d(LOG_TAG,"-------------------------------");
 
                 // Crea un oggetto WitPOI per ogni monumento del JSON
                 poiList.add(new WitPOI(
