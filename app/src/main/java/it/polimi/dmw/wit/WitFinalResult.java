@@ -40,8 +40,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 
-import it.polimi.dmw.wit.Menu.NavDrawerItem;
-import it.polimi.dmw.wit.Menu.NavDrawerListAdapter;
+import it.polimi.dmw.wit.menu.NavDrawerItem;
+import it.polimi.dmw.wit.menu.NavDrawerListAdapter;
 import it.polimi.dmw.wit.Polygon.Point;
 import it.polimi.dmw.wit.Polygon.Polygon;
 import it.polimi.dmw.wit.database.DbAdapter;

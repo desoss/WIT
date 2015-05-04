@@ -23,8 +23,8 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 
-import it.polimi.dmw.wit.Menu.NavDrawerItem;
-import it.polimi.dmw.wit.Menu.NavDrawerListAdapter;
+import it.polimi.dmw.wit.menu.NavDrawerItem;
+import it.polimi.dmw.wit.menu.NavDrawerListAdapter;
 import it.polimi.dmw.wit.database.DbAdapter;
 
 public class WitPOIsList extends Activity {
