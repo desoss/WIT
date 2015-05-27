@@ -6,6 +6,9 @@ import android.app.Fragment;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.Signature;
 import android.content.res.Configuration;
 import android.content.res.TypedArray;
 import android.hardware.SensorManager;
@@ -20,6 +23,7 @@ import android.provider.Settings;
 import android.support.v4.widget.DrawerLayout;
 import android.os.Bundle;
 import android.support.v4.app.ActionBarDrawerToggle;
+import android.util.Base64;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -32,6 +36,8 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.facebook.FacebookSdk;
 import com.google.android.gms.common.api.GoogleApiClient;
 
 import org.json.JSONArray;
@@ -46,6 +52,8 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import it.polimi.dmw.wit.menu.NavDrawerItem;
 import it.polimi.dmw.wit.menu.NavDrawerListAdapter;
@@ -331,19 +339,31 @@ public class WitMainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        FacebookSdk.sdkInitialize(getApplicationContext());
+
+       /* // Add code to print out the key hash
+        try {
+            PackageInfo info = getPackageManager().getPackageInfo(
+                    "it.polimi.dmw.wit",
+                    PackageManager.GET_SIGNATURES);
+            for (Signature signature : info.signatures) {
+                MessageDigest md = MessageDigest.getInstance("SHA");
+                md.update(signature.toByteArray());
+                Log.d("KeyHash:", Base64.encodeToString(md.digest(), Base64.DEFAULT));
+            }
+        } catch (PackageManager.NameNotFoundException e) {
+
+        } catch (NoSuchAlgorithmException e) {
+
+        }
+        */
 
 
-        getWindow().requestFeature(Window.FEATURE_ACTION_BAR);
+
+
+            getWindow().requestFeature(Window.FEATURE_ACTION_BAR);
 
         setContentView(R.layout.activity_wit_main);
-
-
-
-
-
-
-
-
 
 
 
@@ -894,17 +914,20 @@ public class WitMainActivity extends Activity {
     private void displayView(int position) {
         // update the main content by replacing fragments
         Fragment fragment = null;
+        Intent i = null;
         switch (position) {
             case 0:
-                Intent i = new Intent(this, WitMainActivity.class);
+                 i = new Intent(this, WitMainActivity.class);
                 startActivity(i);
                 break;
             case 1:
 
-                Intent intent = new Intent(this, WitPOIsList.class);
-                startActivity(intent);
-
-                //fragment = new FindPeopleFragment();
+                i = new Intent(this, WitPOIsList.class);
+                startActivity(i);
+                break;
+            case 2:
+                i = new Intent(this, WitFacebookLogin.class);
+                startActivity(i);
                 break;
 
 
