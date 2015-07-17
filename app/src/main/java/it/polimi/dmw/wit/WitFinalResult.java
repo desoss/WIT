@@ -23,6 +23,23 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.facebook.CallbackManager;
+import com.facebook.FacebookCallback;
+import com.facebook.FacebookException;
+import com.facebook.share.Sharer;
+import com.facebook.share.model.ShareOpenGraphAction;
+import com.facebook.share.model.ShareOpenGraphContent;
+import com.facebook.share.model.ShareOpenGraphObject;
+import com.facebook.share.widget.ShareButton;
+import com.facebook.share.widget.ShareDialog;
+import com.sromku.simple.fb.Permission;
+import com.sromku.simple.fb.SimpleFacebook;
+import com.sromku.simple.fb.SimpleFacebookConfiguration;
+import com.sromku.simple.fb.entities.Story;
+import com.sromku.simple.fb.listeners.OnCreateStoryObject;
+import com.sromku.simple.fb.listeners.OnPublishListener;
+import com.sromku.simple.fb.utils.Utils;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -71,6 +88,8 @@ public class WitFinalResult extends Activity {
     private NavDrawerListAdapter adapter;
 
 
+    private CallbackManager mCallbackManager;
+    private SimpleFacebook mSimpleFacebook;
 
 
     private final static String LOG_TAG = "WitFinalResult";
@@ -88,8 +107,10 @@ public class WitFinalResult extends Activity {
     private TextView titleText;
     private TextView descText;
 
-    String title;
-    String description;
+    private String title;
+    private String description;
+
+    private URL photoURL;
 
     /**
      * Lista di POI e lista dei POI filtrata
@@ -310,7 +331,7 @@ public class WitFinalResult extends Activity {
                 photo = photos.getJSONObject(0);}
 
                 if (photo != null) {
-                    URL photoURL = new URL(photo.getString("960_url"));
+                    photoURL = new URL(photo.getString("960_url"));
                     new DownloadImageTask().execute(photoURL);
                 }
             }
@@ -319,6 +340,7 @@ public class WitFinalResult extends Activity {
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
+        storyOnFacebook();
     }
 
     @Override
@@ -327,6 +349,12 @@ public class WitFinalResult extends Activity {
         getWindow().requestFeature(Window.FEATURE_ACTION_BAR);
 
         setContentView(R.layout.activity_wit_detail);
+
+        mSimpleFacebook = SimpleFacebook.getInstance(this);
+
+        configurationSimpleFacebook();
+
+
 
 
 
@@ -456,6 +484,7 @@ public class WitFinalResult extends Activity {
                 URL detailUrl = new URL("http://api.wikimapia.org/?key=example&function=place.getbyid&id=" + correctPoiList.get(0).getPoiId() + "&format=json&language=it");
 
                 new WitDownloadTask().execute(detailUrl);
+
             } catch (MalformedURLException e) {
                 e.printStackTrace();
             }
@@ -466,6 +495,20 @@ public class WitFinalResult extends Activity {
            titleText.setText(title);
            descText.setText(description);
        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        mSimpleFacebook = SimpleFacebook.getInstance(this);
+    }
+
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        mSimpleFacebook.onActivityResult(requestCode, resultCode, data);
+        mCallbackManager.onActivityResult(requestCode, resultCode, data);
+        super.onActivityResult(requestCode, resultCode, data);
     }
 
     /**
@@ -712,4 +755,127 @@ public class WitFinalResult extends Activity {
             setTitle(navMenuTitles[position]);
             mDrawerLayout.closeDrawer(mDrawerList);
         }
+
+    private void configurationSimpleFacebook(){
+        Permission[] permissions = new Permission[] {
+                Permission.USER_PHOTOS,
+                Permission.PUBLISH_ACTION,
+        };
+        SimpleFacebookConfiguration configuration = new SimpleFacebookConfiguration.Builder()
+                .setAppId("747369465380873")
+                .setNamespace("wit_discover")
+                .setPermissions(permissions)
+                .build();
+        SimpleFacebook.setConfiguration(configuration);
+
+    }
+    OnPublishListener onPublishListener = new OnPublishListener() {
+        @Override
+        public void onComplete(String id) {
+            Log.d(LOG_TAG, "Published successfully. id = " + id);
+        }
+    };
+
+
+
+    private void storyOnFacebook(){
+        // set object to be shared
+        String p;
+        URL u = null;
+        try {
+            u = new URL("http://uxrepo.com/static/icon-sets/open-maps/svg/monument.svg");
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+        if(photoURL!=null){
+            p = photoURL.toString();
+        }
+        else {
+            p = u.toString();
+        }
+
+        Story.StoryObject storyObject = new Story.StoryObject.Builder()
+                .setNoun("Monument")
+                .setTitle(title)
+                .setImage(p)
+                .setDescription(description)
+                .build();
+
+
+        mSimpleFacebook.create(storyObject, new OnCreateStoryObject() {
+            public void onComplete(String response) {
+
+
+                Story.StoryObject so = new Story.StoryObject.Builder()
+                        .setId(response)
+                        .setNoun("Monument")
+                        .build();
+
+                Story.StoryAction storyAction = new Story.StoryAction.Builder()
+                        .setAction("Discover")
+                        .build();
+
+// build story
+                Story story = new Story.Builder()
+                        .setObject(so)
+                        .setAction(storyAction)
+                        .build();
+
+
+                mSimpleFacebook.publish(story, onPublishListener);
+
+            }
+        });
+        Log.d(LOG_TAG, "Pubblicato post su FB");
+
+
+
+
+
+
+
+
+   /*     mCallbackManager = CallbackManager.Factory.create();
+        ShareOpenGraphObject object = new ShareOpenGraphObject.Builder()
+                .putString("og:type", "monuments.monument")
+                .putString("og:title", title)
+                .build();
+
+        ShareOpenGraphAction action = new ShareOpenGraphAction.Builder()
+                .setActionType("monument.discover")
+                .putObject("monument", object)
+                .build();
+
+        ShareOpenGraphContent content = new ShareOpenGraphContent.Builder()
+                .setPreviewPropertyName("discover")
+                .setAction(action)
+                .build();
+
+        //ShareDialog.show(this, content);
+
+
+
+       ShareButton shareButton = (ShareButton)findViewById(R.id.share_button);
+        shareButton.setShareContent(content);
+        shareButton.registerCallback(mCallbackManager, new FacebookCallback<Sharer.Result>() {
+
+            @Override
+            public void onSuccess(Sharer.Result result) {
+                Log.i(LOG_TAG, "SHARING SUCCESS!");
+            }
+
+            @Override
+            public void onError(FacebookException error) {
+                Log.e(LOG_TAG, "SHARING ERROR! - " + error.getMessage());
+            }
+
+            @Override
+            public void onCancel() {
+                Log.w(LOG_TAG, "SHARING CANCEL!");
+            }
+        });  */
+
+    }
+
+
     }
