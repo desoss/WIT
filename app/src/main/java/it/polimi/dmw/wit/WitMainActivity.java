@@ -1,7 +1,6 @@
 package it.polimi.dmw.wit;
 
 import android.app.AlertDialog;
-import android.app.Fragment;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -19,6 +18,7 @@ import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Message;
 import android.provider.Settings;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.widget.DrawerLayout;
@@ -484,6 +484,7 @@ public class WitMainActivity extends ActionBarActivity implements FragmentDrawer
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            startSettingPage();
             return true;
         }
 
@@ -800,6 +801,13 @@ public class WitMainActivity extends ActionBarActivity implements FragmentDrawer
             // set the toolbar title
             getSupportActionBar().setTitle(title);
         }
+    }
+
+    private void startSettingPage(){
+        Intent i = new Intent(this, WitSettings.class);
+        startActivity(i);
+        getSupportActionBar().setTitle("Settings");
+
     }
 
 

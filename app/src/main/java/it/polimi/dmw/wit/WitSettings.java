@@ -1,52 +1,37 @@
 package it.polimi.dmw.wit;
 
-
 import android.app.Activity;
-import android.app.Fragment;
 import android.content.Intent;
-import android.content.res.Configuration;
-import android.content.res.TypedArray;
-import android.database.Cursor;
-import android.graphics.BitmapFactory;
 import android.os.Bundle;
-import android.support.v4.app.ActionBarDrawerToggle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.Window;
-import android.widget.AdapterView;
-import android.widget.ImageView;
-import android.widget.ListView;
-import android.widget.TextView;
+import android.view.ViewGroup;
+import android.widget.CompoundButton;
+import android.widget.Switch;
+import android.widget.ToggleButton;
 
-import java.util.ArrayList;
-
-import it.polimi.dmw.wit.database.DbAdapter;
-
-public class WitSavedPOI extends ActionBarActivity implements FragmentDrawer.FragmentDrawerListener {
-
-    private int idPOI;
-    private DbAdapter dbAdapter;
-    private Cursor cursor;
-    private String name;
-    private String description;
-    private ImageView mainImage;
-    private TextView titleText;
-    private TextView descText;
+public class WitSettings extends ActionBarActivity implements FragmentDrawer.FragmentDrawerListener {
     private Toolbar mToolbar;
     private FragmentDrawer drawerFragment;
-    private final static String LOG_TAG = "WitSavedPOI";
+    private  Switch sw;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.settings);
 
-        setContentView(R.layout.activity_wit_detail);
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
+        sw = (Switch) findViewById(R.id.switch1);
+
 
         setSupportActionBar(mToolbar);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
@@ -55,49 +40,20 @@ public class WitSavedPOI extends ActionBarActivity implements FragmentDrawer.Fra
                 getSupportFragmentManager().findFragmentById(R.id.fragment_navigation_drawer);
         drawerFragment.setUp(R.id.fragment_navigation_drawer, (DrawerLayout) findViewById(R.id.drawer_layout), mToolbar);
         drawerFragment.setDrawerListener(this);
-        //  displayView(0);
-
-
-
-
-        // Prendi l'intent che ha aperto questa activity, cioè
-        // quello che viene dalla main activity
-
-        mainImage = (ImageView)findViewById(R.id.poi_img);
-        titleText = (TextView)findViewById(R.id.poi_name_text);
-        descText = (TextView)findViewById(R.id.poi_desc_text);
-}
+    }
 
     @Override
     protected void onStart() {
         super.onStart();
-        Intent intent = getIntent();
-        idPOI=intent.getIntExtra(WitPOIsList.EXTRA_POI,0);
-
-
-
-
-        dbAdapter = new DbAdapter(this);
-        dbAdapter.open();
-        cursor = dbAdapter.fetchPOIsByID(idPOI);
-        //cursor=dbAdapter.fetchAllPOIs();
-        Log.d(LOG_TAG, "nome POI = " + idPOI);
-
-
-        while ( cursor.moveToNext() ) {
-            name = cursor.getString(cursor.getColumnIndex(DbAdapter.KEY_NAME));
-            description = cursor.getString(cursor.getColumnIndex(DbAdapter.KEY_DESCRIPTION));
-            byte[] img = cursor.getBlob(cursor.getColumnIndex(DbAdapter.KEY_IMAGE));
-            if (img!=null) {
-                mainImage = (ImageView) findViewById(R.id.poi_img);
-                mainImage.setImageBitmap(BitmapFactory.decodeByteArray(img, 0, img.length));
+        sw.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked) {
+                    // The toggle is enabled
+                } else {
+                    // The toggle is disabled
+                }
             }
-
-        }
-        cursor.close();
-        dbAdapter.close();
-        titleText.setText(name);
-        descText.setText(description);
+        });
 
     }
 
@@ -162,15 +118,11 @@ public class WitSavedPOI extends ActionBarActivity implements FragmentDrawer.Fra
             getSupportActionBar().setTitle(title);
         }
     }
-
     private void startSettingPage(){
         Intent i = new Intent(this, WitSettings.class);
         startActivity(i);
         getSupportActionBar().setTitle("Settings");
 
     }
-
-
-
 
 }

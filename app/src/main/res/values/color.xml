@@ -18,6 +18,6 @@
     <color name="textColorPrimary">#ffffff</color>
     <color name="windowBackground">#ffffff</color>
     <color name="navigationBarColor">#000000</color>
-    <color name="colorAccent">#ffffff</color>
+    <color name="colorAccent">#ffd1a4ff</color>
 
 </resources>

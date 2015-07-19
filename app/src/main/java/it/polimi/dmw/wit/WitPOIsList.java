@@ -157,6 +157,7 @@ public class WitPOIsList extends ActionBarActivity implements FragmentDrawer.Fra
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            startSettingPage();
             return true;
         }
 
@@ -276,6 +277,12 @@ public class WitPOIsList extends ActionBarActivity implements FragmentDrawer.Fra
             // set the toolbar title
             getSupportActionBar().setTitle(title);
         }
+    }
+    private void startSettingPage(){
+        Intent i = new Intent(this, WitSettings.class);
+        startActivity(i);
+        getSupportActionBar().setTitle("Settings");
+
     }
 
 

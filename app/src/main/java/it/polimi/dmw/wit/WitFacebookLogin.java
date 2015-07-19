@@ -216,7 +216,6 @@ public class WitFacebookLogin extends ActionBarActivity implements FragmentDrawe
                         logoutB.setVisibility(View.VISIBLE);
 
 
-
                     }
 
                     @Override
@@ -283,9 +282,9 @@ public class WitFacebookLogin extends ActionBarActivity implements FragmentDrawe
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            startSettingPage();
             return true;
         }
-
         return super.onOptionsItemSelected(item);
     }
 
@@ -456,6 +455,12 @@ private class DownloadImageTask extends AsyncTask<URL, Void, Bitmap> {
         }
     }
 
+    private void startSettingPage(){
+        Intent i = new Intent(this, WitSettings.class);
+        startActivity(i);
+        getSupportActionBar().setTitle("Settings");
+
+    }
 
 
 

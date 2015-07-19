@@ -32,12 +32,16 @@
             android:name=".WitFinalResult"
             android:label="@string/title_activity_wit_list"
             android:parentActivityName=".WitMainActivity"
-
-
-        android:screenOrientation="portrait" >
+            android:screenOrientation="portrait" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="it.polimi.dmw.wit.WitMainActivity" />
+        </activity>
+        <activity
+            android:name=".WitSettings"
+            android:label="@string/action_settings"
+            android:parentActivityName=".WitMainActivity"
+            android:screenOrientation="portrait" >
         </activity>
         <activity
             android:name=".WitPOIsList"

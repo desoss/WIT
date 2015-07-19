@@ -441,6 +441,7 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            startSettingPage();
             return true;
         }
 
@@ -734,6 +735,13 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
             // set the toolbar title
             getSupportActionBar().setTitle(title);
         }
+    }
+
+    private void startSettingPage(){
+        Intent i = new Intent(this, WitSettings.class);
+        startActivity(i);
+        getSupportActionBar().setTitle("Settings");
+
     }
 
 
