@@ -8,9 +8,9 @@
 
     <application
         android:allowBackup="true"
-        android:icon="@drawable/ic_launcher"
+        android:icon="@drawable/eml"
         android:label="@string/app_name"
-        android:theme="@android:style/Theme.WithActionBar" >
+        android:theme="@style/MyMaterialTheme" >
 
         <meta-data android:name="com.facebook.sdk.ApplicationId" android:value="@string/app_id"/>
 

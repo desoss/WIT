@@ -3,31 +3,29 @@ package it.polimi.dmw.wit;
 
 import android.app.Activity;
 import android.app.Fragment;
+import android.content.Context;
 import android.content.Intent;
-import android.content.res.Configuration;
-import android.content.res.TypedArray;
 import android.database.Cursor;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
-import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarActivity;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
-
-import java.util.ArrayList;
-
-import it.polimi.dmw.wit.menu.NavDrawerItem;
-import it.polimi.dmw.wit.menu.NavDrawerListAdapter;
+import com.pkmmte.view.CircularImageView;
 import it.polimi.dmw.wit.database.DbAdapter;
 
-public class WitPOIsList extends Activity {
+public class WitPOIsList extends ActionBarActivity implements FragmentDrawer.FragmentDrawerListener  {
 
    private DbAdapter dbAdapter;
     private Cursor cursor;
@@ -40,24 +38,9 @@ public class WitPOIsList extends Activity {
     private Intent intent;
     public final static String EXTRA_POI= "it.polimi.dmw.wit.POI";
     private int[] idPOI;
-
-    private DrawerLayout mDrawerLayout;
-    private ListView mDrawerList;
-    private ActionBarDrawerToggle mDrawerToggle;
-
-    // nav drawer title
-    private CharSequence mDrawerTitle;
-
-    // used to store app title
-    private CharSequence mTitle;
-
-    // slide menu items
-    private String[] navMenuTitles;
-    private TypedArray navMenuIcons;
-
-    private ArrayList<NavDrawerItem> navDrawerItems;
-    private NavDrawerListAdapter adapter;
-
+    private byte[] [] images;
+    private Toolbar mToolbar;
+    private FragmentDrawer drawerFragment;
 
 
 
@@ -66,87 +49,20 @@ public class WitPOIsList extends Activity {
         super.onCreate(savedInstanceState);
 
 
-        getWindow().requestFeature(Window.FEATURE_ACTION_BAR);
-
         setContentView(R.layout.activity_wit_list);
 
-        listView = (ListView) findViewById(R.id.poi_list);
+        listView = (ListView) findViewById(R.id.listView);
 
+        mToolbar = (Toolbar) findViewById(R.id.toolbar);
 
+        setSupportActionBar(mToolbar);
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
 
-
-        mTitle = mDrawerTitle = getTitle();
-
-        // load slide menu items
-        navMenuTitles = getResources().getStringArray(R.array.nav_drawer_items);
-
-        // nav drawer icons from resources
-        navMenuIcons = getResources()
-                .obtainTypedArray(R.array.nav_drawer_icons);
-
-        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-        mDrawerList = (ListView) findViewById(R.id.list_slidermenu);
-
-        navDrawerItems = new ArrayList<NavDrawerItem>();
-
-        // adding nav drawer items to array
-        // Home
-        navDrawerItems.add(new NavDrawerItem(navMenuTitles[0], navMenuIcons.getResourceId(0, -1)));
-        // Find People
-        navDrawerItems.add(new NavDrawerItem(navMenuTitles[1], navMenuIcons.getResourceId(1, -1)));
-        // Photos
-        navDrawerItems.add(new NavDrawerItem(navMenuTitles[2], navMenuIcons.getResourceId(2, -1)));
-        // Communities, Will add a counter here
-        navDrawerItems.add(new NavDrawerItem(navMenuTitles[3], navMenuIcons.getResourceId(3, -1), true, "22"));
-        // Pages
-        navDrawerItems.add(new NavDrawerItem(navMenuTitles[4], navMenuIcons.getResourceId(4, -1)));
-        // What's hot, We  will add a counter here
-        navDrawerItems.add(new NavDrawerItem(navMenuTitles[5], navMenuIcons.getResourceId(5, -1), true, "50+"));
-
-
-        // Recycle the typed array
-        navMenuIcons.recycle();
-
-        mDrawerList.setOnItemClickListener(new SlideMenuClickListener());
-
-
-        // setting the nav drawer list adapter
-        adapter = new NavDrawerListAdapter(getApplicationContext(),
-                navDrawerItems);
-        mDrawerList.setAdapter(adapter);
-
-        // enabling action bar app icon and behaving it as toggle button
-        getActionBar().setDisplayHomeAsUpEnabled(true);
-        getActionBar().setHomeButtonEnabled(true);
-
-        mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout,
-                R.drawable.ic_drawer, //nav menu toggle icon
-                R.string.app_name, // nav drawer open - description for accessibility
-                R.string.app_name // nav drawer close - description for accessibility
-        ) {
-            public void onDrawerClosed(View view) {
-                getActionBar().setTitle(mTitle);
-                // calling onPrepareOptionsMenu() to show action bar icons
-                invalidateOptionsMenu();
-            }
-
-            public void onDrawerOpened(View drawerView) {
-                getActionBar().setTitle(mDrawerTitle);
-                // calling onPrepareOptionsMenu() to hide action bar icons
-                invalidateOptionsMenu();
-            }
-        };
-        mDrawerLayout.setDrawerListener(mDrawerToggle);
-
-        if (savedInstanceState == null) {
-            // on first time display view for first nav item
-            //displayView(0);
-        }
-
-
-
-
-
+        drawerFragment = (FragmentDrawer)
+                getSupportFragmentManager().findFragmentById(R.id.fragment_navigation_drawer);
+        drawerFragment.setUp(R.id.fragment_navigation_drawer, (DrawerLayout) findViewById(R.id.drawer_layout), mToolbar);
+        drawerFragment.setDrawerListener(this);
+        //  displayView(0);
 
 
     }
@@ -161,6 +77,7 @@ public class WitPOIsList extends Activity {
         dbAdapter.open();
         cursor=dbAdapter.fetchAllPOIs();
         values=new String[cursor.getCount()];
+        images = new byte[cursor.getCount()][];
         idPOI=new int[cursor.getCount()];
         int count=0;
         String n;
@@ -169,6 +86,7 @@ public class WitPOIsList extends Activity {
 
           values[count]=cursor.getString(cursor.getColumnIndex(DbAdapter.KEY_NAME));
           idPOI[count]=cursor.getInt(cursor.getColumnIndex(DbAdapter.KEY_ID));
+          images[count]=cursor.getBlob(cursor.getColumnIndex(DbAdapter.KEY_IMAGE));
             Log.d( LOG_TAG,"nome POI = " +values[count]+idPOI[count]);
 
             count++;
@@ -187,15 +105,15 @@ public class WitPOIsList extends Activity {
         // Third parameter - ID of the TextView to which the data is written
         // Forth - the Array of data
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
-                android.R.layout.simple_list_item_1, android.R.id.text1, values);
+      //  ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
+        //        android.R.layout.simple_list_item_1, android.R.id.text1, values);
 
 
         // Assign adapter to ListView
-        listView.setAdapter(adapter);
+        listView.setAdapter(new CustomAdapter(this, values, images, idPOI));
          intent = new Intent(this, WitSavedPOI.class);
 
-
+          /*
         // ListView Item Click Listener
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
@@ -214,6 +132,13 @@ public class WitPOIsList extends Activity {
             }
 
         });
+        */
+    }
+
+
+    @Override
+    public void onDrawerItemSelected(View view, int position) {
+        displayView(position);
     }
 
     @Override
@@ -225,87 +150,116 @@ public class WitPOIsList extends Activity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // toggle nav drawer on selecting action bar app icon/title
-        if (mDrawerToggle.onOptionsItemSelected(item)) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
             return true;
         }
-        // Handle action bar actions click
-        switch (item.getItemId()) {
-           // case R.id.action_settings:
-             //   return true;
-            default:
-                return super.onOptionsItemSelected(item);
+
+        return super.onOptionsItemSelected(item);
+    }
+
+
+
+
+    /**
+     * Classe privata che gestisce la lista
+     */
+    private class CustomAdapter extends BaseAdapter {
+        String [] result;
+        Context context;
+        byte[] [] imageId;
+        int [] id;
+        private  LayoutInflater inflater=null;
+        public CustomAdapter(Activity mainActivity, String[] nameList, byte[][] images, int [] id) {
+            // TODO Auto-generated constructor stub
+            result=nameList;
+            context=mainActivity;
+            imageId=images;
+            this.id = id;
+            inflater = ( LayoutInflater )context.
+                    getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         }
-    }
-
-    @Override
-    public void setTitle(CharSequence title) {
-        mTitle = title;
-        getActionBar().setTitle(mTitle);
-    }
-
-    /**
-     * When using the ActionBarDrawerToggle, you must call it during
-     * onPostCreate() and onConfigurationChanged()...
-     */
-
-    @Override
-    protected void onPostCreate(Bundle savedInstanceState) {
-        super.onPostCreate(savedInstanceState);
-        // Sync the toggle state after onRestoreInstanceState has occurred.
-        mDrawerToggle.syncState();
-    }
-
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-        // Pass any configuration change to the drawer toggls
-        mDrawerToggle.onConfigurationChanged(newConfig);
-    }
-
-    /***
-     * Called when invalidateOptionsMenu() is triggered
-     */
-    @Override
-    public boolean onPrepareOptionsMenu(Menu menu) {
-        // if nav drawer is opened, hide the action items
-        boolean drawerOpen = mDrawerLayout.isDrawerOpen(mDrawerList);
-      //  menu.findItem(R.id.action_settings).setVisible(!drawerOpen);
-        return super.onPrepareOptionsMenu(menu);
-    }
-
-
-    /**
-     * Slide menu item click listener
-     * */
-    private class SlideMenuClickListener implements ListView.OnItemClickListener {
+        @Override
+        public int getCount() {
+            // TODO Auto-generated method stub
+            return result.length;
+        }
 
         @Override
-        public void onItemClick(AdapterView<?> parent, View view, int position,
-                                long id) {
-            // display view for selected nav drawer item
-            displayView(position);
+        public Object getItem(int position) {
+            // TODO Auto-generated method stub
+            return position;
         }
+
+        @Override
+        public long getItemId(int position) {
+            // TODO Auto-generated method stub
+            return position;
+        }
+
+        public class Holder
+        {
+            TextView tv;
+            CircularImageView img;
+        }
+        @Override
+        public View getView(final int position, View convertView, ViewGroup parent) {
+            // TODO Auto-generated method stub
+            Holder holder=new Holder();
+            View rowView;
+            rowView = inflater.inflate(R.layout.pois_list, null);
+            holder.tv=(TextView) rowView.findViewById(R.id.textView);
+            holder.img=(CircularImageView) rowView.findViewById(R.id.img);
+            holder.img.setBorderColor(getResources().getColor(R.color.colorPrimary));
+            holder.img.setBorderWidth(4);
+            // circularImageView.setSelectorColor(getResources().getColor(R.color.colorPrimary));
+            //circularImageView.setSelectorStrokeColor(getResources().getColor(R.color.colorPrimaryDark));
+            holder.img.setSelectorStrokeWidth(10);
+            holder.img.addShadow();
+            holder.tv.setText(result[position]);
+            //holder.img.setImageResource(imageId[position]);
+            if(imageId[position]!= null) {
+                holder.img.setImageBitmap(BitmapFactory.decodeByteArray(imageId[position], 0, imageId[position].length));
+            }
+            else {
+
+            }
+            rowView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    intent.putExtra(EXTRA_POI,id[position]);
+                    startActivity(intent);
+
+                    Log.d( LOG_TAG,"nome POI = "+ result[position]+ id[position]);
+
+                }
+            });
+            return rowView;
+        }
+
     }
 
-
-    /**
-     * Diplaying fragment view for selected nav drawer list item
-     * */
     private void displayView(int position) {
-        // update the main content by replacing fragments
         Fragment fragment = null;
+        Intent i = null;
+        String title = getString(R.string.app_name);
         switch (position) {
             case 0:
-                Intent i = new Intent(this, WitMainActivity.class);
+                i = new Intent(this, WitMainActivity.class);
                 startActivity(i);
                 break;
             case 1:
-
-                Intent intent = new Intent(this, WitPOIsList.class);
-                startActivity(intent);
-
-                //fragment = new FindPeopleFragment();
+                i = new Intent(this, WitPOIsList.class);
+                startActivity(i);
+                break;
+            case 2:
+                i = new Intent(this, WitFacebookLogin.class);
+                startActivity(i);
                 break;
 
 
@@ -313,14 +267,15 @@ public class WitPOIsList extends Activity {
                 break;
         }
 
+        if (fragment != null) {
+          /*  FragmentManager fragmentManager = getSupportFragmentManager();
+            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+            fragmentTransaction.replace(R.id.container_body, fragment);
+            fragmentTransaction.commit();  */
 
-
-            // update selected item and title, then close the drawer
-            mDrawerList.setItemChecked(position, true);
-            mDrawerList.setSelection(position);
-            setTitle(navMenuTitles[position]);
-            mDrawerLayout.closeDrawer(mDrawerList);
-
+            // set the toolbar title
+            getSupportActionBar().setTitle(title);
+        }
     }
 
 

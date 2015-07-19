@@ -46,6 +46,7 @@ import org.json.JSONObject;
 import org.json.JSONTokener;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -57,8 +58,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 
-import it.polimi.dmw.wit.menu.NavDrawerItem;
-import it.polimi.dmw.wit.menu.NavDrawerListAdapter;
 import it.polimi.dmw.wit.Polygon.Point;
 import it.polimi.dmw.wit.Polygon.Polygon;
 import it.polimi.dmw.wit.database.DbAdapter;
@@ -70,25 +69,6 @@ import it.polimi.dmw.wit.database.DbAdapter;
 public class WitFinalResult extends Activity {
 
 
-    private DrawerLayout mDrawerLayout;
-    private ListView mDrawerList;
-    private ActionBarDrawerToggle mDrawerToggle;
-
-    // nav drawer title
-    private CharSequence mDrawerTitle;
-
-    // used to store app title
-    private CharSequence mTitle;
-
-    // slide menu items
-    private String[] navMenuTitles;
-    private TypedArray navMenuIcons;
-
-    private ArrayList<NavDrawerItem> navDrawerItems;
-    private NavDrawerListAdapter adapter;
-
-
-    private CallbackManager mCallbackManager;
     private SimpleFacebook mSimpleFacebook;
 
 
@@ -111,6 +91,8 @@ public class WitFinalResult extends Activity {
     private String description;
 
     private URL photoURL;
+    private byte[] img=null;
+
 
     /**
      * Lista di POI e lista dei POI filtrata
@@ -264,7 +246,12 @@ public class WitFinalResult extends Activity {
         }
 
         protected void onPostExecute(Bitmap result) {
+
             mainImage.setImageBitmap(result);
+            ByteArrayOutputStream bos=new ByteArrayOutputStream();
+            result.compress(Bitmap.CompressFormat.PNG, 100, bos);
+            img=bos.toByteArray();
+            savePOI(title,description,img); //salvo nel database il poi
         }
     }
 
@@ -321,7 +308,6 @@ public class WitFinalResult extends Activity {
             titleText.setText(title);
             descText.setText(description);
 
-            savePOI(title,description); //salvo nel database il poi
 
             // Se l'array dei places non è vuoto
             if (!documentObject.isNull("photos")) {
@@ -333,6 +319,9 @@ public class WitFinalResult extends Activity {
                 if (photo != null) {
                     photoURL = new URL(photo.getString("960_url"));
                     new DownloadImageTask().execute(photoURL);
+                }
+                else{
+                    savePOI(title,description,img); //salvo nel database il poi
                 }
             }
         } catch (JSONException e) {
@@ -353,93 +342,6 @@ public class WitFinalResult extends Activity {
         mSimpleFacebook = SimpleFacebook.getInstance(this);
 
         configurationSimpleFacebook();
-
-
-
-
-
-
-
-
-
-
-
-        mTitle = mDrawerTitle = getTitle();
-
-        // load slide menu items
-        navMenuTitles = getResources().getStringArray(R.array.nav_drawer_items);
-
-        // nav drawer icons from resources
-        navMenuIcons = getResources()
-                .obtainTypedArray(R.array.nav_drawer_icons);
-
-        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-        mDrawerList = (ListView) findViewById(R.id.list_slidermenu);
-
-        navDrawerItems = new ArrayList<NavDrawerItem>();
-
-        // adding nav drawer items to array
-        // Home
-        navDrawerItems.add(new NavDrawerItem(navMenuTitles[0], navMenuIcons.getResourceId(0, -1)));
-        // Find People
-        navDrawerItems.add(new NavDrawerItem(navMenuTitles[1], navMenuIcons.getResourceId(1, -1)));
-        // Photos
-        navDrawerItems.add(new NavDrawerItem(navMenuTitles[2], navMenuIcons.getResourceId(2, -1)));
-        // Communities, Will add a counter here
-        navDrawerItems.add(new NavDrawerItem(navMenuTitles[3], navMenuIcons.getResourceId(3, -1), true, "22"));
-        // Pages
-        navDrawerItems.add(new NavDrawerItem(navMenuTitles[4], navMenuIcons.getResourceId(4, -1)));
-        // What's hot, We  will add a counter here
-        navDrawerItems.add(new NavDrawerItem(navMenuTitles[5], navMenuIcons.getResourceId(5, -1), true, "50+"));
-
-
-        // Recycle the typed array
-        navMenuIcons.recycle();
-
-        mDrawerList.setOnItemClickListener(new SlideMenuClickListener());
-
-
-        // setting the nav drawer list adapter
-        adapter = new NavDrawerListAdapter(getApplicationContext(),
-                navDrawerItems);
-        mDrawerList.setAdapter(adapter);
-
-        // enabling action bar app icon and behaving it as toggle button
-        getActionBar().setDisplayHomeAsUpEnabled(true);
-        getActionBar().setHomeButtonEnabled(true);
-
-        mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout,
-                R.drawable.ic_drawer, //nav menu toggle icon
-                R.string.app_name, // nav drawer open - description for accessibility
-                R.string.app_name // nav drawer close - description for accessibility
-        ) {
-            public void onDrawerClosed(View view) {
-                getActionBar().setTitle(mTitle);
-                // calling onPrepareOptionsMenu() to show action bar icons
-                invalidateOptionsMenu();
-            }
-
-            public void onDrawerOpened(View drawerView) {
-                getActionBar().setTitle(mDrawerTitle);
-                // calling onPrepareOptionsMenu() to hide action bar icons
-                invalidateOptionsMenu();
-            }
-        };
-        mDrawerLayout.setDrawerListener(mDrawerToggle);
-
-        if (savedInstanceState == null) {
-            // on first time display view for first nav item
-            //displayView(0);
-        }
-
-
-
-
-
-
-
-
-
 
 
 
@@ -503,13 +405,6 @@ public class WitFinalResult extends Activity {
         mSimpleFacebook = SimpleFacebook.getInstance(this);
     }
 
-
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        mSimpleFacebook.onActivityResult(requestCode, resultCode, data);
-        mCallbackManager.onActivityResult(requestCode, resultCode, data);
-        super.onActivityResult(requestCode, resultCode, data);
-    }
 
     /**
      * The angle from the orientation sensor is clockwise starting from west
@@ -607,85 +502,6 @@ public class WitFinalResult extends Activity {
          return false;
         }
 
-    // I seguenti sono METODI per gestire l'actionbar in alto
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // toggle nav drawer on selecting action bar app icon/title
-        if (mDrawerToggle.onOptionsItemSelected(item)) {
-            return true;
-        }
-        // Handle action bar actions click
-        switch (item.getItemId()) {
-        //    case R.id.action_settings:
-          //      return true;
-            default:
-                return super.onOptionsItemSelected(item);
-        }
-    }
-
-    @Override
-    public void setTitle(CharSequence title) {
-        mTitle = title;
-        getActionBar().setTitle(mTitle);
-    }
-
-    /**
-     * When using the ActionBarDrawerToggle, you must call it during
-     * onPostCreate() and onConfigurationChanged()...
-     */
-
-    @Override
-    protected void onPostCreate(Bundle savedInstanceState) {
-        super.onPostCreate(savedInstanceState);
-        // Sync the toggle state after onRestoreInstanceState has occurred.
-        mDrawerToggle.syncState();
-    }
-
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-        // Pass any configuration change to the drawer toggls
-        mDrawerToggle.onConfigurationChanged(newConfig);
-    }
-
-    /***
-     * Called when invalidateOptionsMenu() is triggered
-     */
-    @Override
-    public boolean onPrepareOptionsMenu(Menu menu) {
-        // if nav drawer is opened, hide the action items
-        boolean drawerOpen = mDrawerLayout.isDrawerOpen(mDrawerList);
-       // menu.findItem(R.id.action_settings).setVisible(!drawerOpen);
-        return super.onPrepareOptionsMenu(menu);
-
-    }
-
-
-
-    /**
-     * Slide menu item click listener
-     * */
-    private class SlideMenuClickListener implements
-            ListView.OnItemClickListener {
-        @Override
-        public void onItemClick(AdapterView<?> parent, View view, int position,
-                                long id) {
-            // display view for selected nav drawer item
-            displayView(position);
-        }
-    }
-
-
-
-
 
 
         /**
@@ -695,10 +511,10 @@ public class WitFinalResult extends Activity {
      */
 
 
-    private void savePOI(String name, String description){
+    private void savePOI(String name, String description, byte[] img){
         dbAdapter = new DbAdapter(this);
         dbAdapter.open();
-        dbAdapter.savePOI(name, description, getCurrentDate());
+        dbAdapter.savePOI(name, description, getCurrentDate(), img);
 
         Cursor cursor = dbAdapter.fetchAllPOIs();
         String n;
@@ -722,39 +538,6 @@ public class WitFinalResult extends Activity {
     }
 
 
-
-
-    /**
-     * Diplaying fragment view for selected nav drawer list item
-     * */
-    private void displayView(int position) {
-        // update the main content by replacing fragments
-        Fragment fragment = null;
-        switch (position) {
-            case 0:
-                Intent i = new Intent(this, WitMainActivity.class);
-                startActivity(i);
-                break;
-            case 1:
-
-                Intent intent = new Intent(this, WitPOIsList.class);
-                startActivity(intent);
-
-   //fragment = new FindPeopleFragment();
-                break;
-
-
-            default:
-                break;
-        }
-
-
-            // update selected item and title, then close the drawer
-            mDrawerList.setItemChecked(position, true);
-            mDrawerList.setSelection(position);
-            setTitle(navMenuTitles[position]);
-            mDrawerLayout.closeDrawer(mDrawerList);
-        }
 
     private void configurationSimpleFacebook(){
         Permission[] permissions = new Permission[] {

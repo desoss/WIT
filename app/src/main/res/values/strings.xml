@@ -3,10 +3,10 @@
 
     <string name="app_name">WIT</string>
     <string name="action_settings">Settings</string>
-    <string name="title_activity_wit_list">Results</string>
-    <string name="title_activity_POIs_list">Archivio</string>
-    <string name="title_activity_Saved_POI">Dettaglio</string>
-    <string name="title_activity_Facebook_Login">Login con Facebook</string>
+    <string name="title_activity_wit_list">My Monuments:</string>
+    <string name="title_activity_POIs_list">My Monuments:</string>
+    <string name="title_activity_Saved_POI">Details:</string>
+    <string name="title_activity_Facebook_Login">Account</string>
     <string name="facebook_app_id">Facebook App ID</string> <string name="scan_button_text">Scan</string>
     <string name="scanning_button_text">Scanning...</string>
     <string name="get_monuments_base_url">http://desoss.altervista.org/wit-server/android_wikimapia_request.php</string>
@@ -15,6 +15,12 @@
     <string name="image_description">Main image of the monument</string>
     <string name="drawer_open">Slider Menu Opened</string>
     <string name="drawer_close">Slider Menu Closed</string>
+    <string name="action_search">Search</string>
+
+    <string name="nav_item_scan">Scan</string>
+    <string name="nav_item_my_monuments">My Monumets</string>
+    <string name="nav_item_account">Account</string>
+
 
     <string name="app_id">747369465380873</string>
     <string name="facebook_app_name">WIT</string>
@@ -38,32 +44,22 @@
     <string name="login">Login</string>
 
 
-    <!-- Nav Drawer Menu Items -->
-    <string-array name="nav_drawer_items">
-        <item >Home</item>
-        <item >Archivio</item>
-        <item >Photos</item>
-        <item >Communities</item>
-        <item >Pages</item>
-        <item >What\'s Hot</item>
-    </string-array>
 
-    <!-- Nav Drawer List Item Icons -->
-    <!-- Keep them in order as the titles are in -->
-    <array name="nav_drawer_icons">
-        <item>@drawable/ic_home</item>
-        <item>@drawable/ic_people</item>
-        <item>@drawable/ic_photos</item>
-        <item>@drawable/ic_communities</item>
-        <item>@drawable/ic_pages</item>
-        <item>@drawable/ic_whats_hot</item>
-
-
-
-    </array>
 
     <!-- Content Description -->
     <string name="desc_list_item_icon">Item Icon</string>
+
+
+    <!-- navigation drawer item labels  -->
+    <string-array name="nav_drawer_labels">
+        <item>@string/nav_item_scan</item>
+        <item>@string/nav_item_my_monuments</item>
+        <item>@string/nav_item_account</item>
+    </string-array>
+
+    <string name="title_messages">Login</string>
+    <string name="title_friends">My Monuments</string>
+    <string name="title_home">Scan</string>
 
 
 </resources>

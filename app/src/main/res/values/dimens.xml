@@ -6,4 +6,5 @@
     <dimen name="example_list_text_size">16dp</dimen>
     <dimen name="example_list_title_size">20dp</dimen>
     <dimen name="padding_10dp">10dp</dimen>
+    <dimen name="nav_drawer_width">260dp</dimen>
 </resources>

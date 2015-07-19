@@ -11,8 +11,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final int DATABASE_VERSION = 1;
 
     // Lo statement SQL di creazione del database
-    private static final String DATABASE_CREATE = "create table pois (_id integer primary key autoincrement, name text not null, description text not null,date text not null);";
+    private static final String DATABASE_POIS = "create table pois (_id integer primary key autoincrement, name text not null, description text not null,date text not null, image blob);";
     private static final String DATABASE_CREATE2 = "create table pois2 (_id integer primary key autoincrement, name text not null, description text not null,date text not null);";
+    private static final String DATABASE_USER_PROFILE = "create table userProfile (_id long primary key, name text not null, surname text not null,image blob, fb boolean not null, isLogged boolean not null);";
 
     // Costruttore
     public DatabaseHelper(Context context) {
@@ -23,8 +24,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase database) {
 
-       database.execSQL(DATABASE_CREATE);
-       database.execSQL(DATABASE_CREATE2);
+       database.execSQL(DATABASE_POIS);
+       database.execSQL(DATABASE_USER_PROFILE);
 
     }
 
