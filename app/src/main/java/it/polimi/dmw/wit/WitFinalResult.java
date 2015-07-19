@@ -3,6 +3,7 @@ package it.polimi.dmw.wit;
 import android.app.Activity;
 import android.app.Fragment;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.content.res.TypedArray;
 import android.database.Cursor;
@@ -127,6 +128,8 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
      * Gestore del database
      */
     private DbAdapter dbAdapter;
+    private Cursor cursor;
+
 
     private String wikiLink;
 
@@ -335,7 +338,7 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
-        storyOnFacebook();
+        checkSettingFb();
     }
 
     @Override
@@ -602,10 +605,17 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
         }
     };
 
+    private void checkSettingFb(){
+        SharedPreferences sharedPrefs = getSharedPreferences("WIT", MODE_PRIVATE);
+        if(sharedPrefs.getBoolean("fb", false)){
+            storyOnFacebook();
+        }
+
+    }
+
 
 
     private void storyOnFacebook(){
-        // set object to be shared
         String p;
         URL u = null;
         try {
@@ -641,7 +651,6 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
                         .setAction("Discover")
                         .build();
 
-// build story
                 Story story = new Story.Builder()
                         .setObject(so)
                         .setAction(storyAction)

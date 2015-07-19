@@ -22,6 +22,7 @@ public class DbAdapter {
     private static final String DATABASE_POI = "pois";
     private static final String DATABASE_TABLE2 = "pois2"; //senza duplicati
     private static final String DATABASE_USER = "userProfile";
+    private static final String DATABASE_SETTINGS = "settings";
 
 
     public static final String KEY_ID = "_id";
@@ -70,6 +71,14 @@ public class DbAdapter {
         return values;
     }
 
+    private ContentValues createContentValuesSETTINGS(long id, Boolean fb) {
+        ContentValues values = new ContentValues();
+        values.put(KEY_ID, id);
+        values.put(KEY_FB, fb);
+
+        return values;
+    }
+
     public void savePOI(String name, String description, String date, byte[] img) {
         ContentValues initialValues = createContentValuesPOI(name, description, date, img);
          database.insertOrThrow(DATABASE_POI, null, initialValues);
@@ -79,6 +88,12 @@ public class DbAdapter {
     public void saveUser(long id, String name, String surname, byte[] img, Boolean fb, Boolean isLogged) {
         ContentValues initialValues = createContentValuesUSER(id, name, surname, img, fb, isLogged);
         database.insertOrThrow(DATABASE_USER, null, initialValues);
+
+    }
+
+    public void saveSettings(long id, Boolean fb) {
+        ContentValues initialValues = createContentValuesSETTINGS(id, fb);
+        database.insertOrThrow(DATABASE_SETTINGS, null, initialValues);
 
     }
 
@@ -95,6 +110,11 @@ public class DbAdapter {
     public void logoutUSER(long id) {
          database.execSQL("UPDATE userProfile SET isLogged = 0 where _id="+id+"");
 
+    }
+
+    public boolean updateSETTINGS(long id, Boolean fb) {
+        ContentValues updateValues = createContentValuesSETTINGS(id, fb);
+        return database.update(DATABASE_SETTINGS, updateValues, KEY_ID + "=" + id, null) > 0;
 
     }
 
@@ -115,6 +135,10 @@ public class DbAdapter {
 
     public Cursor fetchAllUSERS() {
         return database.query(DATABASE_USER, new String[]{KEY_ID, KEY_NAME, KEY_SURNAME, KEY_IMAGE, KEY_FB, KEY_ISLOGGED}, null, null, null, null, null,null);
+    }
+
+    public Cursor fetchSETTINGS() {
+        return database.query(DATABASE_SETTINGS, new String[]{KEY_ID, KEY_FB}, null, null, null, null, null,null);
     }
 
     //fetch contacts filter by a string
