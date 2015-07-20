@@ -21,7 +21,6 @@
                 android:id="@+id/toolbar"
                 layout="@layout/toolbar" />
         </LinearLayout>
-
         <FrameLayout
             android:id="@+id/container_body"
             android:layout_width="fill_parent"
@@ -58,9 +57,8 @@
                 android:padding="10dp"
                 android:layout_below="@+id/poi_img"
                 android:layout_gravity="center"
-                android:layout_marginTop="130dp" />
+                android:layout_marginTop="200dp" />
         </FrameLayout>
-
 
     </LinearLayout>
 

@@ -22,6 +22,8 @@ public class WitPOI implements Parcelable{
     private float [] x;
     private float [] y;
 
+    private String correct; // serve solo per la classe DisplayMap, per il parcelable con boolean ma da errore http://stackoverflow.com/questions/6201311/how-to-read-write-a-boolean-when-implementing-the-parcelable-interface
+
     // Costruttore
     public WitPOI(int id, String name, double dist, double lat, double lon, float [] x, float [] y) {
         poiId = id;
@@ -31,6 +33,7 @@ public class WitPOI implements Parcelable{
         poiLon = lon;
         this.x = x;
         this.y = y;
+        correct = "0";
     }
 
     // Quando un oggetto viene inserito in una ListView
@@ -40,6 +43,11 @@ public class WitPOI implements Parcelable{
     }
 
     // GETTER METHODS
+
+    public void setCorrect(){
+        correct = "1";
+    }
+    public String getCorrect(){ return correct; }
 
     public double getPoiLon() {
         return poiLon;
@@ -91,6 +99,7 @@ public class WitPOI implements Parcelable{
         poiLon = in.readDouble();
         x = in.createFloatArray();
         y = in.createFloatArray();
+        correct =   in.readString(); //in.readByte() != 0;     //coorect == true if byte != 0
     }
 
     @Override
@@ -113,6 +122,7 @@ public class WitPOI implements Parcelable{
         dest.writeDouble(poiLon);
         dest.writeFloatArray(x);
         dest.writeFloatArray(y);
+        dest.writeString(correct);//writeByte((byte) (correct ? 1 : 0));     //if correct == true, byte == 1
 
     }
 }

@@ -95,6 +95,7 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
 
     private URL photoURL;
     private byte[] img=null;
+    private boolean imgExists = true;
 
     private Toolbar mToolbar;
     private FragmentDrawer drawerFragment;
@@ -219,7 +220,7 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
         }
 
         /**
-         * Questo viene chiamato quando il thread a finito e gli viene passato il risultato
+         * Questo viene chiamato quando il thread ha finito e gli viene passato il risultato
          * del metodo precedente. Con questo risultato chiama il metodo della Activity per
          * parsare il JSON.
          *
@@ -327,9 +328,11 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
 
                 if (photo != null) {
                     photoURL = new URL(photo.getString("960_url"));
+                    imgExists = true;
                     new DownloadImageTask().execute(photoURL);
                 }
                 else{
+                    imgExists = false;
                     savePOI(title,description,img); //salvo nel database il poi
                 }
             }
@@ -409,6 +412,10 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
 
             } catch (MalformedURLException e) {
                 e.printStackTrace();
+            }
+            if(!imgExists){
+                Log.d(LOG_TAG, "Risultato senza immagine ");
+                mainImage.setVisibility(View.GONE);
             }
        }
        else {

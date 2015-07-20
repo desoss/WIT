@@ -26,6 +26,7 @@ import android.os.Bundle;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.util.Base64;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -79,10 +80,6 @@ public class WitMainActivity extends ActionBarActivity implements FragmentDrawer
     private boolean stop;
     private Toolbar mToolbar;
     private FragmentDrawer drawerFragment;
-
-
-
-
 
 
     /**
@@ -334,8 +331,8 @@ public class WitMainActivity extends ActionBarActivity implements FragmentDrawer
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         FacebookSdk.sdkInitialize(getApplicationContext());
-
-       /* // Add code to print out the key hash
+        /*
+        // Add code to print out the key hash
         try {
             PackageInfo info = getPackageManager().getPackageInfo(
                     "it.polimi.dmw.wit",
@@ -502,6 +499,7 @@ public class WitMainActivity extends ActionBarActivity implements FragmentDrawer
      */
     public void scanClickHandler(View view) {
 
+        scanText.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 21);
         // Inizia l'animazione e cambia il testo
         scanText.setText(R.string.scanning_button_text);
         scanButton.startAnimation(scanClickedAnimation);
