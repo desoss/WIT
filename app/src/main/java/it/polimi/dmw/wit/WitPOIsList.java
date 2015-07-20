@@ -57,6 +57,8 @@ public class WitPOIsList extends ActionBarActivity implements FragmentDrawer.Fra
 
         setSupportActionBar(mToolbar);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
+        getSupportActionBar().setTitle(R.string.title_activity_POIs_list);
+
 
         drawerFragment = (FragmentDrawer)
                 getSupportFragmentManager().findFragmentById(R.id.fragment_navigation_drawer);
@@ -255,8 +257,8 @@ public class WitPOIsList extends ActionBarActivity implements FragmentDrawer.Fra
                 startActivity(i);
                 break;
             case 1:
-                i = new Intent(this, WitPOIsList.class);
-                startActivity(i);
+              //  i = new Intent(this, WitPOIsList.class);
+            //    startActivity(i);
                 break;
             case 2:
                 i = new Intent(this, WitFacebookLogin.class);
@@ -281,7 +283,6 @@ public class WitPOIsList extends ActionBarActivity implements FragmentDrawer.Fra
     private void startSettingPage(){
         Intent i = new Intent(this, WitSettings.class);
         startActivity(i);
-        getSupportActionBar().setTitle("Settings");
 
     }
 

@@ -351,6 +351,8 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
 
         setSupportActionBar(mToolbar);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
+        getSupportActionBar().setTitle(R.string.title_activity_wit_list);
+
 
         drawerFragment = (FragmentDrawer)
                 getSupportFragmentManager().findFragmentById(R.id.fragment_navigation_drawer);
@@ -749,7 +751,6 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
     private void startSettingPage(){
         Intent i = new Intent(this, WitSettings.class);
         startActivity(i);
-        getSupportActionBar().setTitle("Settings");
 
     }
 

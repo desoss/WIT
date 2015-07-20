@@ -50,6 +50,8 @@ public class WitSavedPOI extends ActionBarActivity implements FragmentDrawer.Fra
 
         setSupportActionBar(mToolbar);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
+        getSupportActionBar().setTitle(R.string.title_activity_Saved_POI);
+
 
         drawerFragment = (FragmentDrawer)
                 getSupportFragmentManager().findFragmentById(R.id.fragment_navigation_drawer);
@@ -166,7 +168,6 @@ public class WitSavedPOI extends ActionBarActivity implements FragmentDrawer.Fra
     private void startSettingPage(){
         Intent i = new Intent(this, WitSettings.class);
         startActivity(i);
-        getSupportActionBar().setTitle("Settings");
 
     }
 

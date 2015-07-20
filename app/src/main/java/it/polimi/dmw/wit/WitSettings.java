@@ -44,6 +44,8 @@ public class WitSettings extends ActionBarActivity implements FragmentDrawer.Fra
 
         setSupportActionBar(mToolbar);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
+        getSupportActionBar().setTitle(R.string.action_settings);
+
 
         drawerFragment = (FragmentDrawer)
                 getSupportFragmentManager().findFragmentById(R.id.fragment_navigation_drawer);
@@ -86,7 +88,6 @@ public class WitSettings extends ActionBarActivity implements FragmentDrawer.Fra
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
-            startSettingPage();
             return true;
         }
 
@@ -96,7 +97,6 @@ public class WitSettings extends ActionBarActivity implements FragmentDrawer.Fra
     private void displayView(int position) {
         Fragment fragment = null;
         Intent i = null;
-        String title = getString(R.string.app_name);
         switch (position) {
             case 0:
                 i = new Intent(this, WitMainActivity.class);
@@ -123,14 +123,8 @@ public class WitSettings extends ActionBarActivity implements FragmentDrawer.Fra
             fragmentTransaction.commit();  */
 
             // set the toolbar title
-            getSupportActionBar().setTitle(title);
         }
     }
-    private void startSettingPage(){
-        Intent i = new Intent(this, WitSettings.class);
-        startActivity(i);
-        getSupportActionBar().setTitle("Settings");
 
-    }
 
 }

@@ -358,6 +358,8 @@ public class WitMainActivity extends ActionBarActivity implements FragmentDrawer
 
         setSupportActionBar(mToolbar);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
+        getSupportActionBar().setTitle(R.string.app_name);
+
 
         drawerFragment = (FragmentDrawer)
                 getSupportFragmentManager().findFragmentById(R.id.fragment_navigation_drawer);
@@ -775,8 +777,8 @@ public class WitMainActivity extends ActionBarActivity implements FragmentDrawer
         String title = getString(R.string.app_name);
         switch (position) {
             case 0:
-                i = new Intent(this, WitMainActivity.class);
-                startActivity(i);
+               // i = new Intent(this, WitMainActivity.class);
+                //startActivity(i);
                 break;
             case 1:
                 i = new Intent(this, WitPOIsList.class);
@@ -806,7 +808,6 @@ public class WitMainActivity extends ActionBarActivity implements FragmentDrawer
     private void startSettingPage(){
         Intent i = new Intent(this, WitSettings.class);
         startActivity(i);
-        getSupportActionBar().setTitle("Settings");
 
     }
 

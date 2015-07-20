@@ -105,6 +105,8 @@ public class WitFacebookLogin extends ActionBarActivity implements FragmentDrawe
 
         setSupportActionBar(mToolbar);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
+        getSupportActionBar().setTitle(R.string.title_activity_Facebook_Login);
+
 
         drawerFragment = (FragmentDrawer)
                 getSupportFragmentManager().findFragmentById(R.id.fragment_navigation_drawer);
@@ -435,8 +437,8 @@ private class DownloadImageTask extends AsyncTask<URL, Void, Bitmap> {
                 startActivity(i);
                 break;
             case 2:
-                i = new Intent(this, WitFacebookLogin.class);
-                startActivity(i);
+               // i = new Intent(this, WitFacebookLogin.class);
+              //  startActivity(i);
                 break;
 
 
@@ -458,7 +460,6 @@ private class DownloadImageTask extends AsyncTask<URL, Void, Bitmap> {
     private void startSettingPage(){
         Intent i = new Intent(this, WitSettings.class);
         startActivity(i);
-        getSupportActionBar().setTitle("Settings");
 
     }
 
