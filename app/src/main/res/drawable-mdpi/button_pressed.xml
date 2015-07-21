@@ -12,7 +12,7 @@
                 android:height="250dp" />
             <stroke
                 android:width="5dip"
-                android:color="#ffffff"
+                android:color="@color/white"
                 android:dashWidth="11dip"
                 android:dashGap="10dip"
                 />
