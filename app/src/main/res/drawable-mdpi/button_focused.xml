@@ -16,7 +16,7 @@
                 android:dashWidth="11dip"
                 android:dashGap="10dip"
                 />
-            <solid  android:color="#125156"/>
+            <solid  android:color="?attr/colorPrimary"/>
         </shape>
     </item>
     <item>
