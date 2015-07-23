@@ -136,7 +136,8 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
 
 
     public void saveResult(String t, String d, String wLink, URL imgURL) {
-
+        title = t;
+        description = d;
         titleText.setText(t);
         descText.setText(d);
         wikiLink = wLink;
