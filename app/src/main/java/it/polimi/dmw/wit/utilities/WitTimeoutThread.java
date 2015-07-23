@@ -1,4 +1,4 @@
-package it.polimi.dmw.wit;
+package it.polimi.dmw.wit.utilities;
 
 import android.os.Handler;
 import android.util.Log;

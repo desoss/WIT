@@ -1,4 +1,4 @@
-package it.polimi.dmw.wit;
+package it.polimi.dmw.wit.utilities;
 
 import android.location.Location;
 import android.os.Bundle;

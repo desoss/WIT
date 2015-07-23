@@ -1,9 +1,7 @@
-package it.polimi.dmw.wit;
+package it.polimi.dmw.wit.utilities;
 
 import android.os.Parcel;
 import android.os.Parcelable;
-
-import java.io.Serializable;
 
 /**
  * Classe per gestire le informazioni su un POI

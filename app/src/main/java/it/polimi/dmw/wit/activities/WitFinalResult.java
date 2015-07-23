@@ -1,17 +1,13 @@
-package it.polimi.dmw.wit;
+package it.polimi.dmw.wit.activities;
 
-import android.app.Activity;
 import android.app.Fragment;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.res.Configuration;
-import android.content.res.TypedArray;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
-import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.widget.DrawerLayout;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
@@ -20,28 +16,15 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.Window;
-import android.widget.AdapterView;
 import android.widget.ImageView;
-import android.widget.ListView;
 import android.widget.TextView;
 
-import com.facebook.CallbackManager;
-import com.facebook.FacebookCallback;
-import com.facebook.FacebookException;
-import com.facebook.share.Sharer;
-import com.facebook.share.model.ShareOpenGraphAction;
-import com.facebook.share.model.ShareOpenGraphContent;
-import com.facebook.share.model.ShareOpenGraphObject;
-import com.facebook.share.widget.ShareButton;
-import com.facebook.share.widget.ShareDialog;
 import com.sromku.simple.fb.Permission;
 import com.sromku.simple.fb.SimpleFacebook;
 import com.sromku.simple.fb.SimpleFacebookConfiguration;
 import com.sromku.simple.fb.entities.Story;
 import com.sromku.simple.fb.listeners.OnCreateStoryObject;
 import com.sromku.simple.fb.listeners.OnPublishListener;
-import com.sromku.simple.fb.utils.Utils;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -61,8 +44,13 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 
+import it.polimi.dmw.wit.sliderMenu.FragmentDrawer;
 import it.polimi.dmw.wit.Polygon.Point;
 import it.polimi.dmw.wit.Polygon.Polygon;
+import it.polimi.dmw.wit.R;
+import it.polimi.dmw.wit.utilities.WitDownloadImageTask;
+import it.polimi.dmw.wit.utilities.WitDownloadTask;
+import it.polimi.dmw.wit.utilities.WitPOI;
 import it.polimi.dmw.wit.database.DbAdapter;
 
 
@@ -73,6 +61,9 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
 
 
     private SimpleFacebook mSimpleFacebook;
+    WitDownloadTask witDownloadTask;
+    WitDownloadImageTask witDownloadImageTask;
+
 
 
     private final static String LOG_TAG = "WitFinalResult";
@@ -134,213 +125,30 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
 
     private String wikiLink;
 
-    /**
-     * Classe privata per downloadare il JSON senza bloccare la user interface, viene eseguita
-     * su un thread a parte. E' una classe interna così può chiamare i metodi dell'activity
-     * direttamente
-     */
-    class WitDownloadTask extends AsyncTask<URL, Void, String> {
 
-        // Membri per leggere la risposta HTTP
-        private InputStream is;
-        private BufferedReader br;
-        private StringBuilder sb;
-        private String line;
 
-        public WitDownloadTask() {
-            is = null;
-            br = null;
-            sb = null;
-            line = "";
-        }
 
-        /**
-         * Metodo che viene chiamato quando parte il thread secondario. Fa la richiesta e
-         * riceve il JSON come una stringa
-         *
-         * @param params array che contiene gli URL da contattare, params[0] è il server con già
-         *               la richiesta pronta.
-         * @return la String contenente il JSON scaricato
-         */
-        @Override
-        protected String doInBackground(URL... params) {
-
-            try {
-                // Crea la connessione HTTP
-                HttpURLConnection conn = (HttpURLConnection) params[0].openConnection();
-                conn.setReadTimeout(10000 /* milliseconds */);
-                conn.setConnectTimeout(15000 /* milliseconds */);
-                conn.setRequestMethod("GET");
-                conn.setDoInput(true);
-                // Starts the query
-                conn.connect();
-
-                // Riceve la risposta
-                int response = conn.getResponseCode();
-
-                // Logga il codice HTTP (200, 404, etc.)
-                Log.d("WitMainActivity", "HTTP CODE: " + String.valueOf(response));
-
-                // Prende il contenuto della risposta come un InputStream
-                is = conn.getInputStream();
-
-                sb = new StringBuilder();
-
-                try {
-                    // Legge la risposta linea per linea e la inserisce nello StringBuilder
-                    br = new BufferedReader(new InputStreamReader(is));
-                    while ((line = br.readLine()) != null) {
-                        sb.append(line);
-                    }
-                } catch (IOException e) {
-                    Log.e("WitMainActivity", "ERROR: cannot read input stream");
-                    e.printStackTrace();
-                } finally {
-                    if (br != null) {
-                        br.close();
-                    }
-                }
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-            } catch (ProtocolException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-                if (is != null) {
-                    try {
-                        is.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-            // Dallo string builder esce la string con il JSON
-            return sb.toString();
-        }
-
-        /**
-         * Questo viene chiamato quando il thread ha finito e gli viene passato il risultato
-         * del metodo precedente. Con questo risultato chiama il metodo della Activity per
-         * parsare il JSON.
-         *
-         * @param s
-         */
-        @Override
-        protected void onPostExecute(String s) {
-            // I super lasciamoli che fa serio
-            super.onPostExecute(s);
-            // Chiama il metodo dell'activity per stampare i dettagli
-            parseJsonDetail(s);
-
-        }
-
-    }
-    /**
-     * Classe privata per downloadare le immagini da stampare. Viene eseguita
-     * su un thread a parte. E' una classe interna così può chiamare i metodi dell'activity
-     * direttamente
-     */
-    private class DownloadImageTask extends AsyncTask<URL, Void, Bitmap> {
-
-        protected Bitmap doInBackground(URL... urls) {
-            Bitmap downloadBitmap = null;
-            try {
-                InputStream in = urls[0].openStream();
-                downloadBitmap = BitmapFactory.decodeStream(in);
-            } catch (Exception e) {
-                Log.e(LOG_TAG, e.getMessage());
-                e.printStackTrace();
-            }
-            return downloadBitmap;
-        }
-
-        protected void onPostExecute(Bitmap result) {
-
+    public void setImage(Bitmap result, byte[] img) {
             mainImage.setImageBitmap(result);
-            ByteArrayOutputStream bos=new ByteArrayOutputStream();
-            result.compress(Bitmap.CompressFormat.PNG, 100, bos);
-            img=bos.toByteArray();
             savePOI(title,description,img); //salvo nel database il poi
         }
-    }
-
-    /**
-     * Parsa il json dei dettagli e trova:
-     *  titolo
-     *  descrizione
-     *  una foto
-     *
-     * @param resultJson
-     */
-    private void parseJsonDetail(String resultJson) {
-        /*
-            struttura JSON
-
-            {
-                title : "",
-                description : "",
-                photos : [],
-                wikipedia link: ""
-                ...
-            }
 
 
-         */
 
-        JSONTokener tokener = null;
-        JSONObject documentObject = null;
-        JSONObject photo = null;
-        JSONArray photos = null;
+    public void saveResult(String t, String d, String wLink, URL imgURL) {
 
-        Log.d(LOG_TAG,"JSON received! Length = "+resultJson.length());
-        Log.d(LOG_TAG,resultJson);
-
-        // Inizializza il tokener
-        tokener = new JSONTokener(resultJson);
-        try {
-            // Prendi il primo oggetto JSON,
-            documentObject = (JSONObject)tokener.nextValue();
-
-            // Prendi i campi di interesse
-            title = documentObject.getString("title");
-            if(documentObject.getString("description")!=null) {
-                description = documentObject.getString("description");
-            }
-
-           try{
-                wikiLink = documentObject.getString("wikipedia"); }
-           catch (JSONException e){
-               Log.d(LOG_TAG,"No link a Wikipedia");
-           }
-
-
-            titleText.setText(title);
-            descText.setText(description);
-
-
-            // Se l'array dei places non è vuoto
-            if (!documentObject.isNull("photos")) {
-                // Prendi l'array delle photo
-                photos = documentObject.getJSONArray("photos");
-                if(photos.length()>0){
-                photo = photos.getJSONObject(0);}
-
-                if (photo != null) {
-                    photoURL = new URL(photo.getString("960_url"));
+        titleText.setText(t);
+        descText.setText(d);
+        wikiLink = wLink;
+        if (imgURL != null) {
                     imgExists = true;
-                    new DownloadImageTask().execute(photoURL);
+                    witDownloadImageTask = new WitDownloadImageTask(this,witDownloadImageTask.POIDETAIL);
+            witDownloadImageTask.execute(imgURL);
                 }
                 else{
                     imgExists = false;
                     savePOI(title,description,img); //salvo nel database il poi
                 }
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
         checkSettingFb();
     }
 
@@ -407,8 +215,8 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
         if (correctPoiList.size()>0) {
             try {
                 URL detailUrl = new URL("http://api.wikimapia.org/?key=example&function=place.getbyid&id=" + correctPoiList.get(0).getPoiId() + "&format=json&language=it");
-
-                new WitDownloadTask().execute(detailUrl);
+                witDownloadTask = new WitDownloadTask(this, witDownloadTask.POIDETAIL);
+                witDownloadTask.execute(detailUrl);
 
             } catch (MalformedURLException e) {
                 e.printStackTrace();

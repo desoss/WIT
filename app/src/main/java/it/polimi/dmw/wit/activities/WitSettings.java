@@ -1,25 +1,21 @@
-package it.polimi.dmw.wit;
+package it.polimi.dmw.wit.activities;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.CompoundButton;
 import android.widget.Switch;
-import android.widget.ToggleButton;
 
+import it.polimi.dmw.wit.sliderMenu.FragmentDrawer;
+import it.polimi.dmw.wit.R;
 import it.polimi.dmw.wit.database.DbAdapter;
 
 public class WitSettings extends ActionBarActivity implements FragmentDrawer.FragmentDrawerListener {

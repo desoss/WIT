@@ -19,7 +19,7 @@
             android:value="@integer/google_play_services_version" />
 
         <activity
-            android:name=".WitMainActivity"
+            android:name=".activities.WitMainActivity"
             android:label="@string/app_name"
             android:screenOrientation="portrait" >
             <intent-filter>
@@ -29,49 +29,49 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".WitFinalResult"
+            android:name=".activities.WitFinalResult"
             android:label="@string/title_activity_wit_list"
-            android:parentActivityName=".WitMainActivity"
+            android:parentActivityName=".activities.WitMainActivity"
             android:screenOrientation="portrait" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="it.polimi.dmw.wit.WitMainActivity" />
+                android:value=".activities.WitMainActivity" />
         </activity>
         <activity
-            android:name=".WitSettings"
+            android:name=".activities.WitSettings"
             android:label="@string/action_settings"
-            android:parentActivityName=".WitMainActivity"
+            android:parentActivityName=".activities.WitMainActivity"
             android:screenOrientation="portrait" >
         </activity>
         <activity
-            android:name=".WitPOIsList"
+            android:name=".activities.WitPOIsList"
             android:label="@string/title_activity_POIs_list"
-            android:parentActivityName=".WitMainActivity"
+            android:parentActivityName=".activities.WitMainActivity"
 
             android:screenOrientation="portrait" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="it.polimi.dmw.wit.WitMainActivity" />
+                android:value=".activities.WitMainActivity" />
         </activity>
         <activity
-        android:name=".WitSavedPOI"
+        android:name=".activities.WitSavedPOI"
         android:label="@string/title_activity_Saved_POI"
-        android:parentActivityName=".WitPOIsList"
+        android:parentActivityName=".activities.WitPOIsList"
 
         android:screenOrientation="portrait" >
         <meta-data
             android:name="android.support.PARENT_ACTIVITY"
-            android:value="it.polimi.dmw.wit.WitPOIsList" />
+            android:value=".activities.WitPOIsList" />
     </activity>
         <activity
-            android:name=".WitFacebookLogin"
+            android:name=".activities.WitFacebookLogin"
             android:label="@string/title_activity_Facebook_Login"
-            android:parentActivityName=".WitMainActivity"
+            android:parentActivityName=".activities.WitMainActivity"
 
             android:screenOrientation="portrait" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="it.polimi.dmw.wit.WitMainActivity" />
+                android:value=".activities.WitMainActivity" />
         </activity>
         <activity android:name="com.facebook.FacebookActivity"
             android:configChanges=

@@ -1,4 +1,4 @@
-package it.polimi.dmw.wit;
+package it.polimi.dmw.wit.activities;
 
 
 import android.app.Activity;
@@ -17,15 +17,17 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import com.pkmmte.view.CircularImageView;
+
+import it.polimi.dmw.wit.sliderMenu.FragmentDrawer;
+import it.polimi.dmw.wit.R;
 import it.polimi.dmw.wit.database.DbAdapter;
 
-public class WitPOIsList extends ActionBarActivity implements FragmentDrawer.FragmentDrawerListener  {
+public class WitPOIsList extends ActionBarActivity implements FragmentDrawer.FragmentDrawerListener {
 
    private DbAdapter dbAdapter;
     private Cursor cursor;
@@ -81,9 +83,7 @@ public class WitPOIsList extends ActionBarActivity implements FragmentDrawer.Fra
         values=new String[cursor.getCount()];
         images = new byte[cursor.getCount()][];
         idPOI=new int[cursor.getCount()];
-        int count=0;
-        String n;
-
+        int count=cursor.getCount()-1;
         while ( cursor.moveToNext() ) {
 
           values[count]=cursor.getString(cursor.getColumnIndex(DbAdapter.KEY_NAME));
@@ -91,7 +91,7 @@ public class WitPOIsList extends ActionBarActivity implements FragmentDrawer.Fra
           images[count]=cursor.getBlob(cursor.getColumnIndex(DbAdapter.KEY_IMAGE));
             Log.d( LOG_TAG,"nome POI = " +values[count]+idPOI[count]);
 
-            count++;
+            count--;
 
            //  n = cursor.getString( cursor.getColumnIndex(DbAdapter.KEY_NAME) );
            // int a=cursor.getInt(cursor.getColumnIndex(DbAdapter.KEY_ID));

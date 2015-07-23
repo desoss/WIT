@@ -1,15 +1,11 @@
-package it.polimi.dmw.wit;
+package it.polimi.dmw.wit.activities;
 
 
-import android.app.Activity;
 import android.app.Fragment;
 import android.content.Intent;
-import android.content.res.Configuration;
-import android.content.res.TypedArray;
 import android.database.Cursor;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
-import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
@@ -17,14 +13,11 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.Window;
-import android.widget.AdapterView;
 import android.widget.ImageView;
-import android.widget.ListView;
 import android.widget.TextView;
 
-import java.util.ArrayList;
-
+import it.polimi.dmw.wit.sliderMenu.FragmentDrawer;
+import it.polimi.dmw.wit.R;
 import it.polimi.dmw.wit.database.DbAdapter;
 
 public class WitSavedPOI extends ActionBarActivity implements FragmentDrawer.FragmentDrawerListener {

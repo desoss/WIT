@@ -1,34 +1,24 @@
-package it.polimi.dmw.wit;
+package it.polimi.dmw.wit.activities;
 
 
-import android.app.Activity;
 import android.app.Fragment;
-import android.content.ContentValues;
 import android.content.Intent;
-import android.content.res.Configuration;
-import android.content.res.TypedArray;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
-import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.Window;
-import android.widget.AdapterView;
-import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.ListView;
 import android.widget.TextView;
 
 import com.facebook.AccessToken;
-import com.facebook.AccessTokenTracker;
 import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
@@ -39,22 +29,20 @@ import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
 import com.pkmmte.view.CircularImageView;
-import com.sromku.simple.fb.Permission;
-import com.sromku.simple.fb.listeners.OnLoginListener;
-import com.sromku.simple.fb.listeners.OnLogoutListener;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
-import java.util.List;
 
 import android.support.v7.app.ActionBarActivity;
-import android.support.v7.widget.Toolbar;
 
 
+import it.polimi.dmw.wit.sliderMenu.FragmentDrawer;
+import it.polimi.dmw.wit.R;
 import it.polimi.dmw.wit.database.DbAdapter;
+import it.polimi.dmw.wit.utilities.WitDownloadImageTask;
 
 public class WitFacebookLogin extends ActionBarActivity implements FragmentDrawer.FragmentDrawerListener {
 
@@ -79,6 +67,8 @@ public class WitFacebookLogin extends ActionBarActivity implements FragmentDrawe
     private Toolbar mToolbar;
     private FragmentDrawer drawerFragment;
     private  Profile profile;
+    WitDownloadImageTask witDownloadImageTask;
+
 
 
 
@@ -212,8 +202,7 @@ public class WitFacebookLogin extends ActionBarActivity implements FragmentDrawe
                             e.printStackTrace();
                         }
 
-                        new DownloadImageTask().execute(photoURL);
-
+                        startDownloadImage(photoURL);
                         loginB.setVisibility(View.GONE);
                         logoutB.setVisibility(View.VISIBLE);
 
@@ -231,6 +220,11 @@ public class WitFacebookLogin extends ActionBarActivity implements FragmentDrawe
 
 
 
+    }
+
+    private void startDownloadImage(URL photoURL){
+        witDownloadImageTask = new WitDownloadImageTask(this,witDownloadImageTask.FACEBOOK);
+        witDownloadImageTask.execute(photoURL);
     }
 
     private void logout(){
@@ -308,7 +302,7 @@ public class WitFacebookLogin extends ActionBarActivity implements FragmentDrawe
         return stringBuffer.toString();
     }
 
-
+/*
     private void onFbLogin(){
         mCallbackManager = CallbackManager.Factory.create();
         mButtonLogin.setReadPermissions("user_friends");
@@ -353,30 +347,13 @@ public class WitFacebookLogin extends ActionBarActivity implements FragmentDrawe
 
     }
 
+    */
 
-private class DownloadImageTask extends AsyncTask<URL, Void, Bitmap> {
 
-        protected Bitmap doInBackground(URL... urls) {
-            Bitmap downloadBitmap = null;
-            try {
-                InputStream in = urls[0].openStream();
-                downloadBitmap = BitmapFactory.decodeStream(in);
-            } catch (Exception e) {
-                Log.e(LOG_TAG, e.getMessage());
-                e.printStackTrace();
-            }
-            return downloadBitmap;
-        }
-
-        protected void onPostExecute(Bitmap result) {
-            circularImageView.setImageBitmap(result);
-            ByteArrayOutputStream bos=new ByteArrayOutputStream();
-            result.compress(Bitmap.CompressFormat.PNG, 100, bos);
-            img=bos.toByteArray();
-            saveUser(id, name, surname, img);
-        }
+    public void setImage(Bitmap result, byte[] img) {
+        circularImageView.setImageBitmap(result);
+        saveUser(id, name, surname, img);
     }
-
 
     private void saveUser(long id, String name, String surname, byte[] img) {
         dbAdapter = new DbAdapter(this);

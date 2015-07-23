@@ -1,14 +1,9 @@
-package it.polimi.dmw.wit;
+package it.polimi.dmw.wit.activities;
 
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-import android.content.pm.Signature;
-import android.content.res.Configuration;
-import android.content.res.TypedArray;
 import android.hardware.SensorManager;
 import android.location.Location;
 import android.location.LocationManager;
@@ -19,23 +14,16 @@ import android.os.Handler;
 import android.os.Message;
 import android.provider.Settings;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v4.widget.DrawerLayout;
 import android.os.Bundle;
-import android.support.v4.app.ActionBarDrawerToggle;
-import android.util.Base64;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.Window;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
-import android.widget.AdapterView;
 import android.widget.Button;
-import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -54,15 +42,19 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import android.os.Bundle;
+
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
-import android.view.Menu;
-import android.view.MenuItem;
 
+import it.polimi.dmw.wit.sliderMenu.FragmentDrawer;
+import it.polimi.dmw.wit.R;
+import it.polimi.dmw.wit.utilities.WitDownloadTask;
+import it.polimi.dmw.wit.utilities.WitLocationAPI;
+import it.polimi.dmw.wit.utilities.WitLocationProvider;
+import it.polimi.dmw.wit.utilities.WitOrientationProvider;
+import it.polimi.dmw.wit.utilities.WitPOI;
+import it.polimi.dmw.wit.utilities.WitTimeoutThread;
 
 
 /**
@@ -117,6 +109,7 @@ public class WitMainActivity extends ActionBarActivity implements FragmentDrawer
      */
     WitLocationProvider locationProvider;
     WitOrientationProvider orientationProvider;
+    WitDownloadTask witDownloadTask;
 
     /**
      * Gestori dei sensori del sistema
@@ -135,119 +128,7 @@ public class WitMainActivity extends ActionBarActivity implements FragmentDrawer
      */
     Location currentLocation = null;
 
-    /**
-     * ArrayList per conteneri i POIs
-     */
-    ArrayList<WitPOI> poiList;
 
-    /**
-     * Classe privata per downloadare il JSON senza bloccare la user interface, viene eseguita
-     * su un thread a parte. E' una classe interna così può chiamare i metodi dell'activity
-     * direttamente
-     */
-    private class WitDownloadTask extends AsyncTask<URL, Void, String> {
-
-        // Membri per leggere la risposta HTTP
-        private InputStream is;
-        private BufferedReader br;
-        private StringBuilder sb;
-        private String line;
-
-        public WitDownloadTask() {
-            is = null;
-            br = null;
-            sb = null;
-            line = "";
-        }
-
-        /**
-         * Metodo che viene chiamato quando parte il thread secondario. Fa la richiesta e
-         * riceve il JSON come una stringa
-         *
-         * @param params array che contiene gli URL da contattare, params[0] è il server con già
-         *               la richiesta pronta.
-         * @return la String contenente il JSON scaricato
-         */
-        @Override
-        protected String doInBackground(URL... params) {
-
-            try {
-                // Crea la connessione HTTP
-                HttpURLConnection conn = (HttpURLConnection) params[0].openConnection();
-                conn.setReadTimeout(10000 /* milliseconds */);
-                conn.setConnectTimeout(15000 /* milliseconds */);
-                conn.setRequestMethod("GET");
-                conn.setDoInput(true);
-                // Starts the query
-                conn.connect();
-
-                // Riceve la risposta
-                int response = conn.getResponseCode();
-
-                // Logga il codice HTTP (200, 404, etc.)
-                Log.d("WitMainActivity", "HTTP CODE: " + String.valueOf(response));
-
-                // Prende il contenuto della risposta come un InputStream
-                is = conn.getInputStream();
-
-                sb = new StringBuilder();
-
-                try {
-                    // Legge la risposta linea per linea e la inserisce nello StringBuilder
-                    br = new BufferedReader(new InputStreamReader(is));
-                    while ((line = br.readLine()) != null) {
-                        sb.append(line);
-                    }
-                } catch (IOException e) {
-                    Log.e("WitMainActivity","ERROR: cannot read input stream");
-                    e.printStackTrace();
-                } finally {
-                    if (br != null) {
-                        br.close();
-                    }
-                }
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-            } catch (ProtocolException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-                if (is != null) {
-                    try {
-                        is.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-
-            // Dallo string builder esce la string con il JSON
-            return sb.toString();
-        }
-
-        /**
-         * Questo viene chiamato quando il thread a finito e gli viene passato il risultato
-         * del metodo precedente. Con questo risultato chiama il metodo della Activity per
-         * parsare il JSON.
-         *
-         * @param s
-         */
-        @Override
-        protected void onPostExecute(String s) {
-            // I super lasciamoli che fa serio
-            super.onPostExecute(s);
-
-            // Chiama il metodo dell'activity per gestire il JSON
-
-            if(stop){
-                onPause();
-            }
-            else{
-            parseJsonPOIs(s);}
-
-        }
-    }
 
     /**
      * Gestore dei messaggi tra timeoutThread e activity
@@ -367,8 +248,6 @@ public class WitMainActivity extends ActionBarActivity implements FragmentDrawer
 
 
 
-        // Inizializza la lista monumenti
-        poiList = new ArrayList<WitPOI>();
 
         // Inizializza i riferimenti hai gestori di sistema
         locationManager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
@@ -566,102 +445,30 @@ public class WitMainActivity extends ActionBarActivity implements FragmentDrawer
 
     }
 
+
     /**
-     * Prende una stringa di input, crea un ArrayList con i POI contenuti nel JSON
-     * e fa partire l'activity per mostrare i risultati.
+     * Crea un URL e fa partire il thread che gestisce il download del JSON
      *
-     * NOTA: questo metodo è chiamato del thread che scarica il JSON dopo che ha finito
-     * di scaricare, però viene eseguito dal thread principale dell'applicazione.
-     *
-     * @param resultJson la stringa contenente il JSON
+     * @param serverUrl url del server già completo di parametri
      */
-    public void parseJsonPOIs(String resultJson) {
-        /*
+    private void getMonumentsFromServer(String serverUrl) {
 
-            Struttura Json
-
-            {
-                places: [array] o null
-                found: value,
-                side: value
-            }
-
-         */
-
-        // Inizializza gli oggetti per il parsing
-        JSONTokener tokener = null;
-        JSONObject documentObject = null;
-        JSONObject place = null;
-        JSONArray places = null;
-        JSONArray polygon = null;
-        JSONObject coords = null;
-        float[] x;
-        float[] y;
+        Log.d("WitMainActivity","SERVER URL: "+serverUrl);
 
 
-        // Contiene il numero di monumenti ritornati
-        int poisNumber = 0;
-
-        Log.d(LOG_TAG,"JSON received! Length = "+resultJson.length());
-        Log.d(LOG_TAG,resultJson);
-
-        // Pulisci la lista dei monumenti
-        poiList.clear();
-
-        // Inizializza il tokener
-        tokener = new JSONTokener(resultJson);
         try {
-            // Prendi il primo oggetto JSON,
-            // Sarebbe l'oggetto {places :[] , found: ..., side : ...}
-            documentObject = (JSONObject)tokener.nextValue();
+            URL url = new URL(serverUrl);
 
-            // Verifica quanti monumenti ho
-            poisNumber = documentObject.getInt("found");
-            Log.d(LOG_TAG,"Trovati: "+poisNumber);
+            // WitDownloadTask è la classe che gestisce il download
+            witDownloadTask = new WitDownloadTask(this,witDownloadTask.POISLIST);
+            witDownloadTask.execute(url);
 
-            // Se l'array dei places non è vuoto
-            if (!documentObject.isNull("places")) {
-                // Prendi l'array dei monumenti
-                places = documentObject.getJSONArray("places");
-            }
-
-            // Per ogni monumento nell'array places
-            for (int i = 0; i < poisNumber; i++) {
-
-                // Prendi l'oggetto corrispondente al monumenti i-esimo
-                // sarebbe l'oggetto con i campi id, name, distance, lat, lon e l'array polygon
-                place = places.getJSONObject(i);
-                polygon = place.getJSONArray("polygon");
-                x = new float [polygon.length()];
-                y = new float [polygon.length()];
-             //   Log.d(LOG_TAG,place.getString("name"));
-
-
-                //salvo in due array x e y le coordinate dei punti del poligono di ogni place
-                for(int j=0; j<polygon.length();j++){
-                    coords = polygon.getJSONObject(j);
-                    x[j] = Float.parseFloat(coords.getString("y"));
-                    y[j] = Float.parseFloat(coords.getString("x"));
-                  //  Log.d(LOG_TAG,"x: "+x[j]+" y: "+y[j]);
-
-                }
-               // Log.d(LOG_TAG,"-------------------------------");
-
-                // Crea un oggetto WitPOI per ogni monumento del JSON
-                poiList.add(new WitPOI(
-                        place.getInt("id"),
-                        place.getString("name"),
-                        place.getDouble("distance"),
-                        place.getDouble("lat"),
-                        place.getDouble("lon"),
-                        x,
-                        y
-                ));
-            }
-        } catch (JSONException e) {
+        } catch (MalformedURLException e) {
             e.printStackTrace();
         }
+    }
 
+    public void startfinalResult( ArrayList<WitPOI> poiList){
         // Crea un intent per far partire un'altra Activity
         Intent intent = new Intent(this, WitFinalResult.class);
 
@@ -681,27 +488,7 @@ public class WitMainActivity extends ActionBarActivity implements FragmentDrawer
 
         // Fai partire l'attività dei risultati
         startActivity(intent);
-    }
 
-    /**
-     * Crea un URL e fa partire il thread che gestisce il download del JSON
-     *
-     * @param serverUrl url del server già completo di parametri
-     */
-    private void getMonumentsFromServer(String serverUrl) {
-
-        Log.d("WitMainActivity","SERVER URL: "+serverUrl);
-
-
-        try {
-            URL url = new URL(serverUrl);
-
-            // WitDownloadTask è la classe private che gestisce il download, vedere sopra.
-            new WitDownloadTask().execute(url);
-
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
     }
 
     /**

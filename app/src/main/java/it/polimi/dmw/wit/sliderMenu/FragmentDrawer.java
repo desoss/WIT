@@ -1,4 +1,4 @@
-package it.polimi.dmw.wit;
+package it.polimi.dmw.wit.sliderMenu;
 
 
 import android.content.Context;
@@ -24,9 +24,8 @@ import com.pkmmte.view.CircularImageView;
 import java.util.ArrayList;
 import java.util.List;
 
-import it.polimi.dmw.wit.sliderMenu.NavigationDrawerAdapter;
+import it.polimi.dmw.wit.R;
 import it.polimi.dmw.wit.database.DbAdapter;
-import it.polimi.dmw.wit.sliderMenu.NavDrawerItem;
 
 
 public class FragmentDrawer extends Fragment {
