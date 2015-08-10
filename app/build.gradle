@@ -29,4 +29,7 @@ dependencies {
     compile 'com.pkmmte.view:circularimageview:1.1'
     compile 'com.android.support:design:22.2.0'
     compile 'com.github.nirhart:parallaxscroll:1.0'
+    compile 'com.pnikosis:materialish-progress:1.5'
+
+
 }

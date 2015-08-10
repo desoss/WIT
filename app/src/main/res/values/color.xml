@@ -19,5 +19,7 @@
     <color name="windowBackground">#ffffff</color>
     <color name="navigationBarColor">#000000</color>
     <color name="colorAccent">#ffd1a4ff</color>
+    <color name="tabsScrollColor">#ff177e83</color>
+
 
 </resources>

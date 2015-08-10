@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
+import android.support.v4.app.Fragment;
 import android.util.Log;
 
 import java.io.ByteArrayOutputStream;
@@ -12,6 +13,7 @@ import java.net.URL;
 
 import it.polimi.dmw.wit.activities.WitFacebookLogin;
 import it.polimi.dmw.wit.activities.WitFinalResult;
+import it.polimi.dmw.wit.activities.WitInfo;
 
 
 public class WitDownloadImageTask extends AsyncTask<URL, Void, Bitmap> {
@@ -19,14 +21,17 @@ public class WitDownloadImageTask extends AsyncTask<URL, Void, Bitmap> {
     private final static String LOG_TAG = "WitDownloadImageTask";
     private byte[] img=null;
     Activity activity;
+    Fragment fragment;
     WitFacebookLogin facebookL;
     WitFinalResult finalR;
-    public static final int FACEBOOK = 0, POIDETAIL = 1;
+    WitInfo info;
+    public static final int FACEBOOK = 0, POIDETAIL = 1, CITY = 2, WEATHER = 3;
     private int c;
 
 
-    public WitDownloadImageTask(Activity activity, int c){
+    public WitDownloadImageTask(Activity activity, Fragment fragment, int c){
         this.activity = activity;
+        this.fragment = fragment;
         this.c = c;
 
     }
@@ -49,6 +54,7 @@ public class WitDownloadImageTask extends AsyncTask<URL, Void, Bitmap> {
         ByteArrayOutputStream bos=new ByteArrayOutputStream();
         result.compress(Bitmap.CompressFormat.PNG, 100, bos);
         img=bos.toByteArray();
+        Log.d(LOG_TAG, "image downloaded");
         switch (c){
             case FACEBOOK:
                 facebookL = (WitFacebookLogin)activity;
@@ -57,6 +63,12 @@ public class WitDownloadImageTask extends AsyncTask<URL, Void, Bitmap> {
             case POIDETAIL:
                 finalR = (WitFinalResult)activity;
                 finalR.setImage(result, img);
+                break;
+            case CITY:
+                info = (WitInfo) fragment;
+                info.setImageCity(result, img);
+                break;
+
 
         }
 

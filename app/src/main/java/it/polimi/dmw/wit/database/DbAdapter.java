@@ -23,6 +23,8 @@ public class DbAdapter {
     private static final String DATABASE_TABLE2 = "pois2"; //senza duplicati
     private static final String DATABASE_USER = "userProfile";
     private static final String DATABASE_SETTINGS = "settings";
+    private static final String DATABASE_CITY_INFO = "cityInfo";
+
 
 
     public static final String KEY_ID = "_id";
@@ -33,6 +35,8 @@ public class DbAdapter {
     public static final String KEY_DESCRIPTION = "description";
     public static final String KEY_DATE = "date";
     public static final String KEY_ISLOGGED = "isLogged";
+    public static final String KEY_WTEXT = "wText";
+    public static final String KEY_WCODE = "wCode";
 
     public DbAdapter(Context context) {
         this.context = context;
@@ -79,22 +83,35 @@ public class DbAdapter {
         return values;
     }
 
+    private ContentValues createContentValuesCITYINFO(long id, String name, String wText, String wCode, byte[]img ) {
+        ContentValues values = new ContentValues();
+        values.put(KEY_ID, id);
+        values.put(KEY_NAME, name);
+        values.put(KEY_WTEXT, wText);
+        values.put(KEY_WCODE, wCode);
+        values.put(KEY_IMAGE, img);
+
+        return values;
+    }
+
     public void savePOI(String name, String description, String date, byte[] img) {
         ContentValues initialValues = createContentValuesPOI(name, description, date, img);
          database.insertOrThrow(DATABASE_POI, null, initialValues);
-
     }
 
     public void saveUser(long id, String name, String surname, byte[] img, Boolean fb, Boolean isLogged) {
         ContentValues initialValues = createContentValuesUSER(id, name, surname, img, fb, isLogged);
         database.insertOrThrow(DATABASE_USER, null, initialValues);
-
     }
 
     public void saveSettings(long id, Boolean fb) {
         ContentValues initialValues = createContentValuesSETTINGS(id, fb);
         database.insertOrThrow(DATABASE_SETTINGS, null, initialValues);
+    }
 
+    public void saveCityInfo(long id, String name, String wText, String wCode, byte[]img) {
+        ContentValues initialValues = createContentValuesCITYINFO(id, name, wText, wCode, img);
+        database.insertOrThrow(DATABASE_CITY_INFO, null, initialValues);
     }
 
     public boolean updatePOI(long id, String name, String description, String date, byte[] img) {
@@ -139,6 +156,10 @@ public class DbAdapter {
 
     public Cursor fetchSETTINGS() {
         return database.query(DATABASE_SETTINGS, new String[]{KEY_ID, KEY_FB}, null, null, null, null, null,null);
+    }
+
+    public Cursor fetchCITYINFO() {
+        return database.query(DATABASE_CITY_INFO, new String[]{KEY_ID, KEY_NAME, KEY_WTEXT, KEY_WCODE, KEY_IMAGE}, null, null, null, null, null,null);
     }
 
     //fetch contacts filter by a string

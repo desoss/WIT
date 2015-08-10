@@ -223,7 +223,7 @@ public class WitFacebookLogin extends ActionBarActivity implements FragmentDrawe
     }
 
     private void startDownloadImage(URL photoURL){
-        witDownloadImageTask = new WitDownloadImageTask(this,witDownloadImageTask.FACEBOOK);
+        witDownloadImageTask = new WitDownloadImageTask(this, null, witDownloadImageTask.FACEBOOK);
         witDownloadImageTask.execute(photoURL);
     }
 

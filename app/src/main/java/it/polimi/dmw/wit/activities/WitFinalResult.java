@@ -19,6 +19,7 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.pnikosis.materialishprogress.ProgressWheel;
 import com.sromku.simple.fb.Permission;
 import com.sromku.simple.fb.SimpleFacebook;
 import com.sromku.simple.fb.SimpleFacebookConfiguration;
@@ -90,6 +91,8 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
 
     private Toolbar mToolbar;
     private FragmentDrawer drawerFragment;
+    private ProgressWheel progressWheel;
+
 
 
 
@@ -129,24 +132,28 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
 
 
     public void setImage(Bitmap result, byte[] img) {
-            mainImage.setImageBitmap(result);
+        stopWheel();
+        mainImage.setImageBitmap(result);
             savePOI(title,description,img); //salvo nel database il poi
         }
-
+    private void stopWheel(){
+        findViewById(R.id.progress_wheel).setVisibility(View.GONE);
+        titleText.setText(title);
+        descText.setText(description);
+    }
 
 
     public void saveResult(String t, String d, String wLink, URL imgURL) {
         title = t;
         description = d;
-        titleText.setText(t);
-        descText.setText(d);
         wikiLink = wLink;
         if (imgURL != null) {
                     imgExists = true;
-                    witDownloadImageTask = new WitDownloadImageTask(this,witDownloadImageTask.POIDETAIL);
+                    witDownloadImageTask = new WitDownloadImageTask(this, null, witDownloadImageTask.POIDETAIL);
             witDownloadImageTask.execute(imgURL);
                 }
                 else{
+                  stopWheel();
                     imgExists = false;
                     savePOI(title,description,img); //salvo nel database il poi
                 }
@@ -160,6 +167,13 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
         setContentView(R.layout.activity_wit_detail);
 
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
+        progressWheel = (ProgressWheel) findViewById(R.id.progress_wheel);
+
+
+        progressWheel = new ProgressWheel(this);
+        progressWheel.spin();
+
+
 
         setSupportActionBar(mToolbar);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
@@ -216,7 +230,7 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
         if (correctPoiList.size()>0) {
             try {
                 URL detailUrl = new URL("http://api.wikimapia.org/?key=example&function=place.getbyid&id=" + correctPoiList.get(0).getPoiId() + "&format=json&language=it");
-                witDownloadTask = new WitDownloadTask(this, witDownloadTask.POIDETAIL);
+                witDownloadTask = new WitDownloadTask(this, null, witDownloadTask.POIDETAIL);
                 witDownloadTask.execute(detailUrl);
 
             } catch (MalformedURLException e) {
@@ -228,7 +242,8 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
             }
        }
        else {
-           Drawable sadFace = getResources().getDrawable(R.drawable.sadface);
+            findViewById(R.id.progress_wheel).setVisibility(View.GONE);
+            Drawable sadFace = getResources().getDrawable(R.drawable.sadface);
            mainImage.setImageDrawable(sadFace);
            titleText.setText(title);
            descText.setText(description);

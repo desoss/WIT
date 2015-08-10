@@ -40,6 +40,8 @@ public class WitSavedPOI extends ActionBarActivity implements FragmentDrawer.Fra
 
         setContentView(R.layout.activity_wit_detail);
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
+        findViewById(R.id.progress_wheel).setVisibility(View.GONE);
+
 
         setSupportActionBar(mToolbar);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
