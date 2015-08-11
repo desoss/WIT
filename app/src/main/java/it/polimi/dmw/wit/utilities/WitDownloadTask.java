@@ -44,10 +44,6 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
     private String description;
     private String wikiLink;
     private URL photoURL;
-    private String city;
-    private String county;
-    private String state;
-    private String woeid;
     private String cityUrl;
     public static final int POISLIST = 0, POIDETAIL = 1, WOEID = 2, IMAGECITY = 3, WEATHER = 4;
     private int c;
@@ -296,6 +292,7 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
         JSONObject documentObject = null;
         JSONObject photo = null;
         JSONArray photos = null;
+        String id = null;
 
         Log.d(LOG_TAG, "JSON received! Length = " + resultJson.length());
         Log.d(LOG_TAG, resultJson);
@@ -308,6 +305,7 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
 
             // Prendi i campi di interesse
             title = documentObject.getString("title");
+            id = documentObject.getString("id");
             if(documentObject.getString("description")!=null) {
                 description = documentObject.getString("description");
             }
@@ -336,7 +334,7 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
             e.printStackTrace();
         }
         finalR = (WitFinalResult) activity;
-        finalR.saveResult(title, description, wikiLink, photoURL);
+        finalR.saveResult(id, title, description, wikiLink, photoURL);
 
     }
 
@@ -362,6 +360,11 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
         JSONObject query = null;
         JSONObject results = null;
         JSONObject result = null;
+        String city;
+        String county;
+        String state;
+        String country;
+        String woeid;
 
         Log.d(LOG_TAG, "JSON received! Length = " + resultJson.length());
         Log.d(LOG_TAG,resultJson);
@@ -380,9 +383,10 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
             city = result.getString("city");
             county = result.getString("county");
             state = result.getString("state");
+            country = result.getString("country");
             woeid = result.getString("woeid");
             info =  (WitInfo) fragment;
-            info.saveInfo(city, county, state, woeid);
+            info.saveInfo(city, county, state, country, woeid);
 
 
         } catch (JSONException e) {

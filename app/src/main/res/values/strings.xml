@@ -9,7 +9,7 @@
     <string name="title_activity_Facebook_Login">Account</string>
     <string name="facebook_app_id">Facebook App ID</string> <string name="scan_button_text">Scan</string>
     <string name="scanning_button_text">Scanning...</string>
-    <string name="get_monuments_base_url">http://desoss.altervista.org/wit-server/android_wikimapia_request.php</string>
+    <string name="get_monuments_base_url">http://desoss.altervista.org/wit/android_wikimapia_request.php</string>
     <string name="not_found_title_text">Not found</string>
     <string name="not_found_desc_text">Sorry, we couldn\'t find any monument.</string>
     <string name="image_description">Main image of the monument</string>

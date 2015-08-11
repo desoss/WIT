@@ -48,7 +48,7 @@ public class WitInfo extends Fragment {
     private final static String LOG_TAG = "WitInfo";
     private boolean stop;
     private WitDownloadTask witDownloadTask;
-    private String city,  county,  state,  woeid, imageCityUrl, code, temp, text;
+    private String city,  county,  state, country, woeid, imageCityUrl, code, temp, text;
     private WitDownloadImageTask witDownloadImageTask;
     private ImageView mainImage, weatherImage;
     private TextView titleText, weatherText;
@@ -108,7 +108,7 @@ public class WitInfo extends Fragment {
         ConnectivityManager connMgr = (ConnectivityManager)getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
         // Se sono connesso
-        if (networkInfo != null && networkInfo.isConnected()) {
+        if (networkInfo != null && networkInfo.isConnected() && gpsEnabled) {
 
             // Fa partire il timeout thread che a sua volta farà il check periodico della Location
             WitTimeoutThread timeoutThread = new WitTimeoutThread(new TimeoutHandler());
@@ -170,14 +170,15 @@ public class WitInfo extends Fragment {
         }
     }
 
-    public void saveInfo(String city, String county, String state, String woeid){
+    public void saveInfo(String city, String county, String state, String country, String woeid){
         this.city = city;
         this.county = county;
         this.state = state;
+        this.country = country;
         this.woeid = woeid;
+        getWeather();
         if(!checkWoeid()) {
             searchImageCity();
-            getWeather();
         }
     }
 
@@ -191,9 +192,6 @@ public class WitInfo extends Fragment {
             if (cursor.getInt(cursor.getColumnIndex(DbAdapter.KEY_ID)) == w) {
                 v.findViewById(R.id.progress_wheel).setVisibility(View.GONE);
                 titleText.setText(city);
-                weatherText.setText(cursor.getString(cursor.getColumnIndex(DbAdapter.KEY_WTEXT)));
-                code = cursor.getString(cursor.getColumnIndex(DbAdapter.KEY_WCODE));
-                setImageWeather();
                 byte[] img = cursor.getBlob(cursor.getColumnIndex(DbAdapter.KEY_IMAGE));
                 if (img != null) {
                     mainImage.setImageBitmap(BitmapFactory.decodeByteArray(img, 0, img.length));
@@ -253,10 +251,8 @@ public class WitInfo extends Fragment {
         v.findViewById(R.id.progress_wheel).setVisibility(View.GONE);
         mainImage.setImageBitmap(result);
         titleText.setText(city);
-        String w = temp +"c, "+text;
-        weatherText.setText(w);
         setImageWeather();
-        saveCityInfo(w, img);
+        saveCityInfo(img);
     }
 
     private void getWeather(){
@@ -278,7 +274,7 @@ public class WitInfo extends Fragment {
         this.code = code;
         this.temp = temp;
         this.text = text;
-
+        setImageWeather();
 
     }
 
@@ -292,21 +288,21 @@ public class WitInfo extends Fragment {
         Drawable res = getResources().getDrawable(imageResource);
 
         weatherImage.setImageDrawable(res);
+        String w = temp +"c, "+text;
+        weatherText.setText(w);
 
 
     }
 
-    private void saveCityInfo(String w, byte[] img){
+    private void saveCityInfo(byte[] img){
+        if(img!=null){
+            Log.d(LOG_TAG,"NOT NULLLL");
+        }
         dbAdapter = new DbAdapter(getActivity());
         dbAdapter.open();
-        dbAdapter.saveCityInfo(Long.parseLong(woeid), city, w, code, img);
+        dbAdapter.saveCityInfo(Long.parseLong(woeid), city, county, state, country, img);
         dbAdapter.close();
     }
-
-
-
-
-
 
 
 
@@ -322,7 +318,7 @@ public class WitInfo extends Fragment {
         alertDialog.setTitle("Unable to connect");
 
         // Setting Dialog Message
-        alertDialog.setMessage("You need a GPS connection to use this app. Please turn on GPS in Settings?");
+        alertDialog.setMessage("You need a GPS connection to use this app. Please turn on GPS in Settings");
 
         // On pressing Settings button
         alertDialog.setPositiveButton("Settings", new DialogInterface.OnClickListener() {

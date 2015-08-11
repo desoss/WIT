@@ -389,7 +389,7 @@ public class WitScan extends Fragment {
      */
     private void getMonumentsFromServer(String serverUrl) {
 
-        Log.d("WitMainActivity", "SERVER URL: "+serverUrl);
+        Log.d(LOG_TAG, "SERVER URL: "+serverUrl);
 
 
         try {
@@ -438,7 +438,7 @@ public class WitScan extends Fragment {
         alertDialog.setTitle("Unable to connect");
 
         // Setting Dialog Message
-        alertDialog.setMessage("You need a network connection to use this app. Please turn on mobile network in Settings?");
+        alertDialog.setMessage("You need a network connection to use this app. Please turn on mobile network in Settings");
 
         // On pressing Settings button
         alertDialog.setPositiveButton("Settings", new DialogInterface.OnClickListener() {

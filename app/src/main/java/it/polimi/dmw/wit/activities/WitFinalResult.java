@@ -84,6 +84,7 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
 
     private String title;
     private String description;
+    private int id;
 
     private URL photoURL;
     private byte[] img=null;
@@ -134,7 +135,7 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
     public void setImage(Bitmap result, byte[] img) {
         stopWheel();
         mainImage.setImageBitmap(result);
-            savePOI(title,description,img); //salvo nel database il poi
+            savePOI(id,title,description,img); //salvo nel database il poi
         }
     private void stopWheel(){
         findViewById(R.id.progress_wheel).setVisibility(View.GONE);
@@ -143,10 +144,11 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
     }
 
 
-    public void saveResult(String t, String d, String wLink, URL imgURL) {
+    public void saveResult(String i, String t, String d, String wLink, URL imgURL) {
         title = t;
         description = d;
         wikiLink = wLink;
+        this.id = Integer.parseInt(i);
         if (imgURL != null) {
                     imgExists = true;
                     witDownloadImageTask = new WitDownloadImageTask(this, null, witDownloadImageTask.POIDETAIL);
@@ -155,7 +157,7 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
                 else{
                   stopWheel();
                     imgExists = false;
-                    savePOI(title,description,img); //salvo nel database il poi
+                    savePOI(id,title,description,img); //salvo nel database il poi
                 }
         checkSettingFb();
     }
@@ -230,6 +232,7 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
         if (correctPoiList.size()>0) {
             try {
                 URL detailUrl = new URL("http://api.wikimapia.org/?key=example&function=place.getbyid&id=" + correctPoiList.get(0).getPoiId() + "&format=json&language=it");
+                Log.d(LOG_TAG, "SERVER URL: "+detailUrl);
                 witDownloadTask = new WitDownloadTask(this, null, witDownloadTask.POIDETAIL);
                 witDownloadTask.execute(detailUrl);
 
@@ -390,18 +393,17 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
      */
 
 
-    private void savePOI(String name, String description, byte[] img){
+    private void savePOI(int id, String name, String description, byte[] img){
         dbAdapter = new DbAdapter(this);
         dbAdapter.open();
-        dbAdapter.savePOI(name, description, getCurrentDate(), img);
+        cursor = dbAdapter.fetchCITYINFO();
+        int woeid=0;
+        if(cursor.moveToNext()){
+            woeid = cursor.getInt(cursor.getColumnIndex(DbAdapter.KEY_ID));
+        }
+        dbAdapter.savePOI(id, name, description, getCurrentDate(), woeid, img);
 
-        Cursor cursor = dbAdapter.fetchAllPOIs();
-        String n;
 
-    /*    while ( cursor.moveToNext() ) {
-            n = cursor.getString( cursor.getColumnIndex(DbAdapter.KEY_NAME) );
-            Log.d(LOG_TAG, "nome POI = " + n);
-        } */
         cursor.close();
 
 
