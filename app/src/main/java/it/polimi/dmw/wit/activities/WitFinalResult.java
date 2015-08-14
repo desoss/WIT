@@ -1,6 +1,8 @@
 package it.polimi.dmw.wit.activities;
 
+import android.app.Activity;
 import android.app.Fragment;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
@@ -11,21 +13,31 @@ import android.os.AsyncTask;
 import android.support.v4.widget.DrawerLayout;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.TextView;
 
+import com.pkmmte.view.CircularImageView;
 import com.pnikosis.materialishprogress.ProgressWheel;
+import com.sromku.simple.fb.entities.Profile;
 import com.sromku.simple.fb.Permission;
 import com.sromku.simple.fb.SimpleFacebook;
 import com.sromku.simple.fb.SimpleFacebookConfiguration;
 import com.sromku.simple.fb.entities.Story;
 import com.sromku.simple.fb.listeners.OnCreateStoryObject;
+import com.sromku.simple.fb.listeners.OnFriendsListener;
 import com.sromku.simple.fb.listeners.OnPublishListener;
+
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -41,9 +53,13 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.List;
 
 import it.polimi.dmw.wit.sliderMenu.FragmentDrawer;
 import it.polimi.dmw.wit.Polygon.Point;
@@ -54,6 +70,12 @@ import it.polimi.dmw.wit.utilities.WitDownloadTask;
 import it.polimi.dmw.wit.utilities.WitPOI;
 import it.polimi.dmw.wit.database.DbAdapter;
 
+import com.sromku.simple.fb.entities.Profile.Properties;
+import com.sromku.simple.fb.utils.Utils;
+import android.support.v7.widget.RecyclerView;
+
+
+
 
 /**
  * Activity per gestire e visualizzare la lista dei risultati
@@ -62,10 +84,9 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
 
 
     private SimpleFacebook mSimpleFacebook;
-    WitDownloadTask witDownloadTask;
-    WitDownloadImageTask witDownloadImageTask;
-
-
+    private WitDownloadTask witDownloadTask;
+    private WitDownloadImageTask witDownloadImageTask;
+    private Profile profileFB;
 
     private final static String LOG_TAG = "WitFinalResult";
 
@@ -85,6 +106,7 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
     private String title;
     private String description;
     private int id;
+    private int woeid;
 
     private URL photoURL;
     private byte[] img=null;
@@ -93,6 +115,14 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
     private Toolbar mToolbar;
     private FragmentDrawer drawerFragment;
     private ProgressWheel progressWheel;
+    private RecyclerView fbList;
+    private ListView listView ;
+    private MyRecyclerAdapter adapter;
+    private CustomAdapter adapter2;
+    private ArrayList<String> namesList;
+    private ArrayList<byte[]> imagesList;
+
+
 
 
 
@@ -148,6 +178,7 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
         title = t;
         description = d;
         wikiLink = wLink;
+        photoURL = imgURL;
         this.id = Integer.parseInt(i);
         if (imgURL != null) {
                     imgExists = true;
@@ -159,7 +190,6 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
                     imgExists = false;
                     savePOI(id,title,description,img); //salvo nel database il poi
                 }
-        checkSettingFb();
     }
 
     @Override
@@ -174,6 +204,16 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
 
         progressWheel = new ProgressWheel(this);
         progressWheel.spin();
+
+        LinearLayoutManager layoutManager
+                = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
+
+        fbList = (RecyclerView) findViewById(R.id.fb_list);
+        listView = (ListView) findViewById(R.id.listView);
+        fbList.setLayoutManager(layoutManager);
+
+        imagesList = new ArrayList<>();
+
 
 
 
@@ -190,6 +230,15 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
         mSimpleFacebook = SimpleFacebook.getInstance(this);
 
         configurationSimpleFacebook();
+        namesList = new ArrayList<>();
+
+       // adapter = new MyRecyclerAdapter(this, namesList);
+        //fbList.setAdapter(adapter);
+
+        adapter2 = new CustomAdapter(this, namesList, imagesList);
+        listView.setAdapter(adapter2);
+
+
 
 
 
@@ -396,25 +445,27 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
     private void savePOI(int id, String name, String description, byte[] img){
         dbAdapter = new DbAdapter(this);
         dbAdapter.open();
-        cursor = dbAdapter.fetchCITYINFO();
-        int woeid=0;
-        if(cursor.moveToNext()){
-            woeid = cursor.getInt(cursor.getColumnIndex(DbAdapter.KEY_ID));
-        }
+        SharedPreferences sharedPrefs = getSharedPreferences("WIT", MODE_PRIVATE); //recupero dal database automatico il woeid corrente
+        woeid = sharedPrefs.getInt("woeid", 0);
         dbAdapter.savePOI(id, name, description, getCurrentDate(), woeid, img);
-
-
-        cursor.close();
-
-
         dbAdapter.close();
+        checkSettingFb();
 
     }
 
     private String getCurrentDate(){
-        Calendar c = Calendar.getInstance();
-        SimpleDateFormat df = new SimpleDateFormat("dd-MMM-yyyy");
+        GregorianCalendar c = new GregorianCalendar();
+        SimpleDateFormat df = new SimpleDateFormat("dd-MMM-yyyy HH:mm:ss");
         String date = df.format(c.getTime());
+        /*Date d = null;
+        try {
+            d = df.parse("11-nov-2015 12:14:14");
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        String date = df.format(d);
+        */
+
         return date;
     }
 
@@ -442,11 +493,103 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
 
     private void checkSettingFb(){
         SharedPreferences sharedPrefs = getSharedPreferences("WIT", MODE_PRIVATE);
+        Log.d(LOG_TAG, ""+sharedPrefs.getBoolean("fb", false));
         if(sharedPrefs.getBoolean("fb", false)){
+            Log.d(LOG_TAG, "FACEBOOK");
             storyOnFacebook();
+            registerVisit();
         }
 
     }
+
+    private void registerVisit(){
+        SharedPreferences sharedPrefs = getSharedPreferences("WIT", MODE_PRIVATE);
+        Long fbId = sharedPrefs.getLong("fbId", 0);
+        try {
+            URL detailUrl = new URL(getString(R.string.register_visit_url)+"?poi="+id+"&woeid="+woeid+"&fb_id="+fbId);
+            Log.d(LOG_TAG, "SERVER URL: "+detailUrl);
+            witDownloadTask = new WitDownloadTask(this, null, witDownloadTask.REGISTERVISIT);
+            witDownloadTask.execute(detailUrl);
+
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    public void checkIds(ArrayList<Long> l){
+        getFacebookFrieds(this, l);
+
+    }
+
+    private void getFacebookFrieds(Activity a, ArrayList<Long> l){
+      final  Activity activity = a;
+        Properties properties = new Properties.Builder()
+                .add(Properties.ID)
+                .add(Properties.FIRST_NAME)
+                .add(Properties.LAST_NAME)
+                .add(Properties.NAME)
+                .add(Properties.BIRTHDAY)
+                .add(Properties.AGE_RANGE)
+                .add(Properties.EMAIL)
+                .add(Properties.GENDER)
+                .add(Properties.INSTALLED)
+                .build();
+        final ArrayList<Long> idsList = l;
+        //avevo aggiunto manualmente il tuo id jaco per pare le prove...sostituiscilo col mio se vuoi provare
+        //idsList.add(Long.parseLong("10207291961247199"));
+       // Log.d(LOG_TAG, "" + idsList.get(0));
+
+
+        SimpleFacebook.getInstance().getFriends(properties, new OnFriendsListener() {
+
+            @Override
+            public void onThinking() {
+
+            }
+
+            @Override
+            public void onException(Throwable throwable) {
+            }
+
+            @Override
+            public void onFail(String reason) {
+            }
+
+            @Override
+            public void onComplete(List<Profile> response) {
+                for (int x = 0; x < response.size(); x++) {
+                    String name = response.get(x).getFirstName();
+                    String id = response.get(x).getId();
+                    String img = response.get(x).getPicture();
+                    Log.d(LOG_TAG, "id: " + id + " nome: " + name + " " + img);
+                    if (idsList.contains(Long.parseLong(id))) {
+                        namesList.add(name);
+                        downloadImageProfile(id);
+                        Log.d(LOG_TAG, "TRue" + namesList.get(0));
+                    }
+                }
+
+            }
+        });
+    }
+
+    private void downloadImageProfile(String id){
+        URL photoURL = null;
+        try {
+            photoURL = new URL("https://graph.facebook.com/" + id + "/picture?type=large");
+            witDownloadImageTask = new WitDownloadImageTask(this, null, witDownloadImageTask.IMAGEPROFILE);
+            witDownloadImageTask.execute(photoURL);
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void saveImage(byte[] img){
+        imagesList.add(img);
+        adapter2.notifyDataSetChanged();
+    }
+
 
 
 
@@ -498,53 +641,6 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
         });
         Log.d(LOG_TAG, "Pubblicato post su FB");
 
-
-
-
-
-
-
-
-   /*     mCallbackManager = CallbackManager.Factory.create();
-        ShareOpenGraphObject object = new ShareOpenGraphObject.Builder()
-                .putString("og:type", "monuments.monument")
-                .putString("og:title", title)
-                .build();
-
-        ShareOpenGraphAction action = new ShareOpenGraphAction.Builder()
-                .setActionType("monument.discover")
-                .putObject("monument", object)
-                .build();
-
-        ShareOpenGraphContent content = new ShareOpenGraphContent.Builder()
-                .setPreviewPropertyName("discover")
-                .setAction(action)
-                .build();
-
-        //ShareDialog.show(this, content);
-
-
-
-       ShareButton shareButton = (ShareButton)findViewById(R.id.share_button);
-        shareButton.setShareContent(content);
-        shareButton.registerCallback(mCallbackManager, new FacebookCallback<Sharer.Result>() {
-
-            @Override
-            public void onSuccess(Sharer.Result result) {
-                Log.i(LOG_TAG, "SHARING SUCCESS!");
-            }
-
-            @Override
-            public void onError(FacebookException error) {
-                Log.e(LOG_TAG, "SHARING ERROR! - " + error.getMessage());
-            }
-
-            @Override
-            public void onCancel() {
-                Log.w(LOG_TAG, "SHARING CANCEL!");
-            }
-        });  */
-
     }
 
     private void displayView(int position) {
@@ -561,6 +657,10 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
                 startActivity(i);
                 break;
             case 2:
+                i = new Intent(this, WitDiary.class);
+                startActivity(i);
+                break;
+            case 3:
                 i = new Intent(this, WitFacebookLogin.class);
                 startActivity(i);
                 break;
@@ -587,5 +687,121 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
 
     }
 
+    private class MyRecyclerAdapter extends RecyclerView.Adapter<MyRecyclerAdapter.CustomViewHolder> {
+        private Context mContext;
+        private ArrayList<String> fbList;
+
+        public MyRecyclerAdapter(Context context, ArrayList<String> l) {
+            fbList = l;
+            this.mContext = context;
+        }
+
+        @Override
+        public CustomViewHolder onCreateViewHolder(ViewGroup viewGroup, int i) {
+            View view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.list_row, null);
+
+            CustomViewHolder viewHolder = new CustomViewHolder(view);
+            return viewHolder;
+        }
+
+        @Override
+        public void onBindViewHolder(CustomViewHolder customViewHolder, int i) {
+           String name = fbList.get(i);
+
+
+            //Setting text view title
+            customViewHolder.textView.setText(name);
+        }
+
+        @Override
+        public int getItemCount() {
+            return fbList.size();
+        }
+
+        public class CustomViewHolder extends RecyclerView.ViewHolder {
+            protected ImageView imageView;
+            protected TextView textView;
+
+            public CustomViewHolder(View view) {
+                super(view);
+                this.imageView = (ImageView) view.findViewById(R.id.img);
+                this.textView = (TextView) view.findViewById(R.id.name);
+            }
+        }
+    }
+
+
+
+    /**
+     * Classe privata che gestisce la lista
+     */
+    private class CustomAdapter extends BaseAdapter {
+        Context context;
+        private ArrayList<String> fbList;
+        ArrayList<byte[]> imagesList;
+        private  LayoutInflater inflater=null;
+        public CustomAdapter(Activity mainActivity,  ArrayList<String> l, ArrayList<byte[]> imagesList) {
+            context=mainActivity;
+            fbList = l;
+            this.imagesList = imagesList;
+            inflater = ( LayoutInflater )context.
+                    getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        }
+        @Override
+        public int getCount() {
+            // TODO Auto-generated method stub
+            return fbList.size();
+        }
+
+        @Override
+        public Object getItem(int position) {
+            // TODO Auto-generated method stub
+            return position;
+        }
+
+        @Override
+        public long getItemId(int position) {
+            // TODO Auto-generated method stub
+            return position;
+        }
+
+        public class Holder
+        {
+            TextView tv;
+            CircularImageView img;
+        }
+        @Override
+        public View getView(final int position, View convertView, ViewGroup parent) {
+            Holder holder=new Holder();
+            View rowView;
+            rowView = inflater.inflate(R.layout.pois_list, null);
+            holder.tv=(TextView) rowView.findViewById(R.id.textView);
+            holder.img=(CircularImageView) rowView.findViewById(R.id.img);
+            holder.img.setBorderColor(getResources().getColor(R.color.colorPrimary));
+            holder.img.setBorderWidth(4);
+            // circularImageView.setSelectorColor(getResources().getColor(R.color.colorPrimary));
+            //circularImageView.setSelectorStrokeColor(getResources().getColor(R.color.colorPrimaryDark));
+            holder.img.setSelectorStrokeWidth(10);
+            holder.img.addShadow();
+            String name = fbList.get(position);
+            holder.tv.setText(name);
+            byte [] img = imagesList.get(position);
+            if(img!= null) {
+                holder.img.setImageBitmap(BitmapFactory.decodeByteArray(img, 0, img.length));
+            }
+            else {
+
+            }
+            rowView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+
+
+                }
+            });
+            return rowView;
+        }
+
+    }
 
     }

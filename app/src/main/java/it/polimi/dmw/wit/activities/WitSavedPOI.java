@@ -19,6 +19,7 @@ import android.widget.TextView;
 import it.polimi.dmw.wit.sliderMenu.FragmentDrawer;
 import it.polimi.dmw.wit.R;
 import it.polimi.dmw.wit.database.DbAdapter;
+import it.polimi.dmw.wit.utilities.WitPOI;
 
 public class WitSavedPOI extends ActionBarActivity implements FragmentDrawer.FragmentDrawerListener {
 
@@ -33,6 +34,7 @@ public class WitSavedPOI extends ActionBarActivity implements FragmentDrawer.Fra
     private Toolbar mToolbar;
     private FragmentDrawer drawerFragment;
     private final static String LOG_TAG = "WitSavedPOI";
+    private WitPOI poi;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,30 +71,20 @@ public class WitSavedPOI extends ActionBarActivity implements FragmentDrawer.Fra
     protected void onStart() {
         super.onStart();
         Intent intent = getIntent();
-        idPOI=intent.getIntExtra(WitPOIsList.EXTRA_POI,0);
+        poi = intent.getParcelableExtra(WitPOIsList.EXTRA_POI);
+        poi = intent.getParcelableExtra(WitDetailJourney.EXTRA_POI);
+        byte[] img = intent.getByteArrayExtra(WitPOIsList.EXTRA_IMG);
 
 
 
+            name = poi.getPoiName();
+            description = poi.getDescription();
 
-        dbAdapter = new DbAdapter(this);
-        dbAdapter.open();
-        cursor = dbAdapter.fetchPOIsByID(idPOI);
-        //cursor=dbAdapter.fetchAllPOIs();
-        Log.d(LOG_TAG, "nome POI = " + idPOI);
-
-
-        while ( cursor.moveToNext() ) {
-            name = cursor.getString(cursor.getColumnIndex(DbAdapter.KEY_NAME));
-            description = cursor.getString(cursor.getColumnIndex(DbAdapter.KEY_DESCRIPTION));
-            byte[] img = cursor.getBlob(cursor.getColumnIndex(DbAdapter.KEY_IMAGE));
             if (img!=null) {
                 mainImage = (ImageView) findViewById(R.id.poi_img);
                 mainImage.setImageBitmap(BitmapFactory.decodeByteArray(img, 0, img.length));
             }
 
-        }
-        cursor.close();
-        dbAdapter.close();
         titleText.setText(name);
         descText.setText(description);
 
@@ -140,6 +132,10 @@ public class WitSavedPOI extends ActionBarActivity implements FragmentDrawer.Fra
                 startActivity(i);
                 break;
             case 2:
+                i = new Intent(this, WitDiary.class);
+                startActivity(i);
+                break;
+            case 3:
                 i = new Intent(this, WitFacebookLogin.class);
                 startActivity(i);
                 break;

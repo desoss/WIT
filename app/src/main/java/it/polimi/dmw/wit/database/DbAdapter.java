@@ -26,7 +26,6 @@ public class DbAdapter {
     private static final String DATABASE_CITY_INFO = "cityInfo";
 
 
-
     public static final String KEY_ID = "_id";
     public static final String KEY_NAME = "name";
     public static final String KEY_SURNAME = "surname";
@@ -41,6 +40,7 @@ public class DbAdapter {
     public static final String KEY_COUNTRY = "country";
     public static final String KEY_WOEID = "woeid";
     public static final String KEY_WIKIMAPIAID = "wikimapiaId";
+
 
     public DbAdapter(Context context) {
         this.context = context;
@@ -90,7 +90,7 @@ public class DbAdapter {
         return values;
     }
 
-    private ContentValues createContentValuesCITYINFO(long id, String city, String county, String state, String country, byte[]img ) {
+    private ContentValues createContentValuesCITYINFO(long id, String city, String county, String state, String country, byte[]img) {
         ContentValues values = new ContentValues();
         values.put(KEY_ID, id);
         values.put(KEY_CITY, city);
@@ -123,7 +123,7 @@ public class DbAdapter {
     }
 
     public boolean updatePOI(int id, String name, String description, String date, int woeid, byte[] img) {
-        ContentValues updateValues = createContentValuesPOI(id,name, description, date, woeid, img);
+        ContentValues updateValues = createContentValuesPOI(id, name, description, date, woeid, img);
         return database.update(DATABASE_POI, updateValues, KEY_ID + "=" + id, null) > 0;
     }
 
@@ -173,7 +173,7 @@ public class DbAdapter {
     //fetch contacts filter by a string
     public Cursor fetchPOIsByID(int filter) {
         Cursor mCursor = database.query(true, DATABASE_POI, new String[]{
-                        KEY_ID, KEY_NAME, KEY_DESCRIPTION, KEY_DATE, KEY_IMAGE},
+                        KEY_ID, KEY_NAME, KEY_DESCRIPTION, KEY_DATE, KEY_WOEID, KEY_IMAGE},
                 KEY_ID + "=" + filter, null, null, null, null, null);
 
         return mCursor;
@@ -183,6 +183,22 @@ public class DbAdapter {
         Cursor mCursor = database.query(true, DATABASE_USER, new String[]{
                         KEY_ID, KEY_NAME, KEY_SURNAME, KEY_IMAGE, KEY_FB, KEY_ISLOGGED},
                 KEY_ID + "=" + filter, null, null, null, null, null);
+
+        return mCursor;
+    }
+
+    public Cursor fetchCityByID(int filter){
+        Cursor mCursor = database.query(true, DATABASE_CITY_INFO, new String[]{
+                        KEY_ID, KEY_CITY, KEY_COUNTY, KEY_STATE, KEY_COUNTRY, KEY_IMAGE},
+                KEY_ID + "=" + filter, null, null, null, null, null);
+
+        return mCursor;
+    }
+
+    public Cursor fetchPOIByWoeid(int filter){
+        Cursor mCursor = database.query(true, DATABASE_POI, new String[]{
+                        KEY_ID, KEY_WIKIMAPIAID, KEY_NAME, KEY_DESCRIPTION, KEY_DATE, KEY_WOEID, KEY_IMAGE},
+                KEY_WOEID + "=" + filter, null, null, null, null, null, null);
 
         return mCursor;
     }

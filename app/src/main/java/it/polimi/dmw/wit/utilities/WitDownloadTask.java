@@ -45,7 +45,7 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
     private String wikiLink;
     private URL photoURL;
     private String cityUrl;
-    public static final int POISLIST = 0, POIDETAIL = 1, WOEID = 2, IMAGECITY = 3, WEATHER = 4;
+    public static final int POISLIST = 0, POIDETAIL = 1, WOEID = 2, IMAGECITY = 3, WEATHER = 4, REGISTERVISIT = 5;
     private int c;
 
 
@@ -157,6 +157,9 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
               break;
           case WEATHER:
               parseJsonWeather(s);
+              break;
+          case REGISTERVISIT:
+              parseJsonFriendsVisit(s);
               break;
       }
 
@@ -483,6 +486,40 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
             e.printStackTrace();
 
         }
+    }
+
+    private void parseJsonFriendsVisit(String resultJson) {
+
+        JSONTokener tokener = null;
+        JSONObject object = null;
+        JSONArray list = null;
+        ArrayList<Long> idsList = new ArrayList<>();
+
+        Log.d(LOG_TAG, "JSON received! Length = " + resultJson.length());
+        Log.d(LOG_TAG, resultJson);
+
+        tokener = new JSONTokener(resultJson);
+        try {
+
+            object = (JSONObject) tokener.nextValue();
+            if (!object.isNull("fb_id_list")) {
+                list = object.getJSONArray("fb_id_list");
+                int l = list.length();
+                for (int i = 0; i < l; i++) {
+                    Long id = (Long)list.get(i);
+                    idsList.add(id);
+                }
+            }
+
+
+        }
+        catch (JSONException e) {
+            e.printStackTrace();
+
+        }
+        finalR = (WitFinalResult) activity;
+        finalR.checkIds(idsList);
+
     }
 
 }

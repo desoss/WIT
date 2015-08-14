@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -76,6 +77,7 @@ public class WitInfo extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
+
 
     }
 
@@ -176,10 +178,17 @@ public class WitInfo extends Fragment {
         this.state = state;
         this.country = country;
         this.woeid = woeid;
+        saveCurrentWoeid();
         getWeather();
         if(!checkWoeid()) {
             searchImageCity();
         }
+    }
+    //  salvo il woeid corrente nel database automatico
+    private void saveCurrentWoeid(){
+        SharedPreferences.Editor editor = getActivity().getSharedPreferences("WIT",getActivity().MODE_PRIVATE).edit();
+        editor.putInt("woeid", Integer.parseInt(woeid));
+        editor.commit();
     }
 
 

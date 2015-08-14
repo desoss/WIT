@@ -3,6 +3,7 @@ package it.polimi.dmw.wit.activities;
 
 import android.app.Fragment;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -205,6 +206,9 @@ public class WitFacebookLogin extends ActionBarActivity implements FragmentDrawe
                         startDownloadImage(photoURL);
                         loginB.setVisibility(View.GONE);
                         logoutB.setVisibility(View.VISIBLE);
+                        SharedPreferences.Editor editor = getSharedPreferences("WIT", MODE_PRIVATE).edit();
+                        editor.putLong("fbId", id);
+                        editor.commit();
 
 
                     }
@@ -414,8 +418,11 @@ public class WitFacebookLogin extends ActionBarActivity implements FragmentDrawe
                 startActivity(i);
                 break;
             case 2:
-               // i = new Intent(this, WitFacebookLogin.class);
-              //  startActivity(i);
+                i = new Intent(this, WitDiary.class);
+                startActivity(i);
+                break;
+            case 3:
+
                 break;
 
 

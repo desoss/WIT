@@ -25,7 +25,7 @@ public class WitDownloadImageTask extends AsyncTask<URL, Void, Bitmap> {
     WitFacebookLogin facebookL;
     WitFinalResult finalR;
     WitInfo info;
-    public static final int FACEBOOK = 0, POIDETAIL = 1, CITY = 2, WEATHER = 3;
+    public static final int FACEBOOK = 0, POIDETAIL = 1, CITY = 2, WEATHER = 3, IMAGEPROFILE = 4;
     private int c;
 
 
@@ -68,7 +68,10 @@ public class WitDownloadImageTask extends AsyncTask<URL, Void, Bitmap> {
                 info = (WitInfo) fragment;
                 info.setImageCity(result, img);
                 break;
-
+            case IMAGEPROFILE:
+                finalR = (WitFinalResult)activity;
+                finalR.saveImage(img);
+                break;
 
         }
 

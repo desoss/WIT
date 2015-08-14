@@ -20,6 +20,10 @@ public class WitPOI implements Parcelable{
     private float [] x;
     private float [] y;
 
+    private int wikimapiaId;
+    private String description;
+    private String date;
+
     private String correct; // serve solo per la classe DisplayMap, per il parcelable con boolean ma da errore http://stackoverflow.com/questions/6201311/how-to-read-write-a-boolean-when-implementing-the-parcelable-interface
 
     // Costruttore
@@ -32,6 +36,14 @@ public class WitPOI implements Parcelable{
         this.x = x;
         this.y = y;
         correct = "0";
+    }
+
+    public WitPOI (int id, int wikimapiaId, String name, String description, String date){
+        poiId = id;
+        this.wikimapiaId = wikimapiaId;
+        poiName = name;
+        this.description = description;
+        this.date = date;
     }
 
     // Quando un oggetto viene inserito in una ListView
@@ -98,6 +110,10 @@ public class WitPOI implements Parcelable{
         x = in.createFloatArray();
         y = in.createFloatArray();
         correct =   in.readString(); //in.readByte() != 0;     //coorect == true if byte != 0
+        wikimapiaId = in.readInt();
+        description = in.readString();
+        date = in.readString();
+
     }
 
     @Override
@@ -121,6 +137,25 @@ public class WitPOI implements Parcelable{
         dest.writeFloatArray(x);
         dest.writeFloatArray(y);
         dest.writeString(correct);//writeByte((byte) (correct ? 1 : 0));     //if correct == true, byte == 1
+        dest.writeInt(wikimapiaId);
+        dest.writeString(description);
+        dest.writeString(date);
+        }
 
+
+
+    public int getWikimapiaId() {
+        return wikimapiaId;
     }
+
+
+    public String getDescription() {
+        return description;
+    }
+
+    public String getDate() {
+        return date;
+    }
+
+
 }

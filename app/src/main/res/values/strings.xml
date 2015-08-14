@@ -7,9 +7,12 @@
     <string name="title_activity_POIs_list">My Monuments:</string>
     <string name="title_activity_Saved_POI">Details:</string>
     <string name="title_activity_Facebook_Login">Account</string>
+    <string name="title_activity_Diary">Diary</string>
+    <string name="title_activity_detail_journey">Journey</string>
     <string name="facebook_app_id">Facebook App ID</string> <string name="scan_button_text">Scan</string>
     <string name="scanning_button_text">Scanning...</string>
     <string name="get_monuments_base_url">http://desoss.altervista.org/wit/android_wikimapia_request.php</string>
+    <string name="register_visit_url">    http://desoss.altervista.org/wit/android_friends_visits_in_poi.php</string>
     <string name="not_found_title_text">Not found</string>
     <string name="not_found_desc_text">Sorry, we couldn\'t find any monument.</string>
     <string name="image_description">Main image of the monument</string>
@@ -17,8 +20,9 @@
     <string name="drawer_close">Slider Menu Closed</string>
     <string name="action_search">Search</string>
 
-    <string name="nav_item_scan">Scan</string>
+    <string name="nav_item_scan">Wit</string>
     <string name="nav_item_my_monuments">My Monumets</string>
+    <string name="nav_item_diary">Diary</string>
     <string name="nav_item_account">Account</string>
 
 
@@ -47,9 +51,6 @@
 
 
 
-
-
-
     <!-- Content Description -->
     <string name="desc_list_item_icon">Item Icon</string>
 
@@ -58,12 +59,14 @@
     <string-array name="nav_drawer_labels">
         <item>@string/nav_item_scan</item>
         <item>@string/nav_item_my_monuments</item>
+        <item>@string/nav_item_diary</item>
         <item>@string/nav_item_account</item>
     </string-array>
 
-    <string name="title_messages">Login</string>
-    <string name="title_friends">My Monuments</string>
-    <string name="title_home">Scan</string>
+    <string name="title_Login">Login</string>
+    <string name="title_Monuments">My Monuments</string>
+    <string name="title_home">Wit</string>
+    <string name="title_diary">Diary</string>
 
 
 </resources>

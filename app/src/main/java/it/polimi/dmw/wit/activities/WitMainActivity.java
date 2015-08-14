@@ -236,6 +236,10 @@ public class WitMainActivity extends ActionBarActivity implements FragmentDrawer
                 startActivity(i);
                 break;
             case 2:
+                i = new Intent(this, WitDiary.class);
+                startActivity(i);
+                break;
+            case 3:
                 i = new Intent(this, WitFacebookLogin.class);
                 startActivity(i);
                 break;
