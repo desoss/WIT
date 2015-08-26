@@ -468,6 +468,7 @@ public class WitScan extends Fragment {
         mServiceIntent.putExtra("lat", lat);
         mServiceIntent.putExtra("lon", lon);
         mServiceIntent.putExtra("range", "4");
+        mServiceIntent.putExtra("max", "800");
 
         getActivity().startService(mServiceIntent);
         // Log.d("DownloadService", "Service Started!");
