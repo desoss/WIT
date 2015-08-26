@@ -30,6 +30,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 import com.facebook.FacebookSdk;
 import com.google.android.gms.common.api.GoogleApiClient;
+import android.content.SharedPreferences;
+
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -113,6 +115,7 @@ public class WitScan extends Fragment {
     boolean orientationEnabled = false;
     boolean gpsEnabled = false;
 
+
     /**
      * Migliore location ricevute
      */
@@ -125,11 +128,13 @@ public class WitScan extends Fragment {
     private class TimeoutHandler extends Handler {
 
         private boolean messagesEnabled = true;
+        SharedPreferences sharedPrefs = getActivity().getSharedPreferences("WIT", getActivity().MODE_PRIVATE); //recupero dal database automatico il woeid corrente
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
 
             if (messagesEnabled&&!stop) {
+                int woeid = sharedPrefs.getInt("woeid", 0);
                 // In base al codice del messaggio ricevuto
                 switch (msg.what) {
                     case WitTimeoutThread.CHECK_LOCATION_CODE:
@@ -138,7 +143,7 @@ public class WitScan extends Fragment {
                         if ((currentLocation == null) && locationProvider.hasLocation()) {
                             Location foundLocation = locationProvider.getLocation();
                             Log.d(LOG_TAG, "Location found A: "+foundLocation.getAccuracy());
-                            if (foundLocation.getAccuracy() <= MAX_ACCURACY) { //se ho accuratezza <=5m uso la location se no aspetto
+                            if (foundLocation.getAccuracy() <= MAX_ACCURACY&&woeid!=-1) { //se ho accuratezza <=5m uso la location se no aspetto
                                 Log.d(LOG_TAG, "Location accurated is founded before 10s A: "+foundLocation.getAccuracy());
                                 Log.d(LOG_TAG, "Starting server request");
                                 // Aggiorna la currentLocation
@@ -155,7 +160,7 @@ public class WitScan extends Fragment {
                         if ((currentLocation == null) && locationProvider.hasLocation()) {
                             Log.d(LOG_TAG, "Location found");
                             Location foundLocation = locationProvider.getLocation();
-                            if (foundLocation.getAccuracy() <= MEDIUM_ACCURACY) { //se ho accuratezza <=10m uso la location
+                            if (foundLocation.getAccuracy() <= MEDIUM_ACCURACY&&woeid!=-1) { //se ho accuratezza <=10m uso la location
                                 Log.d(LOG_TAG, "Location found after 5s A: "+foundLocation.getAccuracy());
                                 Log.d(LOG_TAG, "Starting server request");
                                 // Aggiorna la currentLocation
@@ -172,7 +177,7 @@ public class WitScan extends Fragment {
                         if ((currentLocation == null) && locationProvider.hasLocation()) {
                             Log.d(LOG_TAG, "Location found");
                             Location foundLocation = locationProvider.getLocation();
-                            if (foundLocation.getAccuracy() <= MIN_ACCURACY) { //se ho accuratezza <30m uso la location
+                            if (foundLocation.getAccuracy() <= MIN_ACCURACY&&woeid!=-1) { //se ho accuratezza <30m uso la location
                                 Log.d(LOG_TAG, "Location found after 10s A: "+foundLocation.getAccuracy());
                                 Log.d(LOG_TAG, "Starting server request");
                                 // Aggiorna la currentLocation
@@ -250,7 +255,9 @@ public class WitScan extends Fragment {
 
         Log.d(LOG_TAG, "onStart()");
         stop=false;
-
+        SharedPreferences.Editor editor = getActivity().getSharedPreferences("WIT",getActivity().MODE_PRIVATE).edit();
+        editor.putInt("woeid", -1);
+        editor.commit();
         // Verifica che il GPS sia acceso
         gpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
         if (!gpsEnabled) {
@@ -384,6 +391,12 @@ public class WitScan extends Fragment {
     private void getPOIs() {
         String lat = String.valueOf(currentLocation.getLatitude());
         String lon = String.valueOf(currentLocation.getLongitude());
+
+        SharedPreferences sharedPrefs = getActivity().getSharedPreferences("WIT", getActivity().MODE_PRIVATE); //recupero dal database automatico il woeid corrente
+        int woeid = sharedPrefs.getInt("woeid", 0);
+        Log.d(LOG_TAG,"WOEID: "+woeid);
+
+
 
         // Crea l'url con i parametri giusti per il server
         witDownloadTask = new WitDownloadTask(null, this, witDownloadTask.POISLIST);

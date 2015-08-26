@@ -90,9 +90,8 @@ public class DbAdapter {
         return values;
     }
 
-    private ContentValues createContentValuesCITYINFO(long id, String city, String county, String state, String country, byte[]img) {
+    private ContentValues createContentValuesCITYINFO(String city, String county, String state, String country, byte[]img) {
         ContentValues values = new ContentValues();
-        values.put(KEY_ID, id);
         values.put(KEY_CITY, city);
         values.put(KEY_COUNTY, county);
         values.put(KEY_STATE, state);
@@ -117,8 +116,8 @@ public class DbAdapter {
         database.insertOrThrow(DATABASE_SETTINGS, null, initialValues);
     }
 
-    public void saveCityInfo(long id, String city, String county, String state, String country, byte[]img) {
-        ContentValues initialValues = createContentValuesCITYINFO(id, city, county, state, country, img);
+    public void saveCityInfo(String city, String county, String state, String country, byte[]img) {
+        ContentValues initialValues = createContentValuesCITYINFO(city, county, state, country, img);
         database.insertOrThrow(DATABASE_CITY_INFO, null, initialValues);
     }
 
@@ -191,6 +190,13 @@ public class DbAdapter {
         Cursor mCursor = database.query(true, DATABASE_CITY_INFO, new String[]{
                         KEY_ID, KEY_CITY, KEY_COUNTY, KEY_STATE, KEY_COUNTRY, KEY_IMAGE},
                 KEY_ID + "=" + filter, null, null, null, null, null);
+
+        return mCursor;
+    }
+    public Cursor fetchCityByCCSC(String a, String b, String c, String d){
+        Cursor mCursor = database.query(true, DATABASE_CITY_INFO, new String[]{
+                        KEY_ID, KEY_CITY, KEY_COUNTY, KEY_STATE, KEY_COUNTRY, KEY_IMAGE},
+                 KEY_CITY + "='" + a +"' AND "+ KEY_COUNTY + "='" + b+"' AND "+ KEY_STATE + "='" + c+"' AND "+ KEY_COUNTRY + "='" + d+"'",null, null, null, null, null);
 
         return mCursor;
     }

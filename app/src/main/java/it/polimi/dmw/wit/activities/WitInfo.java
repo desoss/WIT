@@ -147,9 +147,7 @@ public class WitInfo extends Fragment {
 
     private void startDownloadInfo(){
 
-        getSquarePosition();
-        if(!pointIntoInternalSquare(currentLocation.getLatitude(),currentLocation.getLongitude())) {
-            Toast.makeText(getActivity(), ""+currentLocation.getLatitude()+" "+currentLocation.getLongitude(), Toast.LENGTH_LONG).show();
+        Toast.makeText(getActivity(), "" + currentLocation.getLatitude() + " " + currentLocation.getLongitude(), Toast.LENGTH_LONG).show();
             Log.d(LOG_TAG,"D si");
             progressWheel = new ProgressWheel(getActivity());
             progressWheel.spin();
@@ -159,31 +157,18 @@ public class WitInfo extends Fragment {
             final String url = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20geo.placefinder%20where%20text%3D%22" + lat + "%2C%20" + lon + "%22%20and%20gflags%3D%22R%22&format=json&diagnostics=true&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys&callback=";
             getWoeid(url);
         }
-        else{
-            v.findViewById(R.id.progress_wheel).setVisibility(View.GONE);
-            Log.d(LOG_TAG,"D no");
-            SharedPreferences prefs = getActivity().getSharedPreferences("WEATHER", Context.MODE_PRIVATE);
-            code = prefs.getString("code","0");
-            temp =  prefs.getString("temp","0");
-            text =  prefs.getString("text","0");
-            setImageWeather();
-            prefs = getActivity().getSharedPreferences("WIT", Context.MODE_PRIVATE);
-            int id  = prefs.getInt("woeid",0);
-            dbAdapter=new DbAdapter(getActivity());
-            dbAdapter.open();
-            cursor = dbAdapter.fetchCityByID(id);
-            byte[] img = null;
-            if(cursor.moveToNext()) {
-                city = cursor.getString(cursor.getColumnIndex(DbAdapter.KEY_CITY));
-                img = cursor.getBlob(cursor.getColumnIndex(DbAdapter.KEY_IMAGE));
-                mainImage.setImageBitmap(BitmapFactory.decodeByteArray(img, 0, img.length));
 
-            }
-            cursor.close();
-            dbAdapter.close();
-            //v.findViewById(R.id.progress_wheel).setVisibility(View.GONE);
-            titleText.setText(city);
-        }
+
+
+    private void setWeatherSaved(){
+        v.findViewById(R.id.progress_wheel).setVisibility(View.GONE);
+        Log.d(LOG_TAG,"D no");
+        SharedPreferences prefs = getActivity().getSharedPreferences("WEATHER", Context.MODE_PRIVATE);
+        code = prefs.getString("code","0");
+        temp =  prefs.getString("temp","0");
+        text =  prefs.getString("text","0");
+        setImageWeather();
+
 
     }
 
@@ -238,16 +223,22 @@ public class WitInfo extends Fragment {
         this.state = state;
         this.country = country;
         this.woeid = woeid;
-        saveCurrentWoeid();
-        getWeather();
-        if(!checkWoeid()) {
-            searchImageCity();
+        getSquarePosition();
+        boolean b = checkWoeid();
+        if(!pointIntoInternalSquare(currentLocation.getLatitude(),currentLocation.getLongitude())) {
+            getWeather(); }
+        else{
+            setWeatherSaved();
         }
+            if (!b) {
+                searchImageCity();
+            }
+
     }
     //  salvo il woeid corrente nel database automatico
-    private void saveCurrentWoeid(){
+    private void saveCurrentWoeid(int woeid){
         SharedPreferences.Editor editor = getActivity().getSharedPreferences("WIT",getActivity().MODE_PRIVATE).edit();
-        editor.putInt("woeid", Integer.parseInt(woeid));
+        editor.putInt("woeid", woeid);
         editor.commit();
     }
 
@@ -255,20 +246,20 @@ public class WitInfo extends Fragment {
     private boolean checkWoeid() {
         dbAdapter = new DbAdapter(getActivity());
         dbAdapter.open();
-        cursor = dbAdapter.fetchCITYINFO();
+        cursor = dbAdapter.fetchCityByCCSC(city, county, state, country);
         while (cursor.moveToNext()) {
-            int w = Integer.parseInt(woeid);
-            if (cursor.getInt(cursor.getColumnIndex(DbAdapter.KEY_ID)) == w) {
                 v.findViewById(R.id.progress_wheel).setVisibility(View.GONE);
                 titleText.setText(city);
                 byte[] img = cursor.getBlob(cursor.getColumnIndex(DbAdapter.KEY_IMAGE));
+                int woeid = cursor.getInt(cursor.getColumnIndex(DbAdapter.KEY_ID));
+                saveCurrentWoeid(woeid);
                 if (img != null) {
                     mainImage.setImageBitmap(BitmapFactory.decodeByteArray(img, 0, img.length));
                 }
                 return true;
 
             }
-        }
+
         cursor.close();
         dbAdapter.close();
         return false;
@@ -374,7 +365,13 @@ public class WitInfo extends Fragment {
         }
         dbAdapter = new DbAdapter(getActivity());
         dbAdapter.open();
-        dbAdapter.saveCityInfo(Long.parseLong(woeid), city, county, state, country, img);
+        dbAdapter.saveCityInfo(city, county, state, country, img);
+        cursor = dbAdapter.fetchCityByCCSC(city, county, state, country);
+        while (cursor.moveToNext()) {
+            int woeid = cursor.getInt(cursor.getColumnIndex(DbAdapter.KEY_ID));
+            saveCurrentWoeid(woeid);
+        }
+        cursor.close();
         dbAdapter.close();
     }
 
