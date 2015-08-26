@@ -18,6 +18,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.GridView;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -51,8 +52,9 @@ public class WitDiary extends ActionBarActivity implements FragmentDrawer.Fragme
     private ArrayList<WitJourney> completeList;
     private final static int maxDays = 30;
     private WitJourney journey;
-    private ListView listView ;
+    private GridView gridview;
     private Intent intent;
+    private Intent intent2;
     public final static String EXTRA_JOURNEY= "it.polimi.dmw.wit.JOURNEY";
 
 
@@ -62,9 +64,10 @@ public class WitDiary extends ActionBarActivity implements FragmentDrawer.Fragme
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        setContentView(R.layout.activity_wit_list);
+        setContentView(R.layout.activity_wit_diary);
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
-        listView = (ListView) findViewById(R.id.listView);
+        gridview = (GridView) findViewById(R.id.gridview);
+
 
 
         setSupportActionBar(mToolbar);
@@ -95,8 +98,9 @@ public class WitDiary extends ActionBarActivity implements FragmentDrawer.Fragme
         Log.d(LOG_TAG, "Viaggi collassati: ");
         printFinalTest();
 
-        listView.setAdapter(new CustomAdapter(this, completeList));
+        gridview.setAdapter(new CustomAdapter(this, completeList));
        intent = new Intent(this, WitDetailJourney.class);
+        intent2 = new Intent(this, WitDetailState.class);
 
     }
 
@@ -125,7 +129,7 @@ public class WitDiary extends ActionBarActivity implements FragmentDrawer.Fragme
                 String name = cursor.getString(cursor.getColumnIndex(DbAdapter.KEY_NAME));
                 String description = cursor.getString(cursor.getColumnIndex(DbAdapter.KEY_DESCRIPTION));
                 String date = cursor.getString(cursor.getColumnIndex(DbAdapter.KEY_DATE));
-                WitPOI poi = new WitPOI(id, wikimapiaId, name, description, date);
+                WitPOI poi = new WitPOI(id, wikimapiaId, name, description, date, citieList.get(x).getWoeid());
                 poisList.add(poi);
             }
             if (cursor.getCount() > 0) {
@@ -371,7 +375,7 @@ public class WitDiary extends ActionBarActivity implements FragmentDrawer.Fragme
         public View getView(final int position, View convertView, ViewGroup parent) {
             Holder holder=new Holder();
             View rowView;
-            rowView = inflater.inflate(R.layout.pois_list, null);
+            rowView = inflater.inflate(R.layout.places_list, null);
             holder.tv=(TextView) rowView.findViewById(R.id.textView);
             holder.img=(CircularImageView) rowView.findViewById(R.id.img);
             holder.img.setBorderColor(getResources().getColor(R.color.colorPrimary));
@@ -394,8 +398,13 @@ public class WitDiary extends ActionBarActivity implements FragmentDrawer.Fragme
                 @Override
                 public void onClick(View v) {
                    j = journeysList.get(position);
-                    intent.putExtra(EXTRA_JOURNEY,j);
-                    startActivity(intent);
+                    if(j.getCities().size()==1){
+                        intent.putExtra(EXTRA_JOURNEY,j);
+                    startActivity(intent);}
+                    if(j.getCities().size()>1){
+                        intent2.putExtra(EXTRA_JOURNEY,j);
+                        startActivity(intent2);
+                    }
 
                     //Log.d( LOG_TAG,"nome POI = "+ result[position]+ id[position]);
 

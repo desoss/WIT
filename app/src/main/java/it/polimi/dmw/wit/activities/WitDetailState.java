@@ -1,14 +1,43 @@
 package it.polimi.dmw.wit.activities;
 
+import android.app.Activity;
+import android.app.Fragment;
+import android.content.Context;
+import android.content.Intent;
+import android.database.Cursor;
+import android.graphics.BitmapFactory;
+import android.os.Bundle;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarActivity;
+import android.support.v7.widget.Toolbar;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
+import android.widget.GridView;
+import android.widget.ImageView;
+import android.widget.ListView;
+import android.widget.TextView;
+import com.pkmmte.view.CircularImageView;
+import java.util.ArrayList;
+
+import it.polimi.dmw.wit.R;
+import it.polimi.dmw.wit.database.DbAdapter;
+import it.polimi.dmw.wit.sliderMenu.FragmentDrawer;
+import it.polimi.dmw.wit.utilities.WitCity;
+import it.polimi.dmw.wit.utilities.WitJourney;
+import it.polimi.dmw.wit.utilities.WitPOI;
+
 
 import android.app.Activity;
 import android.app.Fragment;
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.BitmapFactory;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarActivity;
@@ -23,28 +52,37 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+
 import com.pkmmte.view.CircularImageView;
 
 import java.util.ArrayList;
 
-import it.polimi.dmw.wit.sliderMenu.FragmentDrawer;
 import it.polimi.dmw.wit.R;
 import it.polimi.dmw.wit.database.DbAdapter;
+import it.polimi.dmw.wit.sliderMenu.FragmentDrawer;
+import it.polimi.dmw.wit.utilities.WitJourney;
 import it.polimi.dmw.wit.utilities.WitPOI;
 
-public class WitPOIsList extends ActionBarActivity implements FragmentDrawer.FragmentDrawerListener {
 
-    private DbAdapter dbAdapter;
-    private Cursor cursor;
-    private ListView listView ;
-    private final static String LOG_TAG = "WitPOIsListActivity";
-    private Intent intent;
-    public final static String EXTRA_POI= "it.polimi.dmw.wit.POI";
-    public final static String EXTRA_IMG= "it.polimi.dmw.wit.IMG";
+
+public class WitDetailState extends ActionBarActivity implements FragmentDrawer.FragmentDrawerListener {
+
     private Toolbar mToolbar;
     private FragmentDrawer drawerFragment;
-    private WitPOI [] poisList;
-    private byte [][] imagesList;
+    private final static String LOG_TAG = "WitDetailJourney";
+    private WitJourney journey;
+    private ImageView mainImage;
+    private TextView titleText;
+    private GridView gridView;
+    private Intent intent;
+    public final static String EXTRA_JOURNEY= "it.polimi.dmw.wit.JOURNEY";
+    private DbAdapter dbAdapter;
+    private Cursor cursor;
+    private byte [][] imagesListCities;
+    private ArrayList<WitJourney> journeysList;
+
+
+
 
 
 
@@ -52,96 +90,68 @@ public class WitPOIsList extends ActionBarActivity implements FragmentDrawer.Fra
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-
-        setContentView(R.layout.activity_wit_list);
-
-        listView = (ListView) findViewById(R.id.listView);
-
+        setContentView(R.layout.activity_wit_diary);
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
+        gridView = (GridView) findViewById(R.id.gridview);
+
+
 
         setSupportActionBar(mToolbar);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
-        getSupportActionBar().setTitle(R.string.title_activity_POIs_list);
+        getSupportActionBar().setTitle(R.string.title_activity_detail_journey);
+
+        titleText = (TextView)findViewById(R.id.journey_name_text);
+
 
 
         drawerFragment = (FragmentDrawer)
                 getSupportFragmentManager().findFragmentById(R.id.fragment_navigation_drawer);
         drawerFragment.setUp(R.id.fragment_navigation_drawer, (DrawerLayout) findViewById(R.id.drawer_layout), mToolbar);
         drawerFragment.setDrawerListener(this);
-        //  displayView(0);
-
 
     }
-
-
 
     @Override
     protected void onStart() {
         super.onStart();
+        intent = getIntent();
+        journey = intent.getParcelableExtra(WitDiary.EXTRA_JOURNEY);
 
-        dbAdapter=new DbAdapter(this);
+        Log.d(LOG_TAG,""+journey.getNameJourney());
+        titleText.setText(journey.getNameJourney());
+        Log.d(LOG_TAG, journey.getNameJourney());
+
+        dbAdapter = new DbAdapter(this);
         dbAdapter.open();
-        cursor=dbAdapter.fetchAllPOIs();
-        int i = cursor.getCount()-1;
-        poisList = new WitPOI[i+1];
-        imagesList = new byte[i+1][];
-        while ( cursor.moveToNext() ) {
-
-          String name=cursor.getString(cursor.getColumnIndex(DbAdapter.KEY_NAME));
-          int id  = cursor.getInt(cursor.getColumnIndex(DbAdapter.KEY_ID));
-//          int wikimapiaId = cursor.getInt(cursor.getColumnIndex(DbAdapter.KEY_WIKIMAPIAID));
-          String description = cursor.getString(cursor.getColumnIndex(DbAdapter.KEY_DESCRIPTION));
-          String date = cursor.getString(cursor.getColumnIndex(DbAdapter.KEY_DATE));
-          byte[] img = cursor.getBlob(cursor.getColumnIndex(DbAdapter.KEY_IMAGE));
-            imagesList [i] = img;
-
-          WitPOI poi = new WitPOI(id, 0, name, description, date, 0);
-          poisList[i] = poi;
-          i--;
-
-
-           //  n = cursor.getString( cursor.getColumnIndex(DbAdapter.KEY_NAME) );
-           // int a=cursor.getInt(cursor.getColumnIndex(DbAdapter.KEY_ID));
-
+        int i = journey.getCities().size();
+        imagesListCities = new byte[i][];
+        journeysList = new ArrayList<>();
+        for(int x=0;x<i;x++) {
+            int woeid = journey.getCities().get(x).getWoeid();
+            WitCity city = journey.getCities().get(x);
+            divideJourney(woeid, city);
+            cursor = dbAdapter.fetchCityByID(woeid);
+            while(cursor.moveToNext()) {
+                imagesListCities[x] = cursor.getBlob(cursor.getColumnIndex(DbAdapter.KEY_IMAGE));
+            }
         }
         cursor.close();
-
         dbAdapter.close();
 
-        // Define a new Adapter
-        // First parameter - Context
-        // Second parameter - Layout for the row
-        // Third parameter - ID of the TextView to which the data is written
-        // Forth - the Array of data
 
-      //  ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
-        //        android.R.layout.simple_list_item_1, android.R.id.text1, values);
+        gridView.setAdapter(new CustomAdapter(this, journeysList, imagesListCities));
+        intent = new Intent(this, WitDetailJourney.class);
 
+    }
 
-        // Assign adapter to ListView
-        listView.setAdapter(new CustomAdapter(this, poisList, imagesList));
-         intent = new Intent(this, WitSavedPOI.class);
-
-          /*
-        // ListView Item Click Listener
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view,
-                                    int position, long id) {
-
-
-
-                intent.putExtra(EXTRA_POI,idPOI[position]);
-                startActivity(intent);
-
-                Log.d( LOG_TAG,"nome POI = "+ values[position]+ idPOI[position]);
-
-
+    private void divideJourney(int woeid, WitCity city){
+        WitJourney j = new WitJourney(city);
+        for(int x=0; x< journey.size();x++){
+            if(journey.getPois().get(x).getWoeid()== woeid){
+                j.addPoi(journey.getPois().get(x));
             }
-
-        });
-        */
+        }
+        journeysList.add(j);
     }
 
 
@@ -176,26 +186,29 @@ public class WitPOIsList extends ActionBarActivity implements FragmentDrawer.Fra
 
 
 
+
+
     /**
      * Classe privata che gestisce la lista
      */
     private class CustomAdapter extends BaseAdapter {
         Context context;
-        WitPOI[] poisList;
-        WitPOI poi;
-        byte [][] imagesList;
-        private  LayoutInflater inflater=null;
-        public CustomAdapter(Activity mainActivity, WitPOI[] l, byte [][] b) {
-            context=mainActivity;
-            poisList = l;
-            imagesList = b;
+        WitJourney j;
+        ArrayList<WitJourney> journeysList;
+        byte imagesList [][];
+        private LayoutInflater inflater=null;
+        public CustomAdapter(Activity activity, ArrayList<WitJourney> p, byte[][] l) {
+            // TODO Auto-generated constructor stub
+            imagesList = l;
+            journeysList = p;
+            context=activity;
             inflater = ( LayoutInflater )context.
                     getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         }
         @Override
         public int getCount() {
             // TODO Auto-generated method stub
-            return poisList.length;
+            return journeysList.size();
         }
 
         @Override
@@ -219,7 +232,7 @@ public class WitPOIsList extends ActionBarActivity implements FragmentDrawer.Fra
         public View getView(final int position, View convertView, ViewGroup parent) {
             Holder holder=new Holder();
             View rowView;
-            rowView = inflater.inflate(R.layout.pois_list, null);
+            rowView = inflater.inflate(R.layout.places_list, null);
             holder.tv=(TextView) rowView.findViewById(R.id.textView);
             holder.img=(CircularImageView) rowView.findViewById(R.id.img);
             holder.img.setBorderColor(getResources().getColor(R.color.colorPrimary));
@@ -228,11 +241,12 @@ public class WitPOIsList extends ActionBarActivity implements FragmentDrawer.Fra
             //circularImageView.setSelectorStrokeColor(getResources().getColor(R.color.colorPrimaryDark));
             holder.img.setSelectorStrokeWidth(10);
             holder.img.addShadow();
-            poi = poisList[position];
-            holder.tv.setText(poi.getPoiName());
-            byte [] img = imagesList[position];
-            if(img!= null) {
-                holder.img.setImageBitmap(BitmapFactory.decodeByteArray(img, 0, img.length));
+            j = journeysList.get(position);
+            holder.tv.setText(j.getNameJourney());
+            //holder.img.setImageResource(imageId[position]);
+            byte[] image = imagesList[position];
+            if(image!= null) {
+                holder.img.setImageBitmap(BitmapFactory.decodeByteArray(image, 0,image.length));
             }
             else {
                 holder.img.setImageResource(R.drawable.gray);
@@ -242,11 +256,13 @@ public class WitPOIsList extends ActionBarActivity implements FragmentDrawer.Fra
             rowView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    poi = poisList[position];
-                    byte [] img = imagesList[position];
-                    intent.putExtra(EXTRA_POI,poi);
-                    intent.putExtra(EXTRA_IMG,img);
+                    j = journeysList.get(position);
+                    intent.putExtra(EXTRA_JOURNEY, j);
                     startActivity(intent);
+
+
+
+                    //Log.d( LOG_TAG,"nome POI = "+ result[position]+ id[position]);
 
                 }
             });
@@ -254,6 +270,7 @@ public class WitPOIsList extends ActionBarActivity implements FragmentDrawer.Fra
         }
 
     }
+
 
     private void displayView(int position) {
         Fragment fragment = null;
@@ -265,8 +282,8 @@ public class WitPOIsList extends ActionBarActivity implements FragmentDrawer.Fra
                 startActivity(i);
                 break;
             case 1:
-              //  i = new Intent(this, WitPOIsList.class);
-            //    startActivity(i);
+                i = new Intent(this, WitPOIsList.class);
+                startActivity(i);
                 break;
             case 2:
                 i = new Intent(this, WitDiary.class);
@@ -276,7 +293,6 @@ public class WitPOIsList extends ActionBarActivity implements FragmentDrawer.Fra
                 i = new Intent(this, WitFacebookLogin.class);
                 startActivity(i);
                 break;
-
 
 
             default:
@@ -293,11 +309,13 @@ public class WitPOIsList extends ActionBarActivity implements FragmentDrawer.Fra
             getSupportActionBar().setTitle(title);
         }
     }
+
     private void startSettingPage(){
         Intent i = new Intent(this, WitSettings.class);
         startActivity(i);
 
     }
+
 
 
 
