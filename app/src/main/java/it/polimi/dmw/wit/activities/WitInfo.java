@@ -1,6 +1,7 @@
 package it.polimi.dmw.wit.activities;
 
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -56,6 +57,11 @@ public class WitInfo extends Fragment {
     private ProgressWheel progressWheel;
     private DbAdapter dbAdapter;
     private Cursor cursor;
+    private Double latMax;
+    private Double lonMax;
+    private Double latMin;
+    private Double lonMin;
+    private boolean BiggerSquareUsable = true;
 
 
 
@@ -141,18 +147,67 @@ public class WitInfo extends Fragment {
 
     private void startDownloadInfo(){
 
-        progressWheel = new ProgressWheel(getActivity());
-        progressWheel.spin();
+        getSquarePosition();
+        if(!pointIntoInternalSquare(currentLocation.getLatitude(),currentLocation.getLongitude())) {
+            Toast.makeText(getActivity(), ""+currentLocation.getLatitude()+" "+currentLocation.getLongitude(), Toast.LENGTH_LONG).show();
+            Log.d(LOG_TAG,"D si");
+            progressWheel = new ProgressWheel(getActivity());
+            progressWheel.spin();
+            currentLocation = locationProvider.getLocation();
+            String lat = String.valueOf(currentLocation.getLatitude());
+            String lon = String.valueOf(currentLocation.getLongitude());
+            final String url = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20geo.placefinder%20where%20text%3D%22" + lat + "%2C%20" + lon + "%22%20and%20gflags%3D%22R%22&format=json&diagnostics=true&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys&callback=";
+            getWoeid(url);
+        }
+        else{
+            Log.d(LOG_TAG,"D no");
+            SharedPreferences prefs = getActivity().getSharedPreferences("WEATHER", Context.MODE_PRIVATE);
+            code = prefs.getString("code","0");
+            temp =  prefs.getString("temp","0");
+            text =  prefs.getString("text","0");
+            setImageWeather();
+            prefs = getActivity().getSharedPreferences("WIT", Context.MODE_PRIVATE);
+            int id  = prefs.getInt("woeid",0);
+            dbAdapter=new DbAdapter(getActivity());
+            dbAdapter.open();
+            cursor = dbAdapter.fetchCityByID(id);
+            city = cursor.getString(cursor.getColumnIndex(DbAdapter.KEY_CITY));
+            byte[] img = cursor.getBlob(cursor.getColumnIndex(DbAdapter.KEY_IMAGE));
+            cursor.close();
+            dbAdapter.close();
+            //v.findViewById(R.id.progress_wheel).setVisibility(View.GONE);
+            mainImage.setImageBitmap(BitmapFactory.decodeByteArray(img, 0, img.length));
+            titleText.setText(city);
+        }
 
+    }
 
-        currentLocation = locationProvider.getLocation();
-        String lat = String.valueOf(currentLocation.getLatitude());
-        String lon = String.valueOf(currentLocation.getLongitude());
+    private void getSquarePosition(){
+        Activity a = getActivity();
+        SharedPreferences prefs = a.getSharedPreferences("bigSquareMonumentList", Context.MODE_PRIVATE);
+        //uso il metodo definito da me altrimenti avrei dovuto usare stringhe (prefs.getString("max_lat",""); )
+        latMax = getDouble(prefs, "max_lat");
+        latMin = getDouble(prefs,"min_lat");
+        lonMax = getDouble(prefs,"max_lon");
+        lonMin = getDouble(prefs, "min_lon");
+    }
 
-        final String url = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20geo.placefinder%20where%20text%3D%22"+lat+"%2C%20"+lon+"%22%20and%20gflags%3D%22R%22&format=json&diagnostics=true&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys&callback=";
+    double getDouble(final SharedPreferences prefs, final String key) {
+        if ( !prefs.contains(key))
+            BiggerSquareUsable = false;
+        return Double.longBitsToDouble(prefs.getLong(key, 0));
+    }
 
-        getWoeid(url);
+    private boolean pointIntoInternalSquare(double lat, double lon){
+        if(!BiggerSquareUsable)
+            return false;
 
+        if(lat >= latMin && lat <= latMax){
+            if(lon >= lonMin && lon <= lonMax){
+                return true;
+            }
+        }
+        return false;
     }
 
     private void getWoeid(String serverUrl) {
@@ -283,6 +338,11 @@ public class WitInfo extends Fragment {
         this.code = code;
         this.temp = temp;
         this.text = text;
+        SharedPreferences.Editor editor = getActivity().getSharedPreferences("WEATHER",getActivity().MODE_PRIVATE).edit();
+        editor.putString("code", code);
+        editor.putString("temp", temp);
+        editor.putString("text", text);
+        editor.commit();
         setImageWeather();
 
     }
