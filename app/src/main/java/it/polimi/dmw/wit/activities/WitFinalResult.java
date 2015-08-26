@@ -513,7 +513,18 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
             else{
                 fbId = null;
             }
-            URL detailUrl = new URL(getString(R.string.register_visit_url)+"?poi="+id+"&woeid="+woeid+fbStringInUrl);
+            dbAdapter.open();
+            cursor = dbAdapter.fetchCityByID(woeid);
+            String city=null, county=null, state=null, country = null;
+            while(cursor.moveToNext()){
+                city = cursor.getString(cursor.getColumnIndex(DbAdapter.KEY_CITY));
+                county = cursor.getString(cursor.getColumnIndex(DbAdapter.KEY_COUNTY));
+                state = cursor.getString(cursor.getColumnIndex(DbAdapter.KEY_STATE));
+                country = cursor.getString(cursor.getColumnIndex(DbAdapter.KEY_COUNTRY));
+            }
+            cursor.close();
+            dbAdapter.close();
+            URL detailUrl = new URL(getString(R.string.register_visit_url)+"?poi="+id+fbStringInUrl+"&city="+city+"&county="+county+"&state="+state+"&country="+country);
             Log.d(LOG_TAG, "SERVER URL: "+detailUrl);
             witDownloadTask = new WitDownloadTask(this, null, witDownloadTask.REGISTERVISIT);
             witDownloadTask.execute(detailUrl);
