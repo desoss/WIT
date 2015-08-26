@@ -31,6 +31,7 @@ import it.polimi.dmw.wit.sliderMenu.FragmentDrawer;
 import it.polimi.dmw.wit.utilities.WitJourney;
 import it.polimi.dmw.wit.utilities.WitPOI;
 
+
 /**
  * Created by Mattia on 12/08/2015.
  */
@@ -42,7 +43,7 @@ public class WitDetailJourney extends ActionBarActivity implements FragmentDrawe
     private WitJourney journey;
     private ImageView mainImage;
     private TextView titleText;
-    private ListView listView ;
+    private ListView  listView ;
     private Intent intent;
     public final static String EXTRA_POI= "it.polimi.dmw.wit.POI";
     public final static String EXTRA_IMG= "it.polimi.dmw.wit.IMG";
@@ -63,6 +64,11 @@ public class WitDetailJourney extends ActionBarActivity implements FragmentDrawe
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
         listView = (ListView) findViewById(R.id.listView);
 
+        View header = getLayoutInflater().inflate(R.layout.header, null);
+        listView.addHeaderView(header);
+
+
+
 
         setSupportActionBar(mToolbar);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
@@ -70,6 +76,7 @@ public class WitDetailJourney extends ActionBarActivity implements FragmentDrawe
 
         mainImage = (ImageView)findViewById(R.id.journey_img);
         titleText = (TextView)findViewById(R.id.journey_name_text);
+
 
 
         drawerFragment = (FragmentDrawer)
@@ -169,7 +176,7 @@ public class WitDetailJourney extends ActionBarActivity implements FragmentDrawe
             poisList = p;
             context=activity;
             inflater = ( LayoutInflater )context.
-                    getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                   getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         }
         @Override
         public int getCount() {
@@ -215,6 +222,8 @@ public class WitDetailJourney extends ActionBarActivity implements FragmentDrawe
                 holder.img.setImageBitmap(BitmapFactory.decodeByteArray(image, 0,image.length));
             }
             else {
+                holder.img.setImageResource(R.drawable.gray);
+
 
             }
             rowView.setOnClickListener(new View.OnClickListener() {
