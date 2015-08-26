@@ -28,10 +28,10 @@ import it.polimi.dmw.wit.activities.WitMainActivity;
 import it.polimi.dmw.wit.activities.WitScan;
 
 public class WitDownloadTask extends AsyncTask<URL, Void, String> {
-    // Membri per leggere la risposta HTTP
-    private InputStream is;
-    private BufferedReader br;
-    private StringBuilder sb;
+        // Membri per leggere la risposta HTTP
+        private InputStream is;
+        private BufferedReader br;
+        private StringBuilder sb;
     private String line;
     ArrayList<WitPOI> poiList;
     private final static String LOG_TAG = "WitDownloadTask";
@@ -61,14 +61,14 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
         this.fragment = fragment;
         photoURL = null;
         this.c = c;
-
     }
+
 
     /**
      * Metodo che viene chiamato quando parte il thread secondario. Fa la richiesta e
      * riceve il JSON come una stringa
      *
-     * @param params array che contiene gli URL da contattare, params[0] è il server con già
+     * @param params array che contiene gli URL da contattare, params[0] e il server con giï¿½
      *               la richiesta pronta.
      * @return la String contenente il JSON scaricato
      */
@@ -131,7 +131,7 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
     }
 
     /**
-     * Questo viene chiamato quando il thread a finito e gli viene passato il risultato
+     * Questo viene chiamato quando il thread ha finito e gli viene passato il risultato
      * del metodo precedente. Con questo risultato chiama il metodo della Activity per
      * parsare il JSON.
      *
@@ -171,12 +171,12 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
      * Prende una stringa di input, crea un ArrayList con i POI contenuti nel JSON
      * e fa partire l'activity per mostrare i risultati.
      *
-     * NOTA: questo metodo è chiamato del thread che scarica il JSON dopo che ha finito
-     * di scaricare, però viene eseguito dal thread principale dell'applicazione.
+     * NOTA: questo metodo ï¿½ chiamato del thread che scarica il JSON dopo che ha finito
+     * di scaricare, perï¿½ viene eseguito dal thread principale dell'applicazione.
      *
      * @param resultJson la stringa contenente il JSON
      */
-    private void parseJsonPOIs(String resultJson) {
+    public void parseJsonPOIs(String resultJson) {
         /*
 
             Struttura Json
@@ -220,7 +220,7 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
             poisNumber = documentObject.getInt("found");
             Log.d(LOG_TAG,"Trovati: "+poisNumber);
 
-            // Se l'array dei places non è vuoto
+            // Se l'array dei places non ï¿½ vuoto
             if (!documentObject.isNull("places")) {
                 // Prendi l'array dei monumenti
                 places = documentObject.getJSONArray("places");
@@ -521,6 +521,13 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
         finalR.checkIds(idsList);
 
     }
-
+    public void refreshPOIsList() {
+        is = null;
+        br = null;
+        sb = null;
+        line = "";
+        poiList = new ArrayList<WitPOI>();
+        photoURL = null;
+    }
 }
 

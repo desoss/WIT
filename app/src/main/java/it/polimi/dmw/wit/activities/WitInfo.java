@@ -112,7 +112,7 @@ public class WitInfo extends Fragment {
         // Se sono connesso
         if (networkInfo != null && networkInfo.isConnected() && gpsEnabled) {
 
-            // Fa partire il timeout thread che a sua volta farà il check periodico della Location
+            // Fa partire il timeout thread che a sua volta fare il check periodico della Location
             WitTimeoutThread timeoutThread = new WitTimeoutThread(new TimeoutHandler());
             timeoutThread.start();
         } else {
@@ -163,7 +163,7 @@ public class WitInfo extends Fragment {
         try {
             URL url = new URL(serverUrl);
 
-            // WitDownloadTask è la classe che gestisce il download
+            // WitDownloadTask ï¿½ la classe che gestisce il download
             witDownloadTask = new WitDownloadTask(null, this, witDownloadTask.WOEID);
             witDownloadTask.execute(url);
 
@@ -221,7 +221,7 @@ public class WitInfo extends Fragment {
         Log.d(LOG_TAG, "SERVER URL: " + u);
         try {
             URL url = new URL(u);
-            // WitDownloadTask è la classe che gestisce il download
+            // WitDownloadTask ï¿½ la classe che gestisce il download
             witDownloadTask = new WitDownloadTask(null, this, witDownloadTask.IMAGECITY);
             witDownloadTask.execute(url);
 
@@ -246,7 +246,7 @@ public class WitInfo extends Fragment {
 
         try {
             URL url = new URL(imageCityUrl);
-            // WitDownloadTask è la classe che gestisce il download
+            // WitDownloadTask ï¿½ la classe che gestisce il download
             witDownloadImageTask = new WitDownloadImageTask(null, this, witDownloadImageTask.CITY);
             witDownloadImageTask.execute(url);
 
@@ -269,7 +269,7 @@ public class WitInfo extends Fragment {
         Log.d(LOG_TAG, "SERVER URL: " + u);
         try {
             URL url = new URL(u);
-            // WitDownloadTask è la classe che gestisce il download
+            // WitDownloadTask ï¿½ la classe che gestisce il download
             witDownloadTask = new WitDownloadTask(null, this, witDownloadTask.WEATHER);
             witDownloadTask.execute(url);
 

@@ -2,8 +2,11 @@ package it.polimi.dmw.wit.activities;
 
 import android.app.AlertDialog;
 import android.content.Context;
+import android.app.Activity;
+
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.hardware.SensorManager;
 import android.location.Location;
 import android.location.LocationManager;
@@ -27,10 +30,17 @@ import android.widget.TextView;
 import android.widget.Toast;
 import com.facebook.FacebookSdk;
 import com.google.android.gms.common.api.GoogleApiClient;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import it.polimi.dmw.wit.R;
+import it.polimi.dmw.wit.utilities.BackgroundService;
 import it.polimi.dmw.wit.utilities.WitDownloadTask;
 import it.polimi.dmw.wit.utilities.WitLocationAPI;
 import it.polimi.dmw.wit.utilities.WitLocationProvider;
@@ -39,6 +49,8 @@ import it.polimi.dmw.wit.utilities.WitPOI;
 import it.polimi.dmw.wit.utilities.WitTimeoutThread;
 import android.view.View.OnClickListener;
 
+import org.json.JSONException;
+import org.json.JSONObject;
 
 
 public class WitScan extends Fragment {
@@ -46,6 +58,11 @@ public class WitScan extends Fragment {
 
     private boolean stop;
     private  View v;
+    private Double latMax;
+    private Double lonMax;
+    private Double latMin;
+    private Double lonMin;
+    private boolean BiggerSquareUsable = true;
 
 
     /**
@@ -67,7 +84,6 @@ public class WitScan extends Fragment {
     public final static int MIN_ACCURACY = 30;
     public final static int MEDIUM_ACCURACY = 10;
     public final static int MAX_ACCURACY = 20; //VALORE CORRETTO 5 METTERE >16 SOLO PER VELOCIZZARE PROVE CON FAKE LOCATION
-
 
 
     /**
@@ -101,7 +117,6 @@ public class WitScan extends Fragment {
      * Migliore location ricevute
      */
     Location currentLocation = null;
-
 
 
     /**
@@ -281,7 +296,7 @@ public class WitScan extends Fragment {
                         orientationEnabled = true;
                     }
 
-                    // Fa partire il timeout thread che a sua volta farà il check periodico della Location
+                    // Fa partire il timeout thread che a sua volta fare il check periodico della Location
                     WitTimeoutThread timeoutThread = new WitTimeoutThread(new TimeoutHandler());
                     timeoutThread.start();
                 } else {
@@ -340,9 +355,6 @@ public class WitScan extends Fragment {
     }
 
 
-
-
-
     /**
      * Metodo per fermare l'animazione di scan e rimettere quella di default
      */
@@ -366,26 +378,105 @@ public class WitScan extends Fragment {
     }
 
     /**
-     * Crea la richiesta per il server con le coordinate più recenti
+     * Crea la richiesta per il server con le coordinate piï¿½ recenti
      * e verifica che internet sia attivo, come per il GPS.
      */
     private void getPOIs() {
         String lat = String.valueOf(currentLocation.getLatitude());
         String lon = String.valueOf(currentLocation.getLongitude());
 
-
         // Crea l'url con i parametri giusti per il server
-        final String url = getString(R.string.get_monuments_base_url)+"?lat=" + lat + "&lon=" + lon + "&json=true&side=1&max=100";
+        witDownloadTask = new WitDownloadTask(null, this, witDownloadTask.POISLIST);
 
-        getMonumentsFromServer(url);
+        SharedPreferences prefs = getActivity().getSharedPreferences("bigSquareMonumentList", Context.MODE_PRIVATE);
+        //uso il metodo definito da me altrimenti avrei dovuto usare stringhe (prefs.getString("max_lat",""); )
+        latMax = getDouble(prefs,"max_lat");
+        latMin = getDouble(prefs,"min_lat");
+        lonMax = getDouble(prefs,"max_lon");
+        lonMin = getDouble(prefs, "min_lon");
 
+        //se current pos Ã¨ dentro l'internal square
+        if(pointIntoInternalSquare(Double.parseDouble(lat),Double.parseDouble(lon))) {
+            try {
+                String jsonString = readCache();
+                if (jsonString != null){
+                    Toast.makeText(getActivity(), "Ho usato il json della cache", Toast.LENGTH_LONG).show();
+                    witDownloadTask.refreshPOIsList();
+                    witDownloadTask.parseJsonPOIs(jsonString);
+                }
+               else{
+
+                    final String url = getString(R.string.get_monuments_base_url)+"?lat=" + lat + "&lon=" + lon + "&json=true&side=1&max=100";
+                    getMonumentsFromServer(url);
+                    startBackgroundWorks(lat, lon);//<------------------------------ non sono sicuro di metterlo qui
+                }
+            } catch (IOException | JSONException e) {
+                e.printStackTrace();
+            }
+        }
+        else{
+            final String url = getString(R.string.get_monuments_base_url)+"?lat=" + lat + "&lon=" + lon + "&json=true&side=1&max=100";
+            getMonumentsFromServer(url);
+            startBackgroundWorks(lat, lon);//<------------------------------ non sono sicuro di metterlo qui
+        }
+}
+    private String readCache() throws IOException, JSONException {
+        InputStreamReader in;
+        StringBuilder responseStrBuilder = new StringBuilder();
+
+        File cacheFile = new File(((Context) getActivity()).getCacheDir(), "cacheFile.srl");
+        if (cacheFile.exists()) {//se il file non esiste ritorna null
+
+            in = new InputStreamReader(new FileInputStream(cacheFile), "UTF-8");
+            BufferedReader buffReader = new BufferedReader(in);
+
+            String inputStr;
+            while ((inputStr = buffReader.readLine()) != null)
+                responseStrBuilder.append(inputStr);
+
+            in.close();
+        }
+        else{
+            return null;
+        }
+        return responseStrBuilder.toString();
     }
 
+    double getDouble(final SharedPreferences prefs, final String key) {
+        if ( !prefs.contains(key))
+            BiggerSquareUsable = false;
+        return Double.longBitsToDouble(prefs.getLong(key, 0));
+    }
+
+    private boolean pointIntoInternalSquare(double lat, double lon){
+        if(!BiggerSquareUsable)
+            return false;
+
+        if(lat >= latMin && lat <= latMax){
+            if(lon >= lonMin && lon <= lonMax){
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+     //Creates a new Intent to start the BackgroundService IntentService.s
+    public void startBackgroundWorks(String lat, String lon) {
+        Intent mServiceIntent = new Intent(getActivity(), BackgroundService.class);
+
+        mServiceIntent.putExtra("lat", lat);
+        mServiceIntent.putExtra("lon", lon);
+        mServiceIntent.putExtra("range", "4");
+
+        getActivity().startService(mServiceIntent);
+        // Log.d("DownloadService", "Service Started!");
+    }
 
     /**
      * Crea un URL e fa partire il thread che gestisce il download del JSON
      *
-     * @param serverUrl url del server già completo di parametri
+     * @param serverUrl url del server giï¿½ completo di parametri
      */
     private void getMonumentsFromServer(String serverUrl) {
 
@@ -395,8 +486,7 @@ public class WitScan extends Fragment {
         try {
             URL url = new URL(serverUrl);
 
-            // WitDownloadTask è la classe che gestisce il download
-            witDownloadTask = new WitDownloadTask(null, this, witDownloadTask.POISLIST);
+            // WitDownloadTask ï¿½ la classe che gestisce il download
             witDownloadTask.execute(url);
 
         } catch (MalformedURLException e) {
@@ -422,7 +512,7 @@ public class WitScan extends Fragment {
         intent.putExtra(EXTRA_USER_LON, currentLocation.getLongitude());
         intent.putExtra(EXTRA_USER_ORIENTATION, orientationProvider.getOrientation(currentLocation));
 
-        // Fai partire l'attività dei risultati
+        // Fai partire l'attivitï¿½ dei risultati
         startActivity(intent);
 
     }

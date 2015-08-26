@@ -185,7 +185,7 @@ public class WitDiary extends ActionBarActivity implements FragmentDrawer.Fragme
         for (int x = 0; x < citieList.size(); x++) {
             WitCity city = citieList.get(x);
             String nameCity = city.getName();
-            Log.d(LOG_TAG, "Città: " + nameCity);
+            Log.d(LOG_TAG, "Citta': " + nameCity);
             if (woeidMap.containsKey(city)) {
                 journeysList = (ArrayList) woeidMap.get(city);
                 Log.d(LOG_TAG, "Numero viaggi: " + journeysList.size());

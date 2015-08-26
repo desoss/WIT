@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.hardware.SensorManager;
 import android.location.Location;
 import android.location.LocationManager;
@@ -36,6 +37,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -101,12 +104,11 @@ public class WitMainActivity extends ActionBarActivity implements FragmentDrawer
     private SlidingTabLayout tabs;
     private CharSequence Titles[] = {"Scan","Info"};
     private int Numboftabs =2;
-
-
-
-
-
-
+    private Double latMax;
+    private Double lonMax;
+    private Double latMin;
+    private Double lonMin;
+    private boolean BiggerSquareUsable = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -154,9 +156,73 @@ public class WitMainActivity extends ActionBarActivity implements FragmentDrawer
         drawerFragment.setDrawerListener(this);
       //  displayView(0);
 
+        SharedPreferences prefs = getSharedPreferences("bigSquareMonumentList", Context.MODE_PRIVATE);
+        //uso il metodo definito da me altrimenti avrei dovuto usare stringhe (prefs.getString("max_lat",""); )
+        latMax = getDouble(prefs,"max_lat");
+        latMin = getDouble(prefs,"min_lat");
+        lonMax = getDouble(prefs,"max_lon");
+        lonMin = getDouble(prefs, "min_lon");
 
+        TextView text =  (TextView) findViewById(R.id.jsonText);
+        text.append("latMin: "+latMin+"\n");
+        text.append("latMax: "+latMax+"\n");
+        text.append("lonMin: "+lonMin+"\n");
+        text.append("lonMax: "+lonMax+"\n");
+
+        try {
+                JSONObject jsonObject = readCache();
+                if(jsonObject!=null){
+                    String found = jsonObject.getString("found") ;
+                    text.append("found: " + found + "\n");
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
 
     }
+    private JSONObject readCache() throws IOException, JSONException {
+        InputStreamReader in;
+        JSONObject jsonObject = null;
+
+        File cacheFile = new File(((Context) this).getCacheDir(), "cacheFile.srl");
+        if (cacheFile.exists()) {//se il file non esiste ritorna null
+
+            StringBuilder responseStrBuilder = new StringBuilder();
+
+            in = new InputStreamReader(new FileInputStream(cacheFile), "UTF-8");
+            BufferedReader buffReader = new BufferedReader(in);
+
+            String inputStr;
+            while ((inputStr = buffReader.readLine()) != null)
+                responseStrBuilder.append(inputStr);
+
+            jsonObject = new JSONObject(responseStrBuilder.toString());
+            in.close();
+        }
+        return jsonObject;
+    }
+
+    double getDouble(final SharedPreferences prefs, final String key) {
+        if ( !prefs.contains(key))
+            BiggerSquareUsable = false;
+        return Double.longBitsToDouble(prefs.getLong(key, 0));
+    }
+
+    private boolean pointIntoInternalSquare(double lat, double lon){
+        if(!BiggerSquareUsable)
+            return false;
+
+        if(lat >= latMin && lat <= latMax){
+            if(lon >= lonMin && lon <= lonMax){
+                return true;
+            }
+        }
+        return false;
+    }
+
+
 
     @Override
     protected void onStart() {

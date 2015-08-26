@@ -90,7 +90,6 @@
                     android:layout_gravity="right"
                     android:layout_marginTop="50dp" />
 
-
                 <ImageView
                     android:contentDescription="@string/image_description"
                     android:layout_width="120dp"

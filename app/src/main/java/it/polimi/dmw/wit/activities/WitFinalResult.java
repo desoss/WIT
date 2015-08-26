@@ -165,7 +165,7 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
     public void setImage(Bitmap result, byte[] img) {
         stopWheel();
         mainImage.setImageBitmap(result);
-            savePOI(id,title,description,img); //salvo nel database il poi
+            savePOI(id, title, description, img); //salvo nel database il poi
         }
     private void stopWheel(){
         findViewById(R.id.progress_wheel).setVisibility(View.GONE);
@@ -449,6 +449,7 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
         woeid = sharedPrefs.getInt("woeid", 0);
         dbAdapter.savePOI(id, name, description, getCurrentDate(), woeid, img);
         dbAdapter.close();
+        registerVisit();
         checkSettingFb();
 
     }
@@ -494,10 +495,9 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
     private void checkSettingFb(){
         SharedPreferences sharedPrefs = getSharedPreferences("WIT", MODE_PRIVATE);
         Log.d(LOG_TAG, ""+sharedPrefs.getBoolean("fb", false));
-        if(sharedPrefs.getBoolean("fb", false)){
+        if(sharedPrefs.getBoolean("fb", false)) {
             Log.d(LOG_TAG, "FACEBOOK");
             storyOnFacebook();
-            registerVisit();
         }
 
     }
@@ -505,8 +505,15 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
     private void registerVisit(){
         SharedPreferences sharedPrefs = getSharedPreferences("WIT", MODE_PRIVATE);
         Long fbId = sharedPrefs.getLong("fbId", 0);
+        String fbStringInUrl = new String();
         try {
-            URL detailUrl = new URL(getString(R.string.register_visit_url)+"?poi="+id+"&woeid="+woeid+"&fb_id="+fbId);
+            if(fbId != null && fbId != 0){ //fbId nel logout viene settato a 0
+                fbStringInUrl = "&fb_id="+fbId;
+            }
+            else{
+                fbId = null;
+            }
+            URL detailUrl = new URL(getString(R.string.register_visit_url)+"?poi="+id+"&woeid="+woeid+fbStringInUrl);
             Log.d(LOG_TAG, "SERVER URL: "+detailUrl);
             witDownloadTask = new WitDownloadTask(this, null, witDownloadTask.REGISTERVISIT);
             witDownloadTask.execute(detailUrl);

@@ -241,6 +241,11 @@ public class WitFacebookLogin extends ActionBarActivity implements FragmentDrawe
         dbAdapter.updateUSER(id, name, surname, img, false, false);
         dbAdapter.close();
         profile = null;
+
+        SharedPreferences.Editor editor = getSharedPreferences("WIT", MODE_PRIVATE).edit();
+        editor.putLong("fbId", 0);
+        editor.commit();
+
         Intent i = new Intent(this, WitFacebookLogin.class);
         startActivity(i);
 
