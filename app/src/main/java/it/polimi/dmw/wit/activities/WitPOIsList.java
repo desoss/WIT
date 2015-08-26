@@ -5,8 +5,10 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarActivity;
@@ -233,6 +235,8 @@ public class WitPOIsList extends ActionBarActivity implements FragmentDrawer.Fra
                 holder.img.setImageBitmap(BitmapFactory.decodeByteArray(img, 0, img.length));
             }
             else {
+                holder.img.setImageResource(R.drawable.gray);
+
 
             }
             rowView.setOnClickListener(new View.OnClickListener() {

@@ -160,6 +160,7 @@ public class WitInfo extends Fragment {
             getWoeid(url);
         }
         else{
+            v.findViewById(R.id.progress_wheel).setVisibility(View.GONE);
             Log.d(LOG_TAG,"D no");
             SharedPreferences prefs = getActivity().getSharedPreferences("WEATHER", Context.MODE_PRIVATE);
             code = prefs.getString("code","0");
@@ -171,12 +172,16 @@ public class WitInfo extends Fragment {
             dbAdapter=new DbAdapter(getActivity());
             dbAdapter.open();
             cursor = dbAdapter.fetchCityByID(id);
-            city = cursor.getString(cursor.getColumnIndex(DbAdapter.KEY_CITY));
-            byte[] img = cursor.getBlob(cursor.getColumnIndex(DbAdapter.KEY_IMAGE));
+            byte[] img = null;
+            if(cursor.moveToNext()) {
+                city = cursor.getString(cursor.getColumnIndex(DbAdapter.KEY_CITY));
+                img = cursor.getBlob(cursor.getColumnIndex(DbAdapter.KEY_IMAGE));
+                mainImage.setImageBitmap(BitmapFactory.decodeByteArray(img, 0, img.length));
+
+            }
             cursor.close();
             dbAdapter.close();
             //v.findViewById(R.id.progress_wheel).setVisibility(View.GONE);
-            mainImage.setImageBitmap(BitmapFactory.decodeByteArray(img, 0, img.length));
             titleText.setText(city);
         }
 

@@ -52,8 +52,14 @@ public class WitDownloadImageTask extends AsyncTask<URL, Void, Bitmap> {
 
     protected void onPostExecute(Bitmap result) {
         ByteArrayOutputStream bos=new ByteArrayOutputStream();
+        if(result!=null){
         result.compress(Bitmap.CompressFormat.PNG, 100, bos);
         img=bos.toByteArray();
+        }
+        else{
+            img = null;
+        }
+
         Log.d(LOG_TAG, "image downloaded");
         switch (c){
             case FACEBOOK:
