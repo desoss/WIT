@@ -25,19 +25,25 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.BaseAdapter;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.pkmmte.view.CircularImageView;
 import com.pnikosis.materialishprogress.ProgressWheel;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+
 import it.polimi.dmw.wit.R;
 import it.polimi.dmw.wit.database.DbAdapter;
 import it.polimi.dmw.wit.utilities.WitDownloadImageTask;
 import it.polimi.dmw.wit.utilities.WitDownloadTask;
 import it.polimi.dmw.wit.utilities.WitLocationAPI;
 import it.polimi.dmw.wit.utilities.WitLocationProvider;
+import it.polimi.dmw.wit.utilities.WitPOI;
 import it.polimi.dmw.wit.utilities.WitTimeoutThread;
 
 public class WitInfo extends Fragment {
@@ -62,6 +68,15 @@ public class WitInfo extends Fragment {
     private Double latMin;
     private Double lonMin;
     private boolean BiggerSquareUsable = true;
+    private ArrayList<byte[]> imgList;
+    private ArrayList<WitPOI> poisList;
+    private ListView listView ;
+    private Intent intent;
+    public final static String EXTRA_POI= "it.polimi.dmw.wit.POI";
+    public final static String EXTRA_IMG= "it.polimi.dmw.wit.IMG";
+    private CustomAdapter adapter;
+
+
 
 
 
@@ -75,6 +90,8 @@ public class WitInfo extends Fragment {
         titleText = (TextView)v.findViewById(R.id.city_name_text);
         weatherText = (TextView)v.findViewById(R.id.weather_text);
         progressWheel = (ProgressWheel) v.findViewById(R.id.progress_wheel);
+        listView = (ListView) v.findViewById(R.id.listView);
+
 
         return v;
     }
@@ -93,6 +110,8 @@ public class WitInfo extends Fragment {
 
         Log.d(LOG_TAG, "onStart()");
         stop = false;
+
+        imgList = new ArrayList<>();
 
         // Verifica che il GPS sia acceso
         gpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
@@ -126,6 +145,11 @@ public class WitInfo extends Fragment {
           //  showWirelessSettingsAlert();
 
         }
+        poisList = new ArrayList<>();
+        adapter = new CustomAdapter(getActivity(),poisList, imgList);
+        listView.setAdapter(adapter);
+        intent = new Intent(getActivity(), WitSavedPOI.class);
+
 
 
     }
@@ -164,9 +188,9 @@ public class WitInfo extends Fragment {
         v.findViewById(R.id.progress_wheel).setVisibility(View.GONE);
         Log.d(LOG_TAG,"D no");
         SharedPreferences prefs = getActivity().getSharedPreferences("WEATHER", Context.MODE_PRIVATE);
-        code = prefs.getString("code","0");
-        temp =  prefs.getString("temp","0");
-        text =  prefs.getString("text","0");
+        code = prefs.getString("code", "0");
+        temp =  prefs.getString("temp", "0");
+        text =  prefs.getString("text", "0");
         setImageWeather();
 
 
@@ -177,8 +201,8 @@ public class WitInfo extends Fragment {
         SharedPreferences prefs = a.getSharedPreferences("bigSquareMonumentList", Context.MODE_PRIVATE);
         //uso il metodo definito da me altrimenti avrei dovuto usare stringhe (prefs.getString("max_lat",""); )
         latMax = getDouble(prefs, "max_lat");
-        latMin = getDouble(prefs,"min_lat");
-        lonMax = getDouble(prefs,"max_lon");
+        latMin = getDouble(prefs, "min_lat");
+        lonMax = getDouble(prefs, "max_lon");
         lonMin = getDouble(prefs, "min_lon");
     }
 
@@ -225,6 +249,7 @@ public class WitInfo extends Fragment {
         this.woeid = woeid;
         getSquarePosition();
         boolean b = checkWoeid();
+        getBestFive();
         if(!pointIntoInternalSquare(currentLocation.getLatitude(),currentLocation.getLongitude())) {
             getWeather(); }
         else{
@@ -233,6 +258,61 @@ public class WitInfo extends Fragment {
             if (!b) {
                 searchImageCity();
             }
+
+    }
+
+    private void getBestFive(){
+        //final String u = "http://desoss.altervista.org/wit/android_best5pois_request.php?city="+city+"county="+county+"&state="+state+"&country="+country;
+        final String u = "http://desoss.altervista.org/wit/android_best5pois_request.php?&city=2&county=3&state=3&country=234";
+        Log.d(LOG_TAG, "SERVER URL: " + u);
+        try {
+            URL url = new URL(u);
+            // WitDownloadTask � la classe che gestisce il download
+            witDownloadTask = new WitDownloadTask(null, this, witDownloadTask.BESTFIVE);
+            witDownloadTask.execute(url);
+
+
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void saveBestFive(ArrayList<WitPOI> l){
+        String url = null;
+        for(int x=0;x<l.size();x++){
+            poisList.add(l.get(x));
+            url = poisList.get(x).getDate();
+            if(url!=null){
+                downloadImagePoi(url);
+            }
+            else{
+                imgList.add(null);
+            }
+        }
+        if(imgList.size()==poisList.size()){
+            adapter.notifyDataSetChanged();
+        }
+
+    }
+
+    private void downloadImagePoi(String imageCityUrl){
+        Log.d(LOG_TAG, "SERVER URL: " + imageCityUrl);
+        try {
+            URL url = new URL(imageCityUrl);
+            witDownloadImageTask = new WitDownloadImageTask(null, this, witDownloadImageTask.POIBEST);
+            witDownloadImageTask.execute(url);
+
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void saveImagePoi(byte [] img){
+        imgList.add(img);
+        if(imgList.size()==poisList.size()){
+            adapter.notifyDataSetChanged();
+        }
+        Log.d(LOG_TAG,""+imgList.size());
 
     }
     //  salvo il woeid corrente nel database automatico
@@ -374,6 +454,96 @@ public class WitInfo extends Fragment {
         cursor.close();
         dbAdapter.close();
     }
+
+
+
+
+    /**
+     * Classe privata che gestisce la lista
+     */
+    private class CustomAdapter extends BaseAdapter {
+        Context context;
+        WitPOI poi;
+        ArrayList<WitPOI> poisList;
+        ArrayList<byte[]> imagesList;
+        private LayoutInflater inflater=null;
+        public CustomAdapter(Activity activity, ArrayList<WitPOI> p, ArrayList<byte[]> l) {
+            // TODO Auto-generated constructor stub
+            imagesList = l;
+            poisList = p;
+            context=activity;
+            inflater = ( LayoutInflater )context.
+                    getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        }
+        @Override
+        public int getCount() {
+            // TODO Auto-generated method stub
+            return poisList.size();
+        }
+
+        @Override
+        public Object getItem(int position) {
+            // TODO Auto-generated method stub
+            return position;
+        }
+
+        @Override
+        public long getItemId(int position) {
+            // TODO Auto-generated method stub
+            return position;
+        }
+
+        public class Holder
+        {
+            TextView tv;
+            CircularImageView img;
+        }
+        @Override
+        public View getView(final int position, View convertView, ViewGroup parent) {
+            Holder holder=new Holder();
+            View rowView;
+            rowView = inflater.inflate(R.layout.pois_list, null);
+            holder.tv=(TextView) rowView.findViewById(R.id.textView);
+            holder.img=(CircularImageView) rowView.findViewById(R.id.img);
+            holder.img.setBorderColor(getResources().getColor(R.color.colorPrimary));
+            holder.img.setBorderWidth(4);
+            // circularImageView.setSelectorColor(getResources().getColor(R.color.colorPrimary));
+            //circularImageView.setSelectorStrokeColor(getResources().getColor(R.color.colorPrimaryDark));
+            holder.img.setSelectorStrokeWidth(10);
+            holder.img.addShadow();
+            poi = poisList.get(position);
+            holder.tv.setText(poi.getPoiName());
+            //holder.img.setImageResource(imageId[position]);
+            byte[] image = imagesList.get(position);
+            if(image!= null) {
+                holder.img.setImageBitmap(BitmapFactory.decodeByteArray(image, 0,image.length));
+            }
+            else {
+                holder.img.setImageResource(R.drawable.gray);
+
+
+            }
+            rowView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    poi = poisList.get(position);
+                    intent.putExtra(EXTRA_POI, poi);
+                    byte [] img = imagesList.get(position);
+                    intent.putExtra(EXTRA_IMG,img);
+                    startActivity(intent);
+
+
+
+                    //Log.d( LOG_TAG,"nome POI = "+ result[position]+ id[position]);
+
+                }
+            });
+            return rowView;
+        }
+
+    }
+
+
 
 
 

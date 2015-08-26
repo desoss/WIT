@@ -77,7 +77,8 @@ public class WitSavedPOI extends ActionBarActivity implements FragmentDrawer.Fra
 
 
 
-            name = poi.getPoiName();
+
+        name = poi.getPoiName();
             description = poi.getDescription();
 
             if (img!=null) {

@@ -45,7 +45,7 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
     private String wikiLink;
     private URL photoURL;
     private String cityUrl;
-    public static final int POISLIST = 0, POIDETAIL = 1, WOEID = 2, IMAGECITY = 3, WEATHER = 4, REGISTERVISIT = 5;
+    public static final int POISLIST = 0, POIDETAIL = 1, WOEID = 2, IMAGECITY = 3, WEATHER = 4, REGISTERVISIT = 5, BESTFIVE = 6;
     private int c;
 
 
@@ -160,6 +160,9 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
               break;
           case REGISTERVISIT:
               parseJsonFriendsVisit(s);
+              break;
+          case BESTFIVE:
+              parseJsonBestFive(s);
               break;
       }
 
@@ -529,5 +532,44 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
         poiList = new ArrayList<WitPOI>();
         photoURL = null;
     }
+
+   private void parseJsonBestFive(String resultJson){
+       JSONTokener tokener = null;
+       JSONObject object = null;
+       JSONObject pois = null;
+       JSONObject poi = null;
+       int num;
+       String name;
+       String description;
+       String urlImg;
+       WitPOI p;
+       ArrayList<WitPOI> list = new ArrayList<>();
+
+       Log.d(LOG_TAG, "JSON received! Length = " + resultJson.length());
+       Log.d(LOG_TAG, resultJson);
+
+       tokener = new JSONTokener(resultJson);
+       try {
+
+           object = (JSONObject) tokener.nextValue();
+           num = object.getInt("num");
+           pois = object.getJSONObject("pois");
+           for(int x=1; x<=num;x++){
+               poi = pois.getJSONObject(""+x);
+               name = poi.getString("name");
+               description = poi.getString("description");
+               urlImg = poi.getString("photo");
+               p = new WitPOI(0,0,name,description,urlImg,0);
+               list.add(p);
+
+           }
+           info =  (WitInfo) fragment;
+           info.saveBestFive(list);
+       }
+           catch (JSONException e) {
+               e.printStackTrace();
+
+           }
+   }
 }
 
