@@ -365,6 +365,7 @@ public class WitInfo extends Fragment {
     private void saveInDbBestFive(){
         dbAdapter = new DbAdapter(getActivity());
         dbAdapter.open();
+        dbAdapter.deleteBestFive();
         String name, description;
         byte [] img;
         for(int x =0;x<poisList.size();x++){

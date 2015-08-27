@@ -7,6 +7,7 @@ import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.provider.ContactsContract;
+import android.util.Log;
 
 import java.sql.Blob;
 
@@ -160,6 +161,13 @@ public class DbAdapter {
     //delete a contact
     public boolean deletePOI(long id) {
         return database.delete(DATABASE_POI, KEY_ID + "=" + id, null) > 0;
+    }
+    public void deleteBestFive() {
+         database.execSQL("DROP TABLE IF EXISTS "+DATABASE_BEST_FIVE);
+         database.execSQL(dbHelper.DATABASE_BEST_FIVE);
+
+        Log.d("db", "drop");
+
     }
 
     public boolean deleteUser(long id) {
