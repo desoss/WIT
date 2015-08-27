@@ -33,12 +33,29 @@ import android.widget.Toast;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.pkmmte.view.CircularImageView;
 import com.pnikosis.materialishprogress.ProgressWheel;
+
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
+import java.io.Writer;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 
 import it.polimi.dmw.wit.R;
 import it.polimi.dmw.wit.database.DbAdapter;
+import it.polimi.dmw.wit.utilities.ObjectSerializer;
 import it.polimi.dmw.wit.utilities.WitDownloadImageTask;
 import it.polimi.dmw.wit.utilities.WitDownloadTask;
 import it.polimi.dmw.wit.utilities.WitLocationAPI;
@@ -85,12 +102,15 @@ public class WitInfo extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
          v = inflater.inflate(R.layout.tab_info,container,false);
+        progressWheel = (ProgressWheel) v.findViewById(R.id.progress_wheel);
+        listView = (ListView) v.findViewById(R.id.listView);
+        View header = getActivity().getLayoutInflater().inflate(R.layout.header_info, null);
+        listView.addHeaderView(header);
         mainImage = (ImageView)v.findViewById(R.id.city_img);
         weatherImage = (ImageView)v.findViewById(R.id.weather_img);
         titleText = (TextView)v.findViewById(R.id.city_name_text);
         weatherText = (TextView)v.findViewById(R.id.weather_text);
-        progressWheel = (ProgressWheel) v.findViewById(R.id.progress_wheel);
-        listView = (ListView) v.findViewById(R.id.listView);
+
 
 
         return v;
@@ -249,11 +269,20 @@ public class WitInfo extends Fragment {
         this.woeid = woeid;
         getSquarePosition();
         boolean b = checkWoeid();
-        getBestFive();
         if(!pointIntoInternalSquare(currentLocation.getLatitude(),currentLocation.getLongitude())) {
-            getWeather(); }
+            getWeather();
+            getBestFive();
+            Log.d(LOG_TAG,"Uso info nuove");
+        }
         else{
             setWeatherSaved();
+            try {
+                readFromCacheBestFive();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            Log.d(LOG_TAG,"Uso info salvate");
+
         }
             if (!b) {
                 searchImageCity();
@@ -262,8 +291,8 @@ public class WitInfo extends Fragment {
     }
 
     private void getBestFive(){
-        //final String u = "http://desoss.altervista.org/wit/android_best5pois_request.php?city="+city+"county="+county+"&state="+state+"&country="+country;
-        final String u = "http://desoss.altervista.org/wit/android_best5pois_request.php?&city=2&county=3&state=3&country=234";
+        final String u = "http://desoss.altervista.org/wit/android_best5pois_request.php?city="+city+"county="+county+"&state="+state+"&country="+country;
+        //final String u = "http://desoss.altervista.org/wit/android_best5pois_request.php?&city=2&county=3&state=3&country=234";
         Log.d(LOG_TAG, "SERVER URL: " + u);
         try {
             URL url = new URL(u);
@@ -291,9 +320,100 @@ public class WitInfo extends Fragment {
         }
         if(imgList.size()==poisList.size()){
             adapter.notifyDataSetChanged();
+            saveInCacheBestPois();
+
         }
 
     }
+
+    private void saveInCacheBestPois(){
+
+        Writer out;
+        ObjectSerializer objectSerializer = new ObjectSerializer();
+
+
+        File cacheFile = new File((getActivity()).getCacheDir(), "cacheBestPois.srl");
+        if (!cacheFile.exists()) {
+            try {
+                cacheFile.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        try {
+            cacheFile.createNewFile();
+            out = new OutputStreamWriter(new FileOutputStream(cacheFile), "UTF8");
+            out.write( objectSerializer.serialize(poisList));
+            out.flush();
+            out.close();
+
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        cacheFile = new File((getActivity()).getCacheDir(), "cacheBestPoisImg.srl");
+        if (!cacheFile.exists()) {
+            try {
+                cacheFile.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        try {
+            cacheFile.createNewFile();
+            out = new OutputStreamWriter(new FileOutputStream(cacheFile), "UTF8");
+            out.write( objectSerializer.serialize(imgList));
+            out.flush();
+            out.close();
+
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void readFromCacheBestFive() throws IOException {
+    InputStreamReader in;
+    StringBuilder responseStrBuilder = new StringBuilder();
+    ObjectSerializer objectSerializer = new ObjectSerializer();
+
+
+        File cacheFile = new File(( getActivity()).getCacheDir(), "cacheBestPois.srl");
+    if (cacheFile.exists()) {//se il file non esiste ritorna null
+
+        in = new InputStreamReader(new FileInputStream(cacheFile), "UTF-8");
+        BufferedReader buffReader = new BufferedReader(in);
+
+        String inputStr;
+        while ((inputStr = buffReader.readLine()) != null)
+            responseStrBuilder.append(inputStr);
+
+        in.close();
+        String result = responseStrBuilder.toString();
+        poisList = (ArrayList<WitPOI>)objectSerializer.deserialize(result);
+    }
+
+
+
+        cacheFile = new File(( getActivity()).getCacheDir(), "cacheBestPoisImg.srl");
+        if (cacheFile.exists()) {//se il file non esiste ritorna null
+
+            in = new InputStreamReader(new FileInputStream(cacheFile), "UTF-8");
+            BufferedReader buffReader = new BufferedReader(in);
+
+            String inputStr;
+            while ((inputStr = buffReader.readLine()) != null)
+                responseStrBuilder.append(inputStr);
+
+            in.close();
+            String result = responseStrBuilder.toString();
+            imgList = (ArrayList<byte[]>)objectSerializer.deserialize(result);
+        }
+        adapter.notifyDataSetChanged();
+
+    }
+
+
 
     private void downloadImagePoi(String imageCityUrl){
         Log.d(LOG_TAG, "SERVER URL: " + imageCityUrl);
@@ -311,8 +431,9 @@ public class WitInfo extends Fragment {
         imgList.add(img);
         if(imgList.size()==poisList.size()){
             adapter.notifyDataSetChanged();
+            saveInCacheBestPois();
         }
-        Log.d(LOG_TAG,""+imgList.size());
+        Log.d(LOG_TAG, "" + imgList.size());
 
     }
     //  salvo il woeid corrente nel database automatico
@@ -328,7 +449,8 @@ public class WitInfo extends Fragment {
         dbAdapter.open();
         cursor = dbAdapter.fetchCityByCCSC(city, county, state, country);
         while (cursor.moveToNext()) {
-                v.findViewById(R.id.progress_wheel).setVisibility(View.GONE);
+            Log.d(LOG_TAG,"Uso info city salvate");
+            v.findViewById(R.id.progress_wheel).setVisibility(View.GONE);
                 titleText.setText(city);
                 byte[] img = cursor.getBlob(cursor.getColumnIndex(DbAdapter.KEY_IMAGE));
                 int woeid = cursor.getInt(cursor.getColumnIndex(DbAdapter.KEY_ID));
@@ -425,7 +547,7 @@ public class WitInfo extends Fragment {
 
     private void setImageWeather(){
         String uri = "@drawable/a"+code;
-        Log.d(LOG_TAG,uri);
+        Log.d(LOG_TAG, uri);
         Log.d(LOG_TAG,getActivity().getPackageName());
 
         int imageResource = getResources().getIdentifier(uri, null,  getActivity().getPackageName());
@@ -657,6 +779,8 @@ public class WitInfo extends Fragment {
 
         Toast.makeText(getActivity(), "Unable to get GPS location.", Toast.LENGTH_LONG).show();
     }
+
+
 
 
 
