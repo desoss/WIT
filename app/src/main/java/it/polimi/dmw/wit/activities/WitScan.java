@@ -438,7 +438,7 @@ public class WitScan extends Fragment {
         StringBuilder responseStrBuilder = new StringBuilder();
 
         File cacheFile = new File(((Context) getActivity()).getCacheDir(), "cacheFile.srl");
-        if (cacheFile.exists()) {//se il file non esiste ritorna null
+        if (cacheFile.exists()) {
 
             in = new InputStreamReader(new FileInputStream(cacheFile), "UTF-8");
             BufferedReader buffReader = new BufferedReader(in);
@@ -449,7 +449,7 @@ public class WitScan extends Fragment {
 
             in.close();
         }
-        else{
+        else{//se il file non esiste ritorna null
             return null;
         }
         return responseStrBuilder.toString();

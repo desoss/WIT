@@ -193,18 +193,18 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
          */
 
         // Inizializza gli oggetti per il parsing
-        JSONTokener tokener = null;
-        JSONObject documentObject = null;
-        JSONObject place = null;
+        JSONTokener tokener;
+        JSONObject documentObject;
+        JSONObject place;
         JSONArray places = null;
-        JSONArray polygon = null;
-        JSONObject coords = null;
+        JSONArray polygon;
+        JSONObject coords;
         float[] x;
         float[] y;
 
 
         // Contiene il numero di monumenti ritornati
-        int poisNumber = 0;
+        int poisNumber;
 
         Log.d(LOG_TAG,"JSON received! Length = "+resultJson.length());
         Log.d(LOG_TAG,resultJson);
@@ -509,7 +509,7 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
                 list = object.getJSONArray("fb_id_list");
                 int l = list.length();
                 for (int i = 0; i < l; i++) {
-                    Long id = (Long)list.get(i);
+                    Long id = Long.parseLong(String.valueOf(list.get(i)));
                     idsList.add(id);
                 }
             }
