@@ -14,28 +14,22 @@ public class ObjectSerializer {
 
     public static String serialize(Serializable obj) throws IOException {
         if (obj == null) return "";
-        try {
+
             ByteArrayOutputStream serialObj = new ByteArrayOutputStream();
             ObjectOutputStream objStream = new ObjectOutputStream(serialObj);
             objStream.writeObject(obj);
             objStream.close();
             return encodeBytes(serialObj.toByteArray());
-        } catch (Exception e) {
-             Log.d("Serialization error: " + e.getMessage(),e.toString());
-        }
-        return "";
+
     }
 
-    public static Object deserialize(String str) throws IOException {
+    public static Object deserialize(String str) throws IOException, ClassNotFoundException {
         if (str == null || str.length() == 0) return null;
-        try {
+
             ByteArrayInputStream serialObj = new ByteArrayInputStream(decodeBytes(str));
             ObjectInputStream objStream = new ObjectInputStream(serialObj);
             return objStream.readObject();
-        } catch (Exception e) {
-             Log.d("Deserialization error: " + e.getMessage(), e.toString());
-        }
-        return "";
+
     }
 
     public static String encodeBytes(byte[] bytes) {

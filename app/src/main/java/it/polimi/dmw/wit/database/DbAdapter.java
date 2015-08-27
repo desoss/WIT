@@ -24,6 +24,8 @@ public class DbAdapter {
     private static final String DATABASE_USER = "userProfile";
     private static final String DATABASE_SETTINGS = "settings";
     private static final String DATABASE_CITY_INFO = "cityInfo";
+    private static final String DATABASE_BEST_FIVE = "bestFive";
+
 
 
     public static final String KEY_ID = "_id";
@@ -68,6 +70,14 @@ public class DbAdapter {
 
         return values;
     }
+    private ContentValues createContentValuesBESTFIVE(String name, String description, byte[] img) {
+        ContentValues values = new ContentValues();
+        values.put(KEY_NAME, name);
+        values.put(KEY_DESCRIPTION, description);
+        values.put(KEY_IMAGE, img);
+
+        return values;
+    }
 
     private ContentValues createContentValuesUSER(long id, String name, String surname, byte[]img, Boolean fb, Boolean isLogged) {
         ContentValues values = new ContentValues();
@@ -104,6 +114,11 @@ public class DbAdapter {
     public void savePOI(int id, String name, String description, String date, int woeid, byte[] img) {
         ContentValues initialValues = createContentValuesPOI(id, name, description, date, woeid, img);
          database.insertOrThrow(DATABASE_POI, null, initialValues);
+    }
+
+    public void saveBestFive(String name, String description,byte[] img) {
+        ContentValues initialValues = createContentValuesBESTFIVE(name, description, img);
+        database.insertOrThrow(DATABASE_BEST_FIVE, null, initialValues);
     }
 
     public void saveUser(long id, String name, String surname, byte[] img, Boolean fb, Boolean isLogged) {
@@ -154,6 +169,10 @@ public class DbAdapter {
     //fetch all contacts
     public Cursor fetchAllPOIs() {
         return database.query(DATABASE_POI, new String[]{KEY_ID, KEY_NAME, KEY_DESCRIPTION, KEY_DATE, KEY_WOEID, KEY_IMAGE}, null, null, null, null, null);
+    }
+
+    public Cursor fetchBestFive() {
+        return database.query(DATABASE_BEST_FIVE, new String[]{KEY_ID, KEY_NAME, KEY_DESCRIPTION,  KEY_IMAGE}, null, null, null, null, null);
     }
 
 

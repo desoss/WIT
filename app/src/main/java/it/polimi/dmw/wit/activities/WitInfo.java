@@ -51,7 +51,12 @@ import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.concurrent.TimeUnit;
 
 import it.polimi.dmw.wit.R;
 import it.polimi.dmw.wit.database.DbAdapter;
@@ -267,31 +272,62 @@ public class WitInfo extends Fragment {
         this.state = state;
         this.country = country;
         this.woeid = woeid;
-        getSquarePosition();
         boolean b = checkWoeid();
-        if(!pointIntoInternalSquare(currentLocation.getLatitude(),currentLocation.getLongitude())) {
+        SharedPreferences prefs = getActivity().getSharedPreferences("LastLocation", getActivity().MODE_PRIVATE);
+        String currentLocation = city+county+state+country;
+        String location = prefs.getString("location","");
+        String currentDate = getCurrentDate();
+        String date = prefs.getString("date", getCurrentDate());
+        Long compare = compareDates(currentDate,date);
+        Log.d(LOG_TAG,"nuova: "+currentLocation+" vecchia: "+location+" compare date: "+compare);
+        if(!currentLocation.equalsIgnoreCase(location)||compare>1) {
             getWeather();
             getBestFive();
             Log.d(LOG_TAG,"Uso info nuove");
         }
         else{
             setWeatherSaved();
-            try {
-                readFromCacheBestFive();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+                readFromDbBestFive();
             Log.d(LOG_TAG,"Uso info salvate");
 
         }
             if (!b) {
                 searchImageCity();
             }
+        SharedPreferences.Editor editor = getActivity().getSharedPreferences("LastLocation",getActivity().MODE_PRIVATE).edit();
+        editor.putString("location", currentLocation);
+        editor.putString("date",getCurrentDate());
+        editor.commit();
 
     }
 
+    private void readFromDbBestFive(){
+        if(poisList.size()==0) {
+            dbAdapter = new DbAdapter(getActivity());
+            dbAdapter.open();
+            cursor = dbAdapter.fetchBestFive();
+            String name, description;
+            byte[] img;
+            WitPOI p;
+            while (cursor.moveToNext()) {
+                img = cursor.getBlob(cursor.getColumnIndex(DbAdapter.KEY_IMAGE));
+                imgList.add(img);
+                name = cursor.getString(cursor.getColumnIndex(DbAdapter.KEY_NAME));
+                description = cursor.getString(cursor.getColumnIndex(DbAdapter.KEY_DESCRIPTION));
+                p = new WitPOI(0, 0, name, description, null, 0);
+                poisList.add(p);
+            }
+            cursor.close();
+            dbAdapter.close();
+        }
+        adapter.notifyDataSetChanged();
+
+
+    }
+
+
     private void getBestFive(){
-        final String u = "http://desoss.altervista.org/wit/android_best5pois_request.php?city="+city+"county="+county+"&state="+state+"&country="+country;
+        final String u = "http://desoss.altervista.org/wit/android_best5pois_request.php?city="+city+"&county="+county+"&state="+state+"&country="+country;
         //final String u = "http://desoss.altervista.org/wit/android_best5pois_request.php?&city=2&county=3&state=3&country=234";
         Log.d(LOG_TAG, "SERVER URL: " + u);
         try {
@@ -320,11 +356,27 @@ public class WitInfo extends Fragment {
         }
         if(imgList.size()==poisList.size()){
             adapter.notifyDataSetChanged();
-            saveInCacheBestPois();
+            saveInDbBestFive();
 
         }
 
     }
+
+    private void saveInDbBestFive(){
+        dbAdapter = new DbAdapter(getActivity());
+        dbAdapter.open();
+        String name, description;
+        byte [] img;
+        for(int x =0;x<poisList.size();x++){
+            name = poisList.get(x).getPoiName();
+            description = poisList.get(x).getDescription();
+            img = imgList.get(x);
+            dbAdapter.saveBestFive(name,description,img);
+        }
+        dbAdapter.close();
+    }
+
+    /*
 
     private void saveInCacheBestPois(){
 
@@ -390,7 +442,11 @@ public class WitInfo extends Fragment {
 
         in.close();
         String result = responseStrBuilder.toString();
-        poisList = (ArrayList<WitPOI>)objectSerializer.deserialize(result);
+        try {
+            poisList = (ArrayList<WitPOI>)objectSerializer.deserialize(result);
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
     }
 
 
@@ -407,12 +463,16 @@ public class WitInfo extends Fragment {
 
             in.close();
             String result = responseStrBuilder.toString();
-            imgList = (ArrayList<byte[]>)objectSerializer.deserialize(result);
+            try {
+                imgList = (ArrayList<byte[]>)objectSerializer.deserialize(result);
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            }
         }
         adapter.notifyDataSetChanged();
 
     }
-
+*/
 
 
     private void downloadImagePoi(String imageCityUrl){
@@ -427,11 +487,11 @@ public class WitInfo extends Fragment {
         }
     }
 
-    public void saveImagePoi(byte [] img){
+    public void saveImagePoi(byte[] img){
         imgList.add(img);
         if(imgList.size()==poisList.size()){
             adapter.notifyDataSetChanged();
-            saveInCacheBestPois();
+            saveInDbBestFive();
         }
         Log.d(LOG_TAG, "" + imgList.size());
 
@@ -494,7 +554,7 @@ public class WitInfo extends Fragment {
 
     }
 
-    private void downloadImageCity(){
+    private void downloadImageCity() {
         Log.d(LOG_TAG, "SERVER URL: " + imageCityUrl);
 
         try {
@@ -546,6 +606,9 @@ public class WitInfo extends Fragment {
     }
 
     private void setImageWeather(){
+        if(code.equalsIgnoreCase("0")){
+            code = "00";
+        }
         String uri = "@drawable/a"+code;
         Log.d(LOG_TAG, uri);
         Log.d(LOG_TAG,getActivity().getPackageName());
@@ -778,6 +841,44 @@ public class WitInfo extends Fragment {
     private void reportTimeout() {
 
         Toast.makeText(getActivity(), "Unable to get GPS location.", Toast.LENGTH_LONG).show();
+    }
+
+    private String getCurrentDate(){
+        GregorianCalendar c = new GregorianCalendar();
+        SimpleDateFormat df = new SimpleDateFormat("dd-MMM-yyyy HH:mm:ss");
+        String date = df.format(c.getTime());
+        /*Date d = null;
+        try {
+            d = df.parse("11-nov-2015 12:14:14");
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        String date = df.format(d);
+        */
+
+        return date;
+    }
+
+    private Long compareDates(String s1, String s2) {
+        Date d1 = null;
+        Date d2 = null;
+        SimpleDateFormat sdf = new SimpleDateFormat("dd-MMM-yyyy HH:mm:ss");
+        try {
+            d1 = sdf.parse(s1);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        try {
+            d2 = sdf.parse(s2);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        TimeUnit tu = TimeUnit.HOURS;
+        long diffInMillies = d1.getTime() - d2.getTime();
+        Long r = tu.convert(diffInMillies, TimeUnit.MILLISECONDS);
+        Log.d(LOG_TAG, "Ris: " + r);
+        return r;
+
     }
 
 
