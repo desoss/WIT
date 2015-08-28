@@ -52,6 +52,8 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -73,8 +75,7 @@ import it.polimi.dmw.wit.database.DbAdapter;
 import com.sromku.simple.fb.entities.Profile.Properties;
 import com.sromku.simple.fb.utils.Utils;
 import android.support.v7.widget.RecyclerView;
-
-
+import android.widget.Toast;
 
 
 /**
@@ -87,6 +88,7 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
     private WitDownloadTask witDownloadTask;
     private WitDownloadImageTask witDownloadImageTask;
     private Profile profileFB;
+    private String language;
 
     private final static String LOG_TAG = "WitFinalResult";
 
@@ -155,24 +157,17 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
      */
     private DbAdapter dbAdapter;
     private Cursor cursor;
-
-
     private String wikiLink;
 
-
-
-
     public void setImage(Bitmap result, byte[] img) {
-        stopWheel();
-        mainImage.setImageBitmap(result);
-            savePOI(id, title, description, img); //salvo nel database il poi
-        }
+            mainImage.setImageBitmap(result);
+    }
+
     private void stopWheel(){
         findViewById(R.id.progress_wheel).setVisibility(View.GONE);
         titleText.setText(title);
         descText.setText(description);
     }
-
 
     public void saveResult(String i, String t, String d, String wLink, URL imgURL) {
         title = t;
@@ -181,15 +176,39 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
         photoURL = imgURL;
         this.id = Integer.parseInt(i);
         if (imgURL != null) {
-                    imgExists = true;
-                    witDownloadImageTask = new WitDownloadImageTask(this, null, witDownloadImageTask.POIDETAIL);
+            imgExists = true;
+            witDownloadImageTask = new WitDownloadImageTask(this, null, witDownloadImageTask.POIDETAIL);
             witDownloadImageTask.execute(imgURL);
-                }
-                else{
-                  stopWheel();
-                    imgExists = false;
-                    savePOI(id,title,description,img); //salvo nel database il poi
-                }
+        }
+        else{
+            imgExists = false;
+        }
+        if(wikiLink!=null){
+            //scarico testo
+            try {
+                URL url = new URL(wikiLink);
+                String path = url.getPath();
+                String wikipediaArticleTitle = path.substring(path.lastIndexOf('/') + 1);
+                URL mediaWikiAPI = new URL("https://"+this.language+".wikipedia.org/w/api.php?format=json&action=query&prop=extracts&exintro=&explaintext=&titles="+wikipediaArticleTitle);
+                Log.d(LOG_TAG, "url_api_wiki: "+mediaWikiAPI);
+
+                witDownloadTask = new WitDownloadTask(this, null, witDownloadTask.WIKIPEDIATEXT);
+                witDownloadTask.execute(mediaWikiAPI);
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            }
+        }
+        stopWheel();
+        savePOI(id, title, description, img); //salvo nel database il poi
+    }
+
+    public void setDescription(String description, String title){
+        //if(description.length()>= this.description.length()) {
+            this.description = description;
+            this.title = title;
+        titleText.setText(title);
+        descText.setText(description);
+       // }
     }
 
     @Override
@@ -197,6 +216,7 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_wit_detail);
+        this.language = "it";
 
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
         progressWheel = (ProgressWheel) findViewById(R.id.progress_wheel);
@@ -258,6 +278,9 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
         titleText = (TextView)findViewById(R.id.poi_name_text);
         descText = (TextView)findViewById(R.id.poi_desc_text);
 
+        Toast.makeText(this, "Orientation: "+userOrientation, Toast.LENGTH_LONG).show();
+
+
         title = getString(R.string.not_found_title_text);
         description = getString(R.string.not_found_desc_text);
 
@@ -280,7 +303,7 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
 
         if (correctPoiList.size()>0) {
             try {
-                URL detailUrl = new URL("http://api.wikimapia.org/?key=example&function=place.getbyid&id=" + correctPoiList.get(0).getPoiId() + "&format=json&language=it");
+                URL detailUrl = new URL("http://api.wikimapia.org/?key=example&function=place.getbyid&id=" + correctPoiList.get(0).getPoiId() + "&format=json&language="+language);
                 Log.d(LOG_TAG, "SERVER URL: "+detailUrl);
                 witDownloadTask = new WitDownloadTask(this, null, witDownloadTask.POIDETAIL);
                 witDownloadTask.execute(detailUrl);
@@ -651,8 +674,6 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
                         .setObject(so)
                         .setAction(storyAction)
                         .build();
-
-
                 mSimpleFacebook.publish(story, onPublishListener);
 
             }

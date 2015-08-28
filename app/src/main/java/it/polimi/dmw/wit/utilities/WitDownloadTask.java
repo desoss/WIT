@@ -21,6 +21,7 @@ import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Iterator;
 
 import it.polimi.dmw.wit.activities.WitFinalResult;
 import it.polimi.dmw.wit.activities.WitInfo;
@@ -45,7 +46,7 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
     private String wikiLink;
     private URL photoURL;
     private String cityUrl;
-    public static final int POISLIST = 0, POIDETAIL = 1, WOEID = 2, IMAGECITY = 3, WEATHER = 4, REGISTERVISIT = 5, BESTFIVE = 6;
+    public static final int POISLIST = 0, POIDETAIL = 1, WOEID = 2, IMAGECITY = 3, WEATHER = 4, REGISTERVISIT = 5, BESTFIVE = 6, WIKIPEDIATEXT = 7;
     private int c;
 
 
@@ -164,11 +165,11 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
           case BESTFIVE:
               parseJsonBestFive(s);
               break;
+          case WIKIPEDIATEXT:
+              parseJsonWikipediaDescription(s);
+              break;
       }
-
     }
-
-
 
     /**
      * Prende una stringa di input, crea un ArrayList con i POI contenuti nel JSON
@@ -391,7 +392,7 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
             state = result.getString("state");
             country = result.getString("country");
             woeid = result.getString("woeid");
-            info =  (WitInfo) fragment;
+            info = (WitInfo) fragment;
             info.saveInfo(city, county, state, country, woeid);
 
 
@@ -553,7 +554,6 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
 
            object = (JSONObject) tokener.nextValue();
            num = object.getInt("num");
-           if(num>0){
            pois = object.getJSONObject("pois");
            for(int x=1; x<=num;x++){
                poi = pois.getJSONObject(""+x);
@@ -564,7 +564,6 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
                list.add(p);
 
            }
-           }
            info =  (WitInfo) fragment;
            info.saveBestFive(list);
        }
@@ -573,5 +572,33 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
 
            }
    }
+    private void parseJsonWikipediaDescription(String resultJson){
+        JSONTokener tokener;
+        JSONObject object;
+        JSONObject pois;
+        JSONObject poi;
+        JSONObject page;
+        String title;
+        String description;
+        Log.d(LOG_TAG, "Wikipedia JSON received! Length = " + resultJson.length());
+
+        tokener = new JSONTokener(resultJson);
+        try {
+            object = (JSONObject) tokener.nextValue();
+            pois = object.getJSONObject("query");
+            poi = pois.getJSONObject("pages");
+            Iterator keys = poi.keys();
+            String firstDynamicKey = (String)keys.next();
+            page = poi.getJSONObject(firstDynamicKey);
+            description = page.getString("extract");
+            title = page.getString("title");
+            finalR = (WitFinalResult) activity;
+            finalR.setDescription(description,title);
+        }
+        catch (JSONException e) {
+            e.printStackTrace();
+
+        }
+    }
 }
 
