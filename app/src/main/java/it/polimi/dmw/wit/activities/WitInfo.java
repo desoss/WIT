@@ -98,12 +98,6 @@ public class WitInfo extends Fragment {
     public final static String EXTRA_IMG= "it.polimi.dmw.wit.IMG";
     private CustomAdapter adapter;
 
-
-
-
-
-
-
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
          v = inflater.inflate(R.layout.tab_info,container,false);
