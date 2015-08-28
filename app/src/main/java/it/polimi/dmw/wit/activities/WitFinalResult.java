@@ -217,7 +217,9 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
                 mainImage.setImageBitmap(image);
             }
             descText.setText(description);
-            savePOI(id, title, description, img); //salvo nel database il poi
+            if(!title.equalsIgnoreCase(getString(R.string.not_found_title_text))) {
+                savePOI(id, title, description, img); //salvo nel database il poi
+            }
         }
     }
 
@@ -320,7 +322,8 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
             }
        }
        else {
-            image = BitmapFactory.decodeResource(getResources(), R.drawable.sadface);
+           // image = BitmapFactory.decodeResource(getResources(), R.drawable.sadface);
+            mainImage.setVisibility(View.GONE);
             title = getString(R.string.not_found_title_text);
             description = getString(R.string.not_found_desc_text);
             textHandled = true;

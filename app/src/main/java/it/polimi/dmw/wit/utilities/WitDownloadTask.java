@@ -554,6 +554,7 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
 
            object = (JSONObject) tokener.nextValue();
            num = object.getInt("num");
+           if(num>0){
            pois = object.getJSONObject("pois");
            for(int x=1; x<=num;x++){
                poi = pois.getJSONObject(""+x);
@@ -562,7 +563,7 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
                urlImg = poi.getString("photo");
                p = new WitPOI(0,0,name,description,urlImg,0);
                list.add(p);
-
+                 }
            }
            info =  (WitInfo) fragment;
            info.saveBestFive(list);
