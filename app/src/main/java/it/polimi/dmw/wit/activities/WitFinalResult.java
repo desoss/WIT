@@ -114,6 +114,9 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
     private byte[] img=null;
     private boolean imgExists = true;
 
+    private boolean imgHandled = false;
+    private boolean textHandled = false;
+
     private Toolbar mToolbar;
     private FragmentDrawer drawerFragment;
     private ProgressWheel progressWheel;
@@ -123,11 +126,7 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
     private CustomAdapter adapter2;
     private ArrayList<String> namesList;
     private ArrayList<byte[]> imagesList;
-
-
-
-
-
+    private Bitmap image;
 
     /**
      * Lista di POI e lista dei POI filtrata
@@ -160,13 +159,14 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
     private String wikiLink;
 
     public void setImage(Bitmap result, byte[] img) {
-            mainImage.setImageBitmap(result);
+        image = result;
+        this.img = img;
+        imgHandled = true;
+        conclude();
     }
 
     private void stopWheel(){
         findViewById(R.id.progress_wheel).setVisibility(View.GONE);
-        titleText.setText(title);
-        descText.setText(description);
     }
 
     public void saveResult(String i, String t, String d, String wLink, URL imgURL) {
@@ -182,6 +182,7 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
         }
         else{
             imgExists = false;
+            imgHandled = true;
         }
         if(wikiLink!=null){
             //scarico testo
@@ -198,17 +199,35 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
                 e.printStackTrace();
             }
         }
-        stopWheel();
-        savePOI(id, title, description, img); //salvo nel database il poi
+        else{
+            textHandled = true;
+        }
+        conclude();
+    }
+
+    private void conclude(){
+        if(textHandled&&imgHandled) {
+            stopWheel();
+            titleText.setText(title);
+            if(!imgExists){
+                Log.d(LOG_TAG, "Risultato senza immagine ");
+                mainImage.setVisibility(View.GONE);
+            }
+            else{
+                mainImage.setImageBitmap(image);
+            }
+            descText.setText(description);
+            savePOI(id, title, description, img); //salvo nel database il poi
+        }
     }
 
     public void setDescription(String description, String title){
-        //if(description.length()>= this.description.length()) {
+        if(description.length()>= this.description.length()) {
             this.description = description;
             this.title = title;
-        titleText.setText(title);
-        descText.setText(description);
-       // }
+        }
+        textHandled = true;
+        conclude();
     }
 
     @Override
@@ -225,17 +244,12 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
         progressWheel = new ProgressWheel(this);
         progressWheel.spin();
 
-        LinearLayoutManager layoutManager
-                = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
-
+        LinearLayoutManager layoutManager = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
         fbList = (RecyclerView) findViewById(R.id.fb_list);
         listView = (ListView) findViewById(R.id.listView);
         fbList.setLayoutManager(layoutManager);
 
         imagesList = new ArrayList<>();
-
-
-
 
         setSupportActionBar(mToolbar);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
@@ -258,10 +272,6 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
         adapter2 = new CustomAdapter(this, namesList, imagesList);
         listView.setAdapter(adapter2);
 
-
-
-
-
         // Prendi l'intent che ha aperto questa activity, cioè
         // quello che viene dalla main activity
         Intent intent = getIntent();
@@ -280,9 +290,6 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
 
         Toast.makeText(this, "Orientation: "+userOrientation, Toast.LENGTH_LONG).show();
 
-
-        title = getString(R.string.not_found_title_text);
-        description = getString(R.string.not_found_desc_text);
 
         // Applica l'algoritmo geometrico alla lista e ottieni la lista filtrata
         correctPoiList = new ArrayList<WitPOI>();
@@ -311,17 +318,14 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
             } catch (MalformedURLException e) {
                 e.printStackTrace();
             }
-            if(!imgExists){
-                Log.d(LOG_TAG, "Risultato senza immagine ");
-                mainImage.setVisibility(View.GONE);
-            }
        }
        else {
-            findViewById(R.id.progress_wheel).setVisibility(View.GONE);
-            Drawable sadFace = getResources().getDrawable(R.drawable.sadface);
-           mainImage.setImageDrawable(sadFace);
-           titleText.setText(title);
-           descText.setText(description);
+            image = BitmapFactory.decodeResource(getResources(), R.drawable.sadface);
+            title = getString(R.string.not_found_title_text);
+            description = getString(R.string.not_found_desc_text);
+            textHandled = true;
+            imgHandled = true;
+            conclude();
        }
     }
 
@@ -555,7 +559,6 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
-
     }
 
     public void checkIds(ArrayList<Long> l){
@@ -630,8 +633,6 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
         imagesList.add(img);
         adapter2.notifyDataSetChanged();
     }
-
-
 
 
     private void storyOnFacebook(){
