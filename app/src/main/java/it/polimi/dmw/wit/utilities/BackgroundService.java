@@ -72,7 +72,7 @@ public class BackgroundService extends IntentService {
         String range = intent.getStringExtra("range"); //side of the square
         String max = intent.getStringExtra("max"); //max number of POIs huge value
 
-        String getParameters = "?lat="+lat+"&lon="+lon+"&side="+range+"&max="+max+"&json=true";
+        String getParameters = "?lat="+lat+"&lon="+lon+"&side="+range+"&max="+max+"&json=true&cachejson=true";
 
         try {
             URL url = new URL(getString(R.string.get_monuments_base_url)+getParameters);

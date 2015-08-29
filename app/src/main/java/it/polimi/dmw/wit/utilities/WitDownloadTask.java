@@ -21,19 +21,21 @@ import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 
 import it.polimi.dmw.wit.activities.WitFinalResult;
 import it.polimi.dmw.wit.activities.WitInfo;
-import it.polimi.dmw.wit.activities.WitMainActivity;
 import it.polimi.dmw.wit.activities.WitScan;
 
 public class WitDownloadTask extends AsyncTask<URL, Void, String> {
-        // Membri per leggere la risposta HTTP
-        private InputStream is;
-        private BufferedReader br;
-        private StringBuilder sb;
+// Attributi per leggere la risposta HTTP
+    private InputStream is;
+    private BufferedReader br;
+    private StringBuilder sb;
     private String line;
+
     ArrayList<WitPOI> poiList;
     private final static String LOG_TAG = "WitDownloadTask";
     Activity activity;
@@ -48,9 +50,9 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
     private String cityUrl;
     public static final int POISLIST = 0, POIDETAIL = 1, WOEID = 2, IMAGECITY = 3, WEATHER = 4, REGISTERVISIT = 5, BESTFIVE = 6, WIKIPEDIATEXT = 7;
     private int c;
-
-
-
+    private boolean useCacheJSON = false;
+    private Double lat;
+    private Double lon;
 
     public WitDownloadTask(Activity activity, Fragment fragment,int c) {
         is = null;
@@ -63,7 +65,6 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
         photoURL = null;
         this.c = c;
     }
-
 
     /**
      * Metodo che viene chiamato quando parte il thread secondario. Fa la richiesta e
@@ -126,7 +127,6 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
                 }
             }
         }
-
         // Dallo string builder esce la string con il JSON
         return sb.toString();
     }
@@ -181,19 +181,12 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
      * @param resultJson la stringa contenente il JSON
      */
     public void parseJsonPOIs(String resultJson) {
-        /*
-
-            Struttura Json
-
+        /*Struttura Json
             {
                 places: [array] o null
                 found: value,
                 side: value
-            }
-
-         */
-
-        // Inizializza gli oggetti per il parsing
+            } */
         JSONTokener tokener;
         JSONObject documentObject;
         JSONObject place;
@@ -202,7 +195,7 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
         JSONObject coords;
         float[] x;
         float[] y;
-
+        Double distance;
 
         // Contiene il numero di monumenti ritornati
         int poisNumber;
@@ -239,26 +232,24 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
                 polygon = place.getJSONArray("polygon");
                 x = new float [polygon.length()];
                 y = new float [polygon.length()];
-                //   Log.d(LOG_TAG,place.getString("name"));
-
 
                 //salvo in due array x e y le coordinate dei punti del poligono di ogni place
                 for(int j=0; j<polygon.length();j++){
                     coords = polygon.getJSONObject(j);
                     x[j] = Float.parseFloat(coords.getString("y"));
                     y[j] = Float.parseFloat(coords.getString("x"));
-                    //  Log.d(LOG_TAG,"x: "+x[j]+" y: "+y[j]);
-
                 }
-                // Log.d(LOG_TAG,"-------------------------------");
+                Double lat = place.getDouble("lat");
+                Double lon = place.getDouble("lon");
+                distance = useCacheJSON ? distanceBetween2points(this.lat, this.lon,lat,lon) : Double.valueOf(place.getDouble("distance"));
 
                 // Crea un oggetto WitPOI per ogni monumento del JSON
                 poiList.add(new WitPOI(
                         place.getInt("id"),
                         place.getString("name"),
-                        place.getDouble("distance"),
-                        place.getDouble("lat"),
-                        place.getDouble("lon"),
+                        distance,
+                        lat,
+                        lon,
                         x,
                         y
                 ));
@@ -266,10 +257,22 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        //mainA = (WitMainActivity) activity;
+
+        //devo ordinare la lista di object in base alla distanza
+        if(useCacheJSON){
+            Collections.sort(poiList, new Comparator<WitPOI>() {
+                public int compare(WitPOI o1, WitPOI o2) {
+                    if (o1.getDistance() == o2.getDistance()) {
+                        return 0;
+                    } else {
+                        return o1.getDistance() > o2.getDistance() ? 1 : -1;
+                    }
+                }
+            });
+        }
+
         scan =  (WitScan) fragment;
         scan.startfinalResult(poiList);
-
     }
 
     /**
@@ -281,24 +284,19 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
      * @param resultJson
      */
     private void parseJsonDetail(String resultJson) {
-        /*
-            struttura JSON
-
+        /* struttura JSON
             {
                 title : "",
                 description : "",
                 photos : [],
                 wikipedia link: ""
                 ...
-            }
+            } */
 
-
-         */
-
-        JSONTokener tokener = null;
-        JSONObject documentObject = null;
+        JSONTokener tokener;
+        JSONObject documentObject;
         JSONObject photo = null;
-        JSONArray photos = null;
+        JSONArray photos;
         String id = null;
 
         Log.d(LOG_TAG, "JSON received! Length = " + resultJson.length());
@@ -332,8 +330,6 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
                 if (photo != null) {
                     photoURL = new URL(photo.getString("960_url"));
                 }
-
-
             }
         } catch (JSONException e) {
             e.printStackTrace();
@@ -342,13 +338,10 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
         }
         finalR = (WitFinalResult) activity;
         finalR.saveResult(id, title, description, wikiLink, photoURL);
-
     }
 
     private void parseJsonWoeid(String resultJson){
-        /*
-            struttura JSON
-
+        /* struttura JSON
             {
                 query
                  - results
@@ -357,16 +350,13 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
                       - county
                       - state
                       - woeid
-            }
+            } */
 
-
-         */
-
-        JSONTokener tokener = null;
-        JSONObject object = null;
-        JSONObject query = null;
-        JSONObject results = null;
-        JSONObject result = null;
+        JSONTokener tokener;
+        JSONObject object;
+        JSONObject query;
+        JSONObject results;
+        JSONObject result;
         String city;
         String county;
         String state;
@@ -385,7 +375,6 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
             results = query.getJSONObject("results");
             result = results.getJSONObject("Result");
 
-
             // Prendi i campi di interesse
             city = result.getString("city");
             county = result.getString("county");
@@ -394,30 +383,23 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
             woeid = result.getString("woeid");
             info = (WitInfo) fragment;
             info.saveInfo(city, county, state, country, woeid);
-
-
         } catch (JSONException e) {
             e.printStackTrace();
         }
     }
 
     private void parseJsonImageCity(String resultJson){
-      /*
-        struttura JSON
-
+      /* struttura JSON
         {
            responseData
             -results []
               - url
-        }
-
-        */
+        }  */
         JSONTokener tokener = null;
         JSONObject object = null;
         JSONObject responseData = null;
         JSONArray results = null;
         JSONObject result = null;
-
 
         Log.d(LOG_TAG, "JSON received! Length = " + resultJson.length());
         Log.d(LOG_TAG,resultJson);
@@ -428,17 +410,11 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
             object = (JSONObject)tokener.nextValue();
             responseData = object.getJSONObject("responseData");
             results = responseData.getJSONArray("results");
-
-
-                result = results.getJSONObject(0);
-                cityUrl = result.getString("url");
+            result = results.getJSONObject(0);
+            cityUrl = result.getString("url");
 
             info =  (WitInfo) fragment;
             info.saveImageCityUrl(cityUrl);
-
-
-
-
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -446,21 +422,18 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
 
     private void parseJsonWeather(String resultJson) {
        /* struttura JSON
-
-        {
+       {
             responseData
                     -results []
             - url
-        }
-
-        */
-        JSONTokener tokener = null;
-        JSONObject object = null;
-        JSONObject query = null;
-        JSONObject results = null;
-        JSONObject channel = null;
-        JSONObject item = null;
-        JSONObject condition = null;
+        } */
+        JSONTokener tokener;
+        JSONObject object;
+        JSONObject query;
+        JSONObject results;
+        JSONObject channel;
+        JSONObject item;
+        JSONObject condition;
         String temp;
         String code;
         String text;
@@ -483,28 +456,22 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
 
             info =  (WitInfo) fragment;
             info.saveWeather(code, temp, text);
-
-
-
         } catch (JSONException e) {
             e.printStackTrace();
-
         }
     }
 
     private void parseJsonFriendsVisit(String resultJson) {
 
-        JSONTokener tokener = null;
-        JSONObject object = null;
-        JSONArray list = null;
+        JSONTokener tokener;
+        JSONObject object;
+        JSONArray list;
         ArrayList<Long> idsList = new ArrayList<>();
 
-        Log.d(LOG_TAG, "JSON received! Length = " + resultJson.length());
-        Log.d(LOG_TAG, resultJson);
+        Log.d(LOG_TAG, "friend visits JSON received! Length = " + resultJson.length());
 
         tokener = new JSONTokener(resultJson);
         try {
-
             object = (JSONObject) tokener.nextValue();
             if (!object.isNull("fb_id_list")) {
                 list = object.getJSONArray("fb_id_list");
@@ -514,17 +481,14 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
                     idsList.add(id);
                 }
             }
-
-
         }
         catch (JSONException e) {
             e.printStackTrace();
-
         }
         finalR = (WitFinalResult) activity;
         finalR.checkIds(idsList);
-
     }
+
     public void refreshPOIsList() {
         is = null;
         br = null;
@@ -535,10 +499,10 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
     }
 
    private void parseJsonBestFive(String resultJson){
-       JSONTokener tokener = null;
-       JSONObject object = null;
-       JSONObject pois = null;
-       JSONObject poi = null;
+       JSONTokener tokener;
+       JSONObject object;
+       JSONObject pois;
+       JSONObject poi;
        int num;
        String name;
        String description;
@@ -546,12 +510,10 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
        WitPOI p;
        ArrayList<WitPOI> list = new ArrayList<>();
 
-       Log.d(LOG_TAG, "JSON received! Length = " + resultJson.length());
-       Log.d(LOG_TAG, resultJson);
+       Log.d(LOG_TAG, "Best 5 JSON received! Length = " + resultJson.length());
 
        tokener = new JSONTokener(resultJson);
        try {
-
            object = (JSONObject) tokener.nextValue();
            num = object.getInt("num");
            if(num>0){
@@ -570,9 +532,9 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
        }
            catch (JSONException e) {
                e.printStackTrace();
-
            }
    }
+
     private void parseJsonWikipediaDescription(String resultJson){
         JSONTokener tokener;
         JSONObject object;
@@ -594,12 +556,34 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
             description = page.getString("extract");
             title = page.getString("title");
             finalR = (WitFinalResult) activity;
-            finalR.setDescription(description,title);
+            finalR.setDescription(description, title);
         }
         catch (JSONException e) {
             e.printStackTrace();
 
         }
+    }
+
+    public void setUseCacheJSON(){
+        useCacheJSON = true;
+    }
+
+    public void setLat(Double lat){
+        this.lat = lat;
+    }
+
+    public void setLon(Double lon){
+        this.lon = lon;
+    }
+
+    private Double distanceBetween2points(Double lat1, Double lon1, Double lat2, Double lon2){
+        Double distance;
+        Double theta = lon1 - lon2;
+        distance = Math.sin(Math.toRadians(lat1)) * Math.sin(Math.toRadians(lat2)) +  Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) * Math.cos(Math.toRadians(theta));
+        distance = Math.acos(distance);
+        distance = Math.toDegrees(distance);
+        distance = distance * 60 * 1.1515* 1.609344 * 1000;
+        return distance;
     }
 }
 

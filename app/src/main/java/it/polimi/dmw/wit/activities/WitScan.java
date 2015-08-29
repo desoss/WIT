@@ -396,8 +396,6 @@ public class WitScan extends Fragment {
         int woeid = sharedPrefs.getInt("woeid", 0);
         Log.d(LOG_TAG,"WOEID: "+woeid);
 
-
-
         // Crea l'url con i parametri giusti per il server
         witDownloadTask = new WitDownloadTask(null, this, witDownloadTask.POISLIST);
 
@@ -408,13 +406,18 @@ public class WitScan extends Fragment {
         lonMax = getDouble(prefs,"max_lon");
         lonMin = getDouble(prefs, "min_lon");
 
+        Double latDouble = Double.parseDouble(lat);
+        Double lonDouble = Double.parseDouble(lon);
         //se current pos è dentro l'internal square
-        if(pointIntoInternalSquare(Double.parseDouble(lat),Double.parseDouble(lon))) {
+        if(pointIntoInternalSquare(latDouble, lonDouble)) {
             try {
                 String jsonString = readCache();
                 if (jsonString != null){
                     Toast.makeText(getActivity(), "Ho usato il json della cache", Toast.LENGTH_LONG).show();
                     witDownloadTask.refreshPOIsList();
+                    witDownloadTask.setLat(latDouble);
+                    witDownloadTask.setLon(lonDouble);
+                    witDownloadTask.setUseCacheJSON();
                     witDownloadTask.parseJsonPOIs(jsonString);
                 }
                else{
