@@ -27,6 +27,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -137,9 +138,13 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
     private static final int CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE = 100;
     public static final int MEDIA_TYPE_IMAGE = 1;
     public static final int MEDIA_TYPE_VIDEO = 2;
+    public final static String EXTRA_LAT= "it.polimi.dmw.wit.LAT";
+    public final static String EXTRA_LON= "it.polimi.dmw.wit.LON";
     private Uri fileUri;
     private String mCurrentPhotoPath;
     private double lat, lon;
+    private Button mapButton;
+
 
 
     /**
@@ -258,6 +263,9 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
         progressWheel = (ProgressWheel) findViewById(R.id.progress_wheel);
 
+        mapButton = (Button) findViewById(R.id.mapButton);
+
+
         cameraButton = (FloatingActionButton) findViewById(R.id.cameraB);
         cameraButton.setBackgroundColor(getResources().getColor(R.color.colorPrimaryDark));
 
@@ -267,6 +275,14 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
             public void onClick(View v) {
 
                 takePicture();
+            }
+        });
+
+        mapButton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                startMapActivity();
             }
         });
 
@@ -938,6 +954,13 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
         // Save a file: path for use with ACTION_VIEW intents
         mCurrentPhotoPath = "file:" + image.getAbsolutePath();
         return image;
+    }
+
+    private void startMapActivity() {
+        Intent i = new Intent(this, WitMapsActivity.class);
+        i.putExtra(EXTRA_LAT,lat);
+        i.putExtra(EXTRA_LON,lon);
+        startActivity(i);
     }
 
 

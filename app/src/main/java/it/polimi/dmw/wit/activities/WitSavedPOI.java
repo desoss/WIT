@@ -130,7 +130,6 @@ public class WitSavedPOI extends ActionBarActivity implements FragmentDrawer.Fra
 
             @Override
             public void onClick(View v) {
-                // Call private method
                 startMapActivity();
             }
         });

@@ -7,6 +7,7 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.location.Location;
 import android.location.LocationManager;
+import android.util.Log;
 
 /**
  * Classe per gestire il sensore di orientazione.
@@ -46,7 +47,7 @@ public class WitOrientationProvider implements SensorEventListener {
         private int currentIndex;
         private int numberOfFrames;
         private boolean isFull;
-        private double averageValue = Double.NaN;
+        private double averageValue = 0;
 
         public AverageAngle(int frames)
         {
@@ -144,6 +145,8 @@ public class WitOrientationProvider implements SensorEventListener {
                 (float) location.getLongitude(),
                 (float) location.getAltitude(),
                 System.currentTimeMillis());
+        Log.d("OrientationProvider aV:",""+averageValues.getAverage());
+        Log.d("Orientation provider d:", ""+Math.toRadians(geoField.getDeclination()));
         return averageValues.getAverage() + Math.toRadians(geoField.getDeclination());
     }
 

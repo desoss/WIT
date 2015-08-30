@@ -520,6 +520,7 @@ public class WitScan extends Fragment {
         Log.d(LOG_TAG,"Accuracy = "+currentLocation.getAccuracy());
         Log.d(LOG_TAG,"Orientation = "+String.valueOf(Math.toDegrees(orientationProvider.getOrientation(currentLocation))));
 
+
         // Inserisci come dati
         // - la lista dei POI
         // - latitude e longitudine dell'utente
