@@ -367,6 +367,7 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
         } else {
             // image = BitmapFactory.decodeResource(getResources(), R.drawable.sadface);
             mainImage.setVisibility(View.GONE);
+            mapButton.setVisibility(View.GONE);
             title = getString(R.string.not_found_title_text);
             description = getString(R.string.not_found_desc_text);
             textHandled = true;
