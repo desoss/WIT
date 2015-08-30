@@ -43,6 +43,8 @@ public class DbAdapter {
     public static final String KEY_COUNTRY = "country";
     public static final String KEY_WOEID = "woeid";
     public static final String KEY_WIKIMAPIAID = "wikimapiaId";
+    public static final String KEY_LAT = "lat";
+    public static final String KEY_LON = "lon";
 
 
     public DbAdapter(Context context) {
@@ -59,23 +61,30 @@ public class DbAdapter {
         dbHelper.close();
     }
 
-    private ContentValues createContentValuesPOI(int id, String name, String description, String date, int woeid, byte[] img) {
+    private ContentValues createContentValuesPOI(int id, String name, String description, String date, int woeid, double lat, double lon, byte[] img) {
         ContentValues values = new ContentValues();
         values.put(KEY_WIKIMAPIAID,id);
         values.put(KEY_NAME, name);
         values.put(KEY_DESCRIPTION, description);
         values.put(KEY_DATE, date);
         values.put(KEY_WOEID, woeid);
+        values.put(KEY_LAT, lat);
+        values.put(KEY_LON, lon);
         values.put(KEY_IMAGE, img);
 
 
         return values;
     }
-    private ContentValues createContentValuesBESTFIVE(String name, String description, byte[] img) {
+    private ContentValues createContentValuesBESTFIVE(int id, String name, String description, double lat, double lon, byte[] img) {
         ContentValues values = new ContentValues();
         values.put(KEY_NAME, name);
         values.put(KEY_DESCRIPTION, description);
         values.put(KEY_IMAGE, img);
+        values.put(KEY_WIKIMAPIAID,id);
+        values.put(KEY_LAT, lat);
+        values.put(KEY_LON, lon);
+        values.put(KEY_IMAGE, img);
+
 
         return values;
     }
@@ -112,13 +121,13 @@ public class DbAdapter {
         return values;
     }
 
-    public void savePOI(int id, String name, String description, String date, int woeid, byte[] img) {
-        ContentValues initialValues = createContentValuesPOI(id, name, description, date, woeid, img);
+    public void savePOI(int id, String name, String description, String date, int woeid, double lat, double lon, byte[] img) {
+        ContentValues initialValues = createContentValuesPOI(id, name, description, date, woeid, lat, lon, img);
          database.insertOrThrow(DATABASE_POI, null, initialValues);
     }
 
-    public void saveBestFive(String name, String description,byte[] img) {
-        ContentValues initialValues = createContentValuesBESTFIVE(name, description, img);
+    public void saveBestFive(int id, String name, String description, double lat, double lon, byte[] img) {
+        ContentValues initialValues = createContentValuesBESTFIVE(id, name, description, lat, lon, img);
         database.insertOrThrow(DATABASE_BEST_FIVE, null, initialValues);
     }
 
@@ -137,9 +146,9 @@ public class DbAdapter {
         database.insertOrThrow(DATABASE_CITY_INFO, null, initialValues);
     }
 
-    public boolean updatePOI(int id, String name, String description, String date, int woeid, byte[] img) {
-        ContentValues updateValues = createContentValuesPOI(id, name, description, date, woeid, img);
-        return database.update(DATABASE_POI, updateValues, KEY_ID + "=" + id, null) > 0;
+    public boolean updatePOI(int id, String name, String description, String date, int woeid, double lat, double lon, byte[] img) {
+        ContentValues updateValues = createContentValuesPOI(id, name, description, date, woeid, lat, lon, img);
+        return database.update(DATABASE_POI, updateValues, KEY_WIKIMAPIAID + "=" + id, null) > 0;
     }
 
     public boolean updateUSER(long id, String name, String surname, byte[] img, Boolean fb, Boolean isLogged) {
@@ -176,11 +185,11 @@ public class DbAdapter {
 
     //fetch all contacts
     public Cursor fetchAllPOIs() {
-        return database.query(DATABASE_POI, new String[]{KEY_ID, KEY_NAME, KEY_DESCRIPTION, KEY_DATE, KEY_WOEID, KEY_IMAGE}, null, null, null, null, null);
+        return database.query(DATABASE_POI, new String[]{KEY_ID,  KEY_WIKIMAPIAID,KEY_NAME, KEY_DESCRIPTION, KEY_DATE, KEY_WOEID, KEY_LAT, KEY_LON, KEY_IMAGE}, null, null, null, null, null);
     }
 
     public Cursor fetchBestFive() {
-        return database.query(DATABASE_BEST_FIVE, new String[]{KEY_ID, KEY_NAME, KEY_DESCRIPTION,  KEY_IMAGE}, null, null, null, null, null);
+        return database.query(DATABASE_BEST_FIVE, new String[]{KEY_ID, KEY_WIKIMAPIAID,KEY_NAME, KEY_DESCRIPTION, KEY_LAT, KEY_LON, KEY_IMAGE}, null, null, null, null, null);
     }
 
 
@@ -199,7 +208,7 @@ public class DbAdapter {
     //fetch contacts filter by a string
     public Cursor fetchPOIsByID(int filter) {
         Cursor mCursor = database.query(true, DATABASE_POI, new String[]{
-                        KEY_ID, KEY_NAME, KEY_DESCRIPTION, KEY_DATE, KEY_WOEID, KEY_IMAGE},
+                        KEY_ID, KEY_NAME, KEY_DESCRIPTION, KEY_DATE, KEY_WOEID, KEY_LAT, KEY_LON, KEY_IMAGE},
                 KEY_ID + "=" + filter, null, null, null, null, null);
 
         return mCursor;
@@ -209,6 +218,14 @@ public class DbAdapter {
         Cursor mCursor = database.query(true, DATABASE_USER, new String[]{
                         KEY_ID, KEY_NAME, KEY_SURNAME, KEY_IMAGE, KEY_FB, KEY_ISLOGGED},
                 KEY_ID + "=" + filter, null, null, null, null, null);
+
+        return mCursor;
+    }
+
+    public Cursor fetchBestFiveByID(int filter) {
+        Cursor mCursor = database.query(true, DATABASE_BEST_FIVE, new String[]{
+                KEY_ID, KEY_NAME, KEY_DESCRIPTION, KEY_LAT, KEY_LON, KEY_IMAGE},
+                KEY_WIKIMAPIAID + "=" + filter, null, null, null, null, null);
 
         return mCursor;
     }
@@ -230,7 +247,7 @@ public class DbAdapter {
 
     public Cursor fetchPOIByWoeid(int filter){
         Cursor mCursor = database.query(true, DATABASE_POI, new String[]{
-                        KEY_ID, KEY_WIKIMAPIAID, KEY_NAME, KEY_DESCRIPTION, KEY_DATE, KEY_WOEID, KEY_IMAGE},
+                        KEY_ID, KEY_WIKIMAPIAID, KEY_NAME, KEY_DESCRIPTION, KEY_DATE, KEY_WOEID,  KEY_LAT, KEY_LON,KEY_IMAGE},
                 KEY_WOEID + "=" + filter, null, null, null, null, null, null);
 
         return mCursor;

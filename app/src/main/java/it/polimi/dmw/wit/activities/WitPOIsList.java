@@ -92,10 +92,12 @@ public class WitPOIsList extends ActionBarActivity implements FragmentDrawer.Fra
 //          int wikimapiaId = cursor.getInt(cursor.getColumnIndex(DbAdapter.KEY_WIKIMAPIAID));
           String description = cursor.getString(cursor.getColumnIndex(DbAdapter.KEY_DESCRIPTION));
           String date = cursor.getString(cursor.getColumnIndex(DbAdapter.KEY_DATE));
+          double lat = cursor.getDouble(cursor.getColumnIndex(DbAdapter.KEY_LAT));
+          double lon = cursor.getDouble(cursor.getColumnIndex(DbAdapter.KEY_LON));
           byte[] img = cursor.getBlob(cursor.getColumnIndex(DbAdapter.KEY_IMAGE));
             imagesList [i] = img;
 
-          WitPOI poi = new WitPOI(id, 0, name, description, date, 0);
+          WitPOI poi = new WitPOI(id, 0, name, description, date, lat, lon, 0);
           poisList[i] = poi;
           i--;
 
@@ -243,9 +245,7 @@ public class WitPOIsList extends ActionBarActivity implements FragmentDrawer.Fra
                 @Override
                 public void onClick(View v) {
                     poi = poisList[position];
-                    byte [] img = imagesList[position];
                     intent.putExtra(EXTRA_POI,poi);
-                    intent.putExtra(EXTRA_IMG,img);
                     startActivity(intent);
 
                 }

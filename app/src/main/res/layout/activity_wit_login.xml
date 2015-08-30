@@ -49,8 +49,8 @@
 
 
             <android.support.design.widget.FloatingActionButton
-                android:layout_width="197dp"
-                android:layout_height="152dp"
+                android:layout_width="160dp"
+                android:layout_height="160dp"
                 android:id="@+id/loginB"
                 android:layout_gravity="center"
                 android:layout_marginTop="40dp"
@@ -60,8 +60,8 @@
 
 
             <android.support.design.widget.FloatingActionButton
-                android:layout_width="197dp"
-                android:layout_height="152dp"
+                android:layout_width="160dp"
+                android:layout_height="160dp"
                 android:id="@+id/logoutB"
                 android:layout_gravity="center"
                 android:visibility="gone"

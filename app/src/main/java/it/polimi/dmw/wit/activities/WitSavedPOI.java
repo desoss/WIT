@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
@@ -13,6 +14,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -35,6 +37,13 @@ public class WitSavedPOI extends ActionBarActivity implements FragmentDrawer.Fra
     private FragmentDrawer drawerFragment;
     private final static String LOG_TAG = "WitSavedPOI";
     private WitPOI poi;
+    private double lat, lon;
+    private Button mapButton;
+    public final static String EXTRA_LAT= "it.polimi.dmw.wit.LAT";
+    public final static String EXTRA_LON= "it.polimi.dmw.wit.LON";
+    private int b5=0;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,6 +52,9 @@ public class WitSavedPOI extends ActionBarActivity implements FragmentDrawer.Fra
         setContentView(R.layout.activity_wit_detail);
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
         findViewById(R.id.progress_wheel).setVisibility(View.GONE);
+
+        mapButton = (Button) findViewById(R.id.mapButton);
+
 
 
         setSupportActionBar(mToolbar);
@@ -73,13 +85,36 @@ public class WitSavedPOI extends ActionBarActivity implements FragmentDrawer.Fra
         Intent intent = getIntent();
         poi = intent.getParcelableExtra(WitPOIsList.EXTRA_POI);
         poi = intent.getParcelableExtra(WitDetailJourney.EXTRA_POI);
-        byte[] img = intent.getByteArrayExtra(WitPOIsList.EXTRA_IMG);
-
-
+        int b5 = intent.getIntExtra(WitInfo.EXTRA_B5,0);
 
 
         name = poi.getPoiName();
-            description = poi.getDescription();
+        description = poi.getDescription();
+        int id = poi.getPoiId();
+        int idB5 = poi.getWikimapiaId();
+        lat = poi.getPoiLat();
+        lon = poi.getPoiLon();
+        byte[] img=null;
+        dbAdapter = new DbAdapter(this);
+        dbAdapter.open();
+        if(b5==1) {
+            cursor = dbAdapter.fetchBestFiveByID(idB5);
+            while (cursor.moveToNext()) {
+                img = cursor.getBlob(cursor.getColumnIndex(DbAdapter.KEY_IMAGE));
+            }
+        }
+        else {
+
+
+            cursor = dbAdapter.fetchPOIsByID(id);
+            while (cursor.moveToNext()) {
+                img = cursor.getBlob(cursor.getColumnIndex(DbAdapter.KEY_IMAGE));
+            }
+        }
+
+
+        cursor.close();
+        dbAdapter.close();
 
             if (img!=null) {
                 mainImage = (ImageView) findViewById(R.id.poi_img);
@@ -88,6 +123,17 @@ public class WitSavedPOI extends ActionBarActivity implements FragmentDrawer.Fra
 
         titleText.setText(name);
         descText.setText(description);
+
+
+
+        mapButton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                // Call private method
+                startMapActivity();
+            }
+        });
 
     }
 
@@ -162,7 +208,12 @@ public class WitSavedPOI extends ActionBarActivity implements FragmentDrawer.Fra
         startActivity(i);
 
     }
-
+    private void startMapActivity() {
+        Intent i = new Intent(this, WitMapsActivity.class);
+        i.putExtra(EXTRA_LAT,lat);
+        i.putExtra(EXTRA_LON,lon);
+        startActivity(i);
+    }
 
 
 

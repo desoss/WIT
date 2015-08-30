@@ -2,20 +2,35 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="it.polimi.dmw.wit" >
 
-    <uses-permission android:name="android.permission.INTERNET" />
+    <permission
+        android:name="it.polimi.dmw.wit.permission.MAPS_RECEIVE"
+        android:protectionLevel="signature" />
+
+    <uses-permission android:name="it.polimi.dmw.wit.permission.MAPS_RECEIVE" />
+    <uses-feature android:name="android.hardware.camera" android:required="false"/>
+
+
+<uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="com.google.android.providers.gsf.permission.READ_GSERVICES" />
+    <!--
+ The ACCESS_COARSE/FINE_LOCATION permissions are not required to use
+         Google Maps Android API v2, but are recommended.
+    -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <application
         android:allowBackup="true"
         android:icon="@drawable/logo"
         android:label="@string/app_name"
         android:theme="@style/MyMaterialTheme" >
-
-        <meta-data android:name="com.facebook.sdk.ApplicationId" android:value="@string/app_id"/>
-
-
-        <meta-data android:name="com.google.android.gms.version"
+        <meta-data
+            android:name="com.facebook.sdk.ApplicationId"
+            android:value="@string/app_id" />
+        <meta-data
+            android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
 
         <activity
@@ -47,7 +62,6 @@
             android:name=".activities.WitPOIsList"
             android:label="@string/title_activity_POIs_list"
             android:parentActivityName=".activities.WitMainActivity"
-
             android:screenOrientation="portrait" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
@@ -57,7 +71,6 @@
             android:name=".activities.WitDiary"
             android:label="@string/title_activity_Diary"
             android:parentActivityName=".activities.WitMainActivity"
-
             android:screenOrientation="portrait" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
@@ -67,7 +80,6 @@
             android:name=".activities.WitDetailState"
             android:label="@string/title_activity_detail_journey"
             android:parentActivityName=".activities.WitMainActivity"
-
             android:screenOrientation="portrait" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
@@ -77,40 +89,50 @@
             android:name=".activities.WitDetailJourney"
             android:label="@string/title_activity_detail_journey"
             android:parentActivityName=".activities.WitMainActivity"
-
             android:screenOrientation="portrait" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".activities.WitMainActivity" />
         </activity>
         <activity
-        android:name=".activities.WitSavedPOI"
-        android:label="@string/title_activity_Saved_POI"
-        android:parentActivityName=".activities.WitPOIsList"
-
-        android:screenOrientation="portrait" >
-        <meta-data
-            android:name="android.support.PARENT_ACTIVITY"
-            android:value=".activities.WitPOIsList" />
-    </activity>
+            android:name=".activities.WitSavedPOI"
+            android:label="@string/title_activity_Saved_POI"
+            android:parentActivityName=".activities.WitPOIsList"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".activities.WitPOIsList" />
+        </activity>
         <activity
             android:name=".activities.WitFacebookLogin"
             android:label="@string/title_activity_Facebook_Login"
             android:parentActivityName=".activities.WitMainActivity"
-
             android:screenOrientation="portrait" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".activities.WitMainActivity" />
         </activity>
-        <activity android:name="com.facebook.FacebookActivity"
-            android:configChanges=
-                "keyboard|keyboardHidden|screenLayout|screenSize|orientation"
-            android:theme="@android:style/Theme.Translucent.NoTitleBar"
-            android:label="@string/app_name" />
+        <activity
+            android:name="com.facebook.FacebookActivity"
+            android:configChanges="keyboard|keyboardHidden|screenLayout|screenSize|orientation"
+            android:label="@string/app_name"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
         <service
             android:name=".utilities.BackgroundService"
-            android:exported="false"/>
+            android:exported="false" />
+
+
+        <activity
+            android:name=".activities.WitMapsActivity"
+            android:label="@string/title_activity_wit_maps" >
+
+        </activity>
+        <meta-data
+            android:name="com.google.android.maps.v2.API_KEY"
+            android:value="AIzaSyA4Hm1oPw-XHjKiO5OxjYFewNj6bwKO3yg"/>
+
+
     </application>
 
 </manifest>

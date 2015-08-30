@@ -95,8 +95,10 @@ public class WitInfo extends Fragment {
     private ListView listView ;
     private Intent intent;
     public final static String EXTRA_POI= "it.polimi.dmw.wit.POI";
-    public final static String EXTRA_IMG= "it.polimi.dmw.wit.IMG";
+    public final static String EXTRA_B5= "it.polimi.dmw.wit.B5";
     private CustomAdapter adapter;
+    private double lat, lon;
+    ArrayList<Double> distList;
 
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -165,6 +167,7 @@ public class WitInfo extends Fragment {
 
         }
         poisList = new ArrayList<>();
+        distList = new ArrayList<>();
         adapter = new CustomAdapter(getActivity(),poisList, imgList);
         listView.setAdapter(adapter);
         intent = new Intent(getActivity(), WitSavedPOI.class);
@@ -257,6 +260,8 @@ public class WitInfo extends Fragment {
 
         } catch (MalformedURLException e) {
             e.printStackTrace();
+            Log.d(LOG_TAG, "URL Fail: " + serverUrl);
+
         }
     }
 
@@ -301,15 +306,22 @@ public class WitInfo extends Fragment {
             dbAdapter.open();
             cursor = dbAdapter.fetchBestFive();
             String name, description;
+            double lat, lon;
             byte[] img;
+            int id;
             WitPOI p;
             while (cursor.moveToNext()) {
                 img = cursor.getBlob(cursor.getColumnIndex(DbAdapter.KEY_IMAGE));
                 imgList.add(img);
                 name = cursor.getString(cursor.getColumnIndex(DbAdapter.KEY_NAME));
                 description = cursor.getString(cursor.getColumnIndex(DbAdapter.KEY_DESCRIPTION));
-                p = new WitPOI(0, 0, name, description, null, 0);
+                lat = cursor.getDouble(cursor.getColumnIndex(DbAdapter.KEY_LAT));
+                lon = cursor.getDouble(cursor.getColumnIndex(DbAdapter.KEY_LON));
+                id = cursor.getInt(cursor.getColumnIndex(DbAdapter.KEY_WIKIMAPIAID));
+                p = new WitPOI(0, id, name, description, null, lat, lon,0);
                 poisList.add(p);
+                double dist = distanceBetween2points(lat,lon,currentLocation.getLatitude(),currentLocation.getLongitude())/1000;
+                distList.add((dist));
             }
             cursor.close();
             dbAdapter.close();
@@ -333,11 +345,13 @@ public class WitInfo extends Fragment {
 
         } catch (MalformedURLException e) {
             e.printStackTrace();
+            Log.d(LOG_TAG, "URL Fail: " + u);
         }
     }
 
-    public void saveBestFive(ArrayList<WitPOI> l){
+    public void saveBestFive(ArrayList<WitPOI> l, ArrayList<Double> d){
         String url = null;
+        distList = d;
         for(int x=0;x<l.size();x++){
             poisList.add(l.get(x));
             url = poisList.get(x).getDate();
@@ -361,12 +375,17 @@ public class WitInfo extends Fragment {
         dbAdapter.open();
         dbAdapter.deleteBestFive();
         String name, description;
+        double lat, lon;
         byte [] img;
+        int id;
         for(int x =0;x<poisList.size();x++){
             name = poisList.get(x).getPoiName();
             description = poisList.get(x).getDescription();
+            id = poisList.get(x).getWikimapiaId();
+            lat = poisList.get(x).getPoiLat();
+            lon = poisList.get(x).getPoiLon();
             img = imgList.get(x);
-            dbAdapter.saveBestFive(name,description,img);
+            dbAdapter.saveBestFive(id, name,description,lat,lon,img);
         }
         dbAdapter.close();
     }
@@ -470,15 +489,16 @@ public class WitInfo extends Fragment {
 */
 
 
-    private void downloadImagePoi(String imageCityUrl){
-        Log.d(LOG_TAG, "SERVER URL: " + imageCityUrl);
+    private void downloadImagePoi(String u){
+        Log.d(LOG_TAG, "SERVER URL: " + u);
         try {
-            URL url = new URL(imageCityUrl);
+            URL url = new URL(u);
             witDownloadImageTask = new WitDownloadImageTask(null, this, witDownloadImageTask.POIBEST);
             witDownloadImageTask.execute(url);
 
         } catch (MalformedURLException e) {
             e.printStackTrace();
+            Log.d(LOG_TAG,"URL Fail: "+u);
         }
     }
 
@@ -536,14 +556,17 @@ public class WitInfo extends Fragment {
 
         } catch (MalformedURLException e) {
             e.printStackTrace();
+            Log.d(LOG_TAG, "URL Fail: " + u);
+
+
         }
 
     }
 
-    public void saveImageCityUrl(String imageCityUrl){
-        this.imageCityUrl = imageCityUrl;
-        Log.d(LOG_TAG,"imagecityurl: "+imageCityUrl);
-        if(imageCityUrl!=null) {
+    public void saveImageCityUrl(String u){
+        imageCityUrl = u;
+        Log.d(LOG_TAG,"imagecityurl: "+u);
+        if(u!=null) {
             downloadImageCity();
         }
 
@@ -560,6 +583,8 @@ public class WitInfo extends Fragment {
 
         } catch (MalformedURLException e) {
             e.printStackTrace();
+            Log.d(LOG_TAG, "URL Fail: " + imageCityUrl);
+
         }
     }
 
@@ -584,6 +609,8 @@ public class WitInfo extends Fragment {
 
         } catch (MalformedURLException e) {
             e.printStackTrace();
+            Log.d(LOG_TAG, "URL Fail: " + u);
+
         }
     }
 
@@ -692,7 +719,8 @@ public class WitInfo extends Fragment {
             holder.img.setSelectorStrokeWidth(10);
             holder.img.addShadow();
             poi = poisList.get(position);
-            holder.tv.setText(poi.getPoiName());
+            String dist = String.format("%.2f", distList.get(position));
+            holder.tv.setText(poi.getPoiName()+" - "+dist+" km");
             //holder.img.setImageResource(imageId[position]);
             byte[] image = imagesList.get(position);
             if(image!= null) {
@@ -708,8 +736,7 @@ public class WitInfo extends Fragment {
                 public void onClick(View v) {
                     poi = poisList.get(position);
                     intent.putExtra(EXTRA_POI, poi);
-                    byte [] img = imagesList.get(position);
-                    intent.putExtra(EXTRA_IMG,img);
+                    intent.putExtra(EXTRA_B5,1);
                     startActivity(intent);
 
 
@@ -874,6 +901,16 @@ public class WitInfo extends Fragment {
         Log.d(LOG_TAG, "Ris: " + r);
         return r;
 
+    }
+
+    private double distanceBetween2points(double lat1, double lon1, double lat2, double lon2){
+        double distance;
+        double theta = lon1 - lon2;
+        distance = Math.sin(Math.toRadians(lat1)) * Math.sin(Math.toRadians(lat2)) +  Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) * Math.cos(Math.toRadians(theta));
+        distance = Math.acos(distance);
+        distance = Math.toDegrees(distance);
+        distance = distance * 60 * 1.1515* 1.609344 * 1000;
+        return distance;
     }
 
 

@@ -231,8 +231,6 @@ public class WitDetailJourney extends ActionBarActivity implements FragmentDrawe
                 public void onClick(View v) {
                     poi = poisList.get(position);
                     intent.putExtra(EXTRA_POI, poi);
-                    byte [] img = imagesList[position];
-                    intent.putExtra(EXTRA_IMG,img);
                     startActivity(intent);
 
 

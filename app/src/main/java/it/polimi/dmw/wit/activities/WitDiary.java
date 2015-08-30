@@ -129,7 +129,9 @@ public class WitDiary extends ActionBarActivity implements FragmentDrawer.Fragme
                 String name = cursor.getString(cursor.getColumnIndex(DbAdapter.KEY_NAME));
                 String description = cursor.getString(cursor.getColumnIndex(DbAdapter.KEY_DESCRIPTION));
                 String date = cursor.getString(cursor.getColumnIndex(DbAdapter.KEY_DATE));
-                WitPOI poi = new WitPOI(id, wikimapiaId, name, description, date, citieList.get(x).getWoeid());
+                double lat = cursor.getDouble(cursor.getColumnIndex(DbAdapter.KEY_LAT));
+                double lon = cursor.getDouble(cursor.getColumnIndex(DbAdapter.KEY_LON));
+                WitPOI poi = new WitPOI(id, wikimapiaId, name, description, date,lat, lon,citieList.get(x).getWoeid());
                 poisList.add(poi);
             }
             if (cursor.getCount() > 0) {

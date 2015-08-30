@@ -7,6 +7,8 @@ import android.os.AsyncTask;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 
+import com.google.android.gms.maps.model.LatLng;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -23,10 +25,13 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 
 import it.polimi.dmw.wit.activities.WitFinalResult;
 import it.polimi.dmw.wit.activities.WitInfo;
+import it.polimi.dmw.wit.activities.WitMapsActivity;
 import it.polimi.dmw.wit.activities.WitScan;
 
 public class WitDownloadTask extends AsyncTask<URL, Void, String> {
@@ -43,16 +48,17 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
     WitInfo info;
     WitScan scan;
     WitFinalResult finalR;
+    WitMapsActivity maps;
     private String title;
     private String description;
     private String wikiLink;
     private URL photoURL;
     private String cityUrl;
-    public static final int POISLIST = 0, POIDETAIL = 1, WOEID = 2, IMAGECITY = 3, WEATHER = 4, REGISTERVISIT = 5, BESTFIVE = 6, WIKIPEDIATEXT = 7;
+    public static final int POISLIST = 0, POIDETAIL = 1, WOEID = 2, IMAGECITY = 3, WEATHER = 4, REGISTERVISIT = 5, BESTFIVE = 6, WIKIPEDIATEXT = 7, Maps = 8;
     private int c;
     private boolean useCacheJSON = false;
-    private Double lat;
-    private Double lon;
+    private double lat;
+    private double lon;
 
     public WitDownloadTask(Activity activity, Fragment fragment,int c) {
         is = null;
@@ -167,6 +173,9 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
               break;
           case WIKIPEDIATEXT:
               parseJsonWikipediaDescription(s);
+              break;
+          case Maps:
+              parseJsonMaps(s);
               break;
       }
     }
@@ -295,9 +304,11 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
 
         JSONTokener tokener;
         JSONObject documentObject;
+        JSONObject location;
         JSONObject photo = null;
         JSONArray photos;
         String id = null;
+        String lat=null, lon=null;
 
         Log.d(LOG_TAG, "JSON received! Length = " + resultJson.length());
         Log.d(LOG_TAG, resultJson);
@@ -311,6 +322,9 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
             // Prendi i campi di interesse
             title = documentObject.getString("title");
             id = documentObject.getString("id");
+            location = documentObject.getJSONObject("location");
+            lat = location.getString("lat");
+            lon = location.getString("lon");
             if(documentObject.getString("description")!=null) {
                 description = documentObject.getString("description");
             }
@@ -337,7 +351,7 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
             e.printStackTrace();
         }
         finalR = (WitFinalResult) activity;
-        finalR.saveResult(id, title, description, wikiLink, photoURL);
+        finalR.saveResult(id, title, description, wikiLink, lat, lon, photoURL);
     }
 
     private void parseJsonWoeid(String resultJson){
@@ -412,6 +426,9 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
             results = responseData.getJSONArray("results");
             result = results.getJSONObject(0);
             cityUrl = result.getString("url");
+            if(cityUrl.equalsIgnoreCase("")){
+                cityUrl=null;
+            }
 
             info =  (WitInfo) fragment;
             info.saveImageCityUrl(cityUrl);
@@ -506,9 +523,12 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
        int num;
        String name;
        String description;
+       int id;
        String urlImg;
+       String la, lo;
        WitPOI p;
        ArrayList<WitPOI> list = new ArrayList<>();
+       ArrayList<Double> distList = new ArrayList<>();
 
        Log.d(LOG_TAG, "Best 5 JSON received! Length = " + resultJson.length());
 
@@ -523,12 +543,21 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
                name = poi.getString("name");
                description = poi.getString("description");
                urlImg = poi.getString("photo");
-               p = new WitPOI(0,0,name,description,urlImg,0);
-               list.add(p);
+               if(urlImg.equalsIgnoreCase("")){
+                   urlImg=null;
+               }
+               la = poi.getString("location_lat");
+               lo = poi.getString("location_lon");
+               if(!name.equalsIgnoreCase("")||name!=null) {
+                   p = new WitPOI(0, x, name, description, urlImg, Double.parseDouble(la), Double.parseDouble(lo), 0);
+                   list.add(p);
+                   double dist = distanceBetween2points(Double.parseDouble(la), Double.parseDouble(lo),lat,lon)/1000;
+                   distList.add(dist);
+               }
                  }
            }
            info =  (WitInfo) fragment;
-           info.saveBestFive(list);
+           info.saveBestFive(list, distList);
        }
            catch (JSONException e) {
                e.printStackTrace();
@@ -564,26 +593,117 @@ public class WitDownloadTask extends AsyncTask<URL, Void, String> {
         }
     }
 
+
+        /** Receives a JSONObject and returns a list of lists containing latitude and longitude */
+        private void parseJsonMaps(String resultJson){
+            JSONTokener tokener;
+            JSONObject object;
+
+            Log.d(LOG_TAG, "Maps JSON received! Length = " + resultJson.length());
+
+            tokener = new JSONTokener(resultJson);
+
+            List<List<HashMap<String, String>>> routes = new ArrayList<List<HashMap<String,String>>>() ;
+            JSONArray jRoutes = null;
+            JSONArray jLegs = null;
+            JSONArray jSteps = null;
+
+            try {
+                object = (JSONObject) tokener.nextValue();
+
+                jRoutes = object.getJSONArray("routes");
+
+                /** Traversing all routes */
+                for(int i=0;i<jRoutes.length();i++){
+                    jLegs = ( (JSONObject)jRoutes.get(i)).getJSONArray("legs");
+                    List path = new ArrayList<HashMap<String, String>>();
+
+                    /** Traversing all legs */
+                    for(int j=0;j<jLegs.length();j++){
+                        jSteps = ( (JSONObject)jLegs.get(j)).getJSONArray("steps");
+
+                        /** Traversing all steps */
+                        for(int k=0;k<jSteps.length();k++){
+                            String polyline = "";
+                            polyline = (String)((JSONObject)((JSONObject)jSteps.get(k)).get("polyline")).get("points");
+                            List<LatLng> list = decodePoly(polyline);
+
+                            /** Traversing all points */
+                            for(int l=0;l<list.size();l++){
+                                HashMap<String, String> hm = new HashMap<String, String>();
+                                hm.put("lat", Double.toString(((LatLng)list.get(l)).latitude) );
+                                hm.put("lng", Double.toString(((LatLng)list.get(l)).longitude) );
+                                path.add(hm);
+                            }
+                        }
+                        routes.add(path);
+                    }
+                }
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }catch (Exception e){
+            }
+
+            maps = (WitMapsActivity) activity;
+            maps.onPostExecute(routes);
+        }
+
     public void setUseCacheJSON(){
         useCacheJSON = true;
     }
 
-    public void setLat(Double lat){
+    public void setLat(double lat){
         this.lat = lat;
     }
 
-    public void setLon(Double lon){
+    public void setLon(double lon){
         this.lon = lon;
     }
 
-    private Double distanceBetween2points(Double lat1, Double lon1, Double lat2, Double lon2){
-        Double distance;
-        Double theta = lon1 - lon2;
+    private double distanceBetween2points(double lat1, double lon1, double lat2, double lon2){
+        double distance;
+        double theta = lon1 - lon2;
         distance = Math.sin(Math.toRadians(lat1)) * Math.sin(Math.toRadians(lat2)) +  Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) * Math.cos(Math.toRadians(theta));
         distance = Math.acos(distance);
         distance = Math.toDegrees(distance);
         distance = distance * 60 * 1.1515* 1.609344 * 1000;
         return distance;
     }
+
+    private List<LatLng> decodePoly(String encoded) {
+
+        List<LatLng> poly = new ArrayList<LatLng>();
+        int index = 0, len = encoded.length();
+        int lat = 0, lng = 0;
+
+        while (index < len) {
+            int b, shift = 0, result = 0;
+            do {
+                b = encoded.charAt(index++) - 63;
+                result |= (b & 0x1f) << shift;
+                shift += 5;
+            } while (b >= 0x20);
+            int dlat = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
+            lat += dlat;
+
+            shift = 0;
+            result = 0;
+            do {
+                b = encoded.charAt(index++) - 63;
+                result |= (b & 0x1f) << shift;
+                shift += 5;
+            } while (b >= 0x20);
+            int dlng = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
+            lng += dlng;
+
+            LatLng p = new LatLng((((double) lat / 1E5)),
+                    (((double) lng / 1E5)));
+            poly.add(p);
+        }
+
+        return poly;
+    }
 }
+
 

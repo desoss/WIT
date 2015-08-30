@@ -9,7 +9,11 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Environment;
+import android.provider.MediaStore;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.widget.DrawerLayout;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
@@ -46,6 +50,7 @@ import org.json.JSONTokener;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -62,6 +67,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
+import java.util.Random;
 
 import it.polimi.dmw.wit.sliderMenu.FragmentDrawer;
 import it.polimi.dmw.wit.Polygon.Point;
@@ -96,7 +102,7 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
      * Ampiezza del cono di visione, per adesso ho fatto un paio di prove,
      * andrebbe verificata
      */
-    private final static double coneWidth = Math.PI/4;
+    private final static double coneWidth = Math.PI / 4;
 
     /**
      * Membri per gestire le View
@@ -111,7 +117,7 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
     private int woeid;
 
     private URL photoURL;
-    private byte[] img=null;
+    private byte[] img = null;
     private boolean imgExists = true;
 
     private boolean imgHandled = false;
@@ -121,12 +127,20 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
     private FragmentDrawer drawerFragment;
     private ProgressWheel progressWheel;
     private RecyclerView fbList;
-    private ListView listView ;
+    private ListView listView;
     private MyRecyclerAdapter adapter;
     private CustomAdapter adapter2;
     private ArrayList<String> namesList;
     private ArrayList<byte[]> imagesList;
     private Bitmap image;
+    private FloatingActionButton cameraButton;
+    private static final int CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE = 100;
+    public static final int MEDIA_TYPE_IMAGE = 1;
+    public static final int MEDIA_TYPE_VIDEO = 2;
+    private Uri fileUri;
+    private String mCurrentPhotoPath;
+    private double lat, lon;
+
 
     /**
      * Lista di POI e lista dei POI filtrata
@@ -142,12 +156,12 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
 
     /**
      * Orientazione del telefono dell'utente
-     *
+     * <p/>
      * In radians considering
-     *  NORTH = 0
-     *  EAST = +90
-     *  WEST = -90
-     *  SUD = +180,-180
+     * NORTH = 0
+     * EAST = +90
+     * WEST = -90
+     * SUD = +180,-180
      */
     double userOrientation;
 
@@ -165,66 +179,68 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
         conclude();
     }
 
-    private void stopWheel(){
+    private void stopWheel() {
         findViewById(R.id.progress_wheel).setVisibility(View.GONE);
     }
 
-    public void saveResult(String i, String t, String d, String wLink, URL imgURL) {
+    public void saveResult(String i, String t, String d, String wLink, String lat, String lon, URL imgURL) {
         title = t;
         description = d;
         wikiLink = wLink;
         photoURL = imgURL;
+        this.lat = Double.parseDouble(lat);
+        this.lon = Double.parseDouble(lon);
         this.id = Integer.parseInt(i);
         if (imgURL != null) {
             imgExists = true;
             witDownloadImageTask = new WitDownloadImageTask(this, null, witDownloadImageTask.POIDETAIL);
             witDownloadImageTask.execute(imgURL);
-        }
-        else{
+        } else {
             imgExists = false;
             imgHandled = true;
         }
-        if(wikiLink!=null){
+        if (wikiLink != null) {
             //scarico testo
             try {
                 URL url = new URL(wikiLink);
                 String path = url.getPath();
                 String wikipediaArticleTitle = path.substring(path.lastIndexOf('/') + 1);
-                URL mediaWikiAPI = new URL("https://"+this.language+".wikipedia.org/w/api.php?format=json&action=query&prop=extracts&exintro=&explaintext=&titles="+wikipediaArticleTitle);
-                Log.d(LOG_TAG, "url_api_wiki: "+mediaWikiAPI);
+                URL mediaWikiAPI = new URL("https://" + this.language + ".wikipedia.org/w/api.php?format=json&action=query&prop=extracts&exintro=&explaintext=&titles=" + wikipediaArticleTitle);
+                Log.d(LOG_TAG, "url_api_wiki: " + mediaWikiAPI);
 
                 witDownloadTask = new WitDownloadTask(this, null, witDownloadTask.WIKIPEDIATEXT);
                 witDownloadTask.execute(mediaWikiAPI);
             } catch (MalformedURLException e) {
                 e.printStackTrace();
+                textHandled = true;
             }
-        }
-        else{
+        } else {
             textHandled = true;
         }
         conclude();
     }
 
-    private void conclude(){
-        if(textHandled&&imgHandled) {
+    private void conclude() {
+        if (textHandled && imgHandled) {
             stopWheel();
             titleText.setText(title);
-            if(!imgExists){
+            if (!imgExists) {
                 Log.d(LOG_TAG, "Risultato senza immagine ");
-                mainImage.setVisibility(View.GONE);
-            }
-            else{
+              //  mainImage.setVisibility(View.GONE);
+                cameraButton.setVisibility(View.VISIBLE);
+
+            } else {
                 mainImage.setImageBitmap(image);
             }
             descText.setText(description);
-            if(!title.equalsIgnoreCase(getString(R.string.not_found_title_text))) {
-                savePOI(id, title, description, img); //salvo nel database il poi
+            if (!title.equalsIgnoreCase(getString(R.string.not_found_title_text))) {
+                savePOI(); //salvo nel database il poi
             }
         }
     }
 
-    public void setDescription(String description, String title){
-        if(description.length()>= this.description.length()) {
+    public void setDescription(String description, String title) {
+        if (description.length() >= this.description.length()) {
             this.description = description;
             this.title = title;
         }
@@ -241,6 +257,18 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
 
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
         progressWheel = (ProgressWheel) findViewById(R.id.progress_wheel);
+
+        cameraButton = (FloatingActionButton) findViewById(R.id.cameraB);
+        cameraButton.setBackgroundColor(getResources().getColor(R.color.colorPrimaryDark));
+
+        cameraButton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+
+                takePicture();
+            }
+        });
 
 
         progressWheel = new ProgressWheel(this);
@@ -268,7 +296,7 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
         configurationSimpleFacebook();
         namesList = new ArrayList<>();
 
-       // adapter = new MyRecyclerAdapter(this, namesList);
+        // adapter = new MyRecyclerAdapter(this, namesList);
         //fbList.setAdapter(adapter);
 
         adapter2 = new CustomAdapter(this, namesList, imagesList);
@@ -286,11 +314,11 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
         userLongitude = intent.getDoubleExtra(WitMainActivity.EXTRA_USER_LON, 0.0);
         userOrientation = intent.getDoubleExtra(WitMainActivity.EXTRA_USER_ORIENTATION, 0.0);
 
-        mainImage = (ImageView)findViewById(R.id.poi_img);
-        titleText = (TextView)findViewById(R.id.poi_name_text);
-        descText = (TextView)findViewById(R.id.poi_desc_text);
+        mainImage = (ImageView) findViewById(R.id.poi_img);
+        titleText = (TextView) findViewById(R.id.poi_name_text);
+        descText = (TextView) findViewById(R.id.poi_desc_text);
 
-        Toast.makeText(this, "Orientation: "+userOrientation, Toast.LENGTH_LONG).show();
+        Toast.makeText(this, "Orientation: " + userOrientation, Toast.LENGTH_LONG).show();
 
 
         // Applica l'algoritmo geometrico alla lista e ottieni la lista filtrata
@@ -298,38 +326,37 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
 
         Log.d(LOG_TAG, "Orientation NORTH from sensor : " + String.valueOf(Math.toDegrees(userOrientation)));
         Log.d(LOG_TAG, "Rotation from algorithm EAST : " + String.valueOf(Math.toDegrees(adjustAngle(userOrientation))));
-        int h=0;
+        int h = 0;
         // TODO rimettere filtering
         for (WitPOI poi : poiList) {
             //if (geometricCheck(userLongitude, userLatitude, poi.getPoiLon(), poi.getPoiLat(),userOrientation)) {
-           h++;
-            Log.d(LOG_TAG, poi.getPoiName()+" "+h);
-            if (polygonCheck(userLatitude, userLongitude, poi.getX(), poi.getY(),userOrientation)){
+            h++;
+            Log.d(LOG_TAG, poi.getPoiName() + " " + h);
+            if (polygonCheck(userLatitude, userLongitude, poi.getX(), poi.getY(), userOrientation)) {
                 correctPoiList.add(poi);
-                Log.d(LOG_TAG, "POI aggiunto: "+poi.getPoiName());
+                Log.d(LOG_TAG, "POI aggiunto: " + poi.getPoiName());
             }
         }
 
-        if (correctPoiList.size()>0) {
+        if (correctPoiList.size() > 0) {
             try {
-                URL detailUrl = new URL("http://api.wikimapia.org/?key=example&function=place.getbyid&id=" + correctPoiList.get(0).getPoiId() + "&format=json&language="+language);
-                Log.d(LOG_TAG, "SERVER URL: "+detailUrl);
+                URL detailUrl = new URL("http://api.wikimapia.org/?key=example&function=place.getbyid&id=" + correctPoiList.get(0).getPoiId() + "&format=json&language=" + language);
+                Log.d(LOG_TAG, "SERVER URL: " + detailUrl);
                 witDownloadTask = new WitDownloadTask(this, null, witDownloadTask.POIDETAIL);
                 witDownloadTask.execute(detailUrl);
 
             } catch (MalformedURLException e) {
                 e.printStackTrace();
             }
-       }
-       else {
-           // image = BitmapFactory.decodeResource(getResources(), R.drawable.sadface);
+        } else {
+            // image = BitmapFactory.decodeResource(getResources(), R.drawable.sadface);
             mainImage.setVisibility(View.GONE);
             title = getString(R.string.not_found_title_text);
             description = getString(R.string.not_found_desc_text);
             textHandled = true;
             imgHandled = true;
             conclude();
-       }
+        }
     }
 
     @Override
@@ -374,20 +401,19 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
      * @param userOrientation
      * @return
      */
-    private double adjustAngle(double userOrientation){
+    private double adjustAngle(double userOrientation) {
         // Tra 0 e +180 -> -90  -270
-        return (userOrientation - Math.PI/2);
+        return (userOrientation - Math.PI / 2);
     }
 
     /**
      * Returns if a given POI is inside a cone that starts from the user and has orientation
      *
-     * @param userX latitude of user
-     * @param userY longitude of user
-     * @param poiX latitude of POI
-     * @param poiY longitude of POI
+     * @param userX           latitude of user
+     * @param userY           longitude of user
+     * @param poiX            latitude of POI
+     * @param poiY            longitude of POI
      * @param userOrientation orientation of the phone in radians
-
      * @return true if the POI is inside the cone, false otherwise
      */
     private boolean geometricCheck(double userX, double userY, double poiX, double poiY, double userOrientation) {
@@ -409,82 +435,87 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
 
         // Rotate the POI around the origin (aka the user) with the rotation matrix.
         // We rotate with an angle of theta in clockwise sense.
-        rotatedX = Math.cos(theta)*poiX - Math.sin(theta)*poiY;
-        rotatedY = Math.sin(theta)*poiX + Math.cos(theta)*poiY;
+        rotatedX = Math.cos(theta) * poiX - Math.sin(theta) * poiY;
+        rotatedY = Math.sin(theta) * poiX + Math.cos(theta) * poiY;
 
         // Use the pois coordinate in the expressions of the sides of the cone,
         // alpha is to the left of the user, beta is to its right.
-        alpha = rotatedY - Math.tan(coneWidth/2)*rotatedX;
-        beta = rotatedY + Math.tan(coneWidth/2)*rotatedX;
+        alpha = rotatedY - Math.tan(coneWidth / 2) * rotatedX;
+        beta = rotatedY + Math.tan(coneWidth / 2) * rotatedX;
 
         // Check if the point is inside the cone, sides are valid.
         return (alpha <= 0 && beta >= 0);
     }
 
 
-    private boolean polygonCheck(double userX, double userY, float[] poiX, float[] poiY, double userOrientation){
+    private boolean polygonCheck(double userX, double userY, float[] poiX, float[] poiY, double userOrientation) {
         double lat;
         double lon;
         double x = Math.toRadians(userX);
         double y = Math.toRadians(userY);
-        float earthR = (float)6371.009 ; //raggio terrestre approssimato
+        float earthR = (float) 6371.009; //raggio terrestre approssimato
         Polygon polygon;
         Polygon.Builder builder = new Polygon.Builder();
-      //  Log.d(LOG_TAG, "Lat long iniziali"+userX+" , "+userY);
-       // Log.d(LOG_TAG, "O: "+userOrientation+" "+earthR);
+        //  Log.d(LOG_TAG, "Lat long iniziali"+userX+" , "+userY);
+        // Log.d(LOG_TAG, "O: "+userOrientation+" "+earthR);
 
 
-        for(int i=0; i<poiX.length; i++){
-            builder.addVertex(new Point(poiX[i],poiY[i]));
-           // Log.d(LOG_TAG,poiX[i]+" , "+poiY[i]);
+        for (int i = 0; i < poiX.length; i++) {
+            builder.addVertex(new Point(poiX[i], poiY[i]));
+            // Log.d(LOG_TAG,poiX[i]+" , "+poiY[i]);
 
         }
-        polygon=builder.build();
+        polygon = builder.build();
         //elimino un posto se ci sono dentro
-        if(polygon.contains(new Point((float)userX,(float)userY))){
+        if (polygon.contains(new Point((float) userX, (float) userY))) {
             Log.d(LOG_TAG, "ci sono dentro lo scarto");
             return false;
 
         }
         //prendo 500 campioni a distanza 1m partendo dalla posizione dell'utente in direzione data da userOrientation
-        for(int j=1; j<=500; j++){
-            float d = (float)(j*0.001); //converto i metri in km
+        for (int j = 1; j <= 500; j++) {
+            float d = (float) (j * 0.001); //converto i metri in km
             // formule per trovare lat e lon dato un punto, la distanza e l'angolo http://www.movable-type.co.uk/scripts/latlong.html
-            lat = (Math.asin( Math.sin(x)*Math.cos(d/earthR) + Math.cos(x)*Math.sin(d/earthR)*Math.cos(userOrientation)));
-            lon = (y + Math.atan2(Math.sin(userOrientation)*Math.sin(d/earthR)*Math.cos(x), Math.cos(d/earthR)-Math.sin(x)*Math.sin(lat)));
+            lat = (Math.asin(Math.sin(x) * Math.cos(d / earthR) + Math.cos(x) * Math.sin(d / earthR) * Math.cos(userOrientation)));
+            lon = (y + Math.atan2(Math.sin(userOrientation) * Math.sin(d / earthR) * Math.cos(x), Math.cos(d / earthR) - Math.sin(x) * Math.sin(lat)));
             lat = Math.toDegrees(lat);
             lon = Math.toDegrees(lon);
-          //  Log.d(LOG_TAG, "lat: "+lat+"lon: "+lon);
-            if(polygon.contains(new Point((float)lat,(float)lon))){
+            //  Log.d(LOG_TAG, "lat: "+lat+"lon: "+lon);
+            if (polygon.contains(new Point((float) lat, (float) lon))) {
                 return true;
             }
         }
-       Log.d(LOG_TAG, "-------------------------");
-         return false;
-        }
+        Log.d(LOG_TAG, "-------------------------");
+        return false;
+    }
 
 
 
-        /**
-     * Metodo per salvare il POI trovato
-     * @param name
-     * @param description
-     */
 
 
-    private void savePOI(int id, String name, String description, byte[] img){
+    private void savePOI() {
         dbAdapter = new DbAdapter(this);
         dbAdapter.open();
         SharedPreferences sharedPrefs = getSharedPreferences("WIT", MODE_PRIVATE); //recupero dal database automatico il woeid corrente
         woeid = sharedPrefs.getInt("woeid", 0);
-        dbAdapter.savePOI(id, name, description, getCurrentDate(), woeid, img);
+        dbAdapter.savePOI(id, title, description, getCurrentDate(), woeid, lat, lon, img);
         dbAdapter.close();
         registerVisit();
         checkSettingFb();
 
     }
+    private void updatePoi(byte[] i){
+        dbAdapter = new DbAdapter(this);
+        dbAdapter.open();
+        SharedPreferences sharedPrefs = getSharedPreferences("WIT", MODE_PRIVATE); //recupero dal database automatico il woeid corrente
+        woeid = sharedPrefs.getInt("woeid", 0);
+        dbAdapter.updatePOI(id, title, description, getCurrentDate(), woeid, lat, lon, i);
+        dbAdapter.close();
+        Log.d(LOG_TAG,"updato il poi con la img scattata: " +i);
 
-    private String getCurrentDate(){
+    }
+
+    private String getCurrentDate() {
         GregorianCalendar c = new GregorianCalendar();
         SimpleDateFormat df = new SimpleDateFormat("dd-MMM-yyyy HH:mm:ss");
         String date = df.format(c.getTime());
@@ -501,9 +532,8 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
     }
 
 
-
-    private void configurationSimpleFacebook(){
-        Permission[] permissions = new Permission[] {
+    private void configurationSimpleFacebook() {
+        Permission[] permissions = new Permission[]{
                 Permission.USER_PHOTOS,
                 Permission.PUBLISH_ACTION,
         };
@@ -515,6 +545,7 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
         SimpleFacebook.setConfiguration(configuration);
 
     }
+
     OnPublishListener onPublishListener = new OnPublishListener() {
         @Override
         public void onComplete(String id) {
@@ -522,31 +553,30 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
         }
     };
 
-    private void checkSettingFb(){
+    private void checkSettingFb() {
         SharedPreferences sharedPrefs = getSharedPreferences("WIT", MODE_PRIVATE);
-        Log.d(LOG_TAG, ""+sharedPrefs.getBoolean("fb", false));
-        if(sharedPrefs.getBoolean("fb", false)) {
+        Log.d(LOG_TAG, "" + sharedPrefs.getBoolean("fb", false));
+        if (sharedPrefs.getBoolean("fb", false)) {
             Log.d(LOG_TAG, "FACEBOOK");
             storyOnFacebook();
         }
 
     }
 
-    private void registerVisit(){
+    private void registerVisit() {
         SharedPreferences sharedPrefs = getSharedPreferences("WIT", MODE_PRIVATE);
         Long fbId = sharedPrefs.getLong("fbId", 0);
         String fbStringInUrl = new String();
         try {
-            if(fbId != null && fbId != 0){ //fbId nel logout viene settato a 0
-                fbStringInUrl = "&fb_id="+fbId;
-            }
-            else{
+            if (fbId != null && fbId != 0) { //fbId nel logout viene settato a 0
+                fbStringInUrl = "&fb_id=" + fbId;
+            } else {
                 fbId = null;
             }
             dbAdapter.open();
             cursor = dbAdapter.fetchCityByID(woeid);
-            String city=null, county=null, state=null, country = null;
-            while(cursor.moveToNext()){
+            String city = null, county = null, state = null, country = null;
+            while (cursor.moveToNext()) {
                 city = cursor.getString(cursor.getColumnIndex(DbAdapter.KEY_CITY));
                 county = cursor.getString(cursor.getColumnIndex(DbAdapter.KEY_COUNTY));
                 state = cursor.getString(cursor.getColumnIndex(DbAdapter.KEY_STATE));
@@ -554,8 +584,8 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
             }
             cursor.close();
             dbAdapter.close();
-            URL detailUrl = new URL(getString(R.string.register_visit_url)+"?poi="+id+fbStringInUrl+"&city="+city+"&county="+county+"&state="+state+"&country="+country);
-            Log.d(LOG_TAG, "SERVER URL: "+detailUrl);
+            URL detailUrl = new URL(getString(R.string.register_visit_url) + "?poi=" + id + fbStringInUrl + "&city=" + city + "&county=" + county + "&state=" + state + "&country=" + country);
+            Log.d(LOG_TAG, "SERVER URL: " + detailUrl);
             witDownloadTask = new WitDownloadTask(this, null, witDownloadTask.REGISTERVISIT);
             witDownloadTask.execute(detailUrl);
 
@@ -564,13 +594,13 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
         }
     }
 
-    public void checkIds(ArrayList<Long> l){
+    public void checkIds(ArrayList<Long> l) {
         getFacebookFrieds(this, l);
 
     }
 
-    private void getFacebookFrieds(Activity a, ArrayList<Long> l){
-      final  Activity activity = a;
+    private void getFacebookFrieds(Activity a, ArrayList<Long> l) {
+        final Activity activity = a;
         Properties properties = new Properties.Builder()
                 .add(Properties.ID)
                 .add(Properties.FIRST_NAME)
@@ -585,7 +615,7 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
         final ArrayList<Long> idsList = l;
         //avevo aggiunto manualmente il tuo id jaco per pare le prove...sostituiscilo col mio se vuoi provare
         //idsList.add(Long.parseLong("10207291961247199"));
-       // Log.d(LOG_TAG, "" + idsList.get(0));
+        // Log.d(LOG_TAG, "" + idsList.get(0));
 
 
         SimpleFacebook.getInstance().getFriends(properties, new OnFriendsListener() {
@@ -621,7 +651,7 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
         });
     }
 
-    private void downloadImageProfile(String id){
+    private void downloadImageProfile(String id) {
         URL photoURL = null;
         try {
             photoURL = new URL("https://graph.facebook.com/" + id + "/picture?type=large");
@@ -632,13 +662,13 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
         }
     }
 
-    public void saveImage(byte[] img){
+    public void saveImage(byte[] img) {
         imagesList.add(img);
         adapter2.notifyDataSetChanged();
     }
 
 
-    private void storyOnFacebook(){
+    private void storyOnFacebook() {
         String p;
         URL u = null;
         try {
@@ -646,10 +676,9 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
-        if(photoURL!=null){
+        if (photoURL != null) {
             p = photoURL.toString();
-        }
-        else {
+        } else {
             p = u.toString();
         }
 
@@ -724,7 +753,7 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
         }
     }
 
-    private void startSettingPage(){
+    private void startSettingPage() {
         Intent i = new Intent(this, WitSettings.class);
         startActivity(i);
 
@@ -749,7 +778,7 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
 
         @Override
         public void onBindViewHolder(CustomViewHolder customViewHolder, int i) {
-           String name = fbList.get(i);
+            String name = fbList.get(i);
 
 
             //Setting text view title
@@ -774,7 +803,6 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
     }
 
 
-
     /**
      * Classe privata che gestisce la lista
      */
@@ -782,14 +810,16 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
         Context context;
         private ArrayList<String> fbList;
         ArrayList<byte[]> imagesList;
-        private  LayoutInflater inflater=null;
-        public CustomAdapter(Activity mainActivity,  ArrayList<String> l, ArrayList<byte[]> imagesList) {
-            context=mainActivity;
+        private LayoutInflater inflater = null;
+
+        public CustomAdapter(Activity mainActivity, ArrayList<String> l, ArrayList<byte[]> imagesList) {
+            context = mainActivity;
             fbList = l;
             this.imagesList = imagesList;
-            inflater = ( LayoutInflater )context.
+            inflater = (LayoutInflater) context.
                     getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         }
+
         @Override
         public int getCount() {
             // TODO Auto-generated method stub
@@ -808,18 +838,18 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
             return position;
         }
 
-        public class Holder
-        {
+        public class Holder {
             TextView tv;
             CircularImageView img;
         }
+
         @Override
         public View getView(final int position, View convertView, ViewGroup parent) {
-            Holder holder=new Holder();
+            Holder holder = new Holder();
             View rowView;
             rowView = inflater.inflate(R.layout.pois_list, null);
-            holder.tv=(TextView) rowView.findViewById(R.id.textView);
-            holder.img=(CircularImageView) rowView.findViewById(R.id.img);
+            holder.tv = (TextView) rowView.findViewById(R.id.textView);
+            holder.img = (CircularImageView) rowView.findViewById(R.id.img);
             holder.img.setBorderColor(getResources().getColor(R.color.colorPrimary));
             holder.img.setBorderWidth(4);
             // circularImageView.setSelectorColor(getResources().getColor(R.color.colorPrimary));
@@ -828,11 +858,10 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
             holder.img.addShadow();
             String name = fbList.get(position);
             holder.tv.setText(name);
-            byte [] img = imagesList.get(position);
-            if(img!= null) {
+            byte[] img = imagesList.get(position);
+            if (img != null) {
                 holder.img.setImageBitmap(BitmapFactory.decodeByteArray(img, 0, img.length));
-            }
-            else {
+            } else {
 
             }
             rowView.setOnClickListener(new View.OnClickListener() {
@@ -847,4 +876,69 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
 
     }
 
+    private void takePicture() {
+        Intent i = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        //fileUri = getOutputMediaFileUri(MEDIA_TYPE_IMAGE); // create a file to save the image
+      //  i.putExtra(MediaStore.EXTRA_OUTPUT, fileUri); // set the image file name
+
+        File photoFile = null;
+        try {
+            photoFile = createImageFile();
+        } catch (IOException ex) {
+            // Error occurred while creating the File
+            Log.i(LOG_TAG, "IOException");
+        }
+        // Continue only if the File was successfully created
+        if (photoFile != null) {
+            i.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(photoFile));
+            startActivityForResult(i, CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE);
+        }
     }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE) {
+            if (resultCode == RESULT_OK) {
+                try {
+                    Bitmap photo = MediaStore.Images.Media.getBitmap(this.getContentResolver(), Uri.parse(mCurrentPhotoPath));
+                    mainImage.setImageBitmap(photo);
+                    cameraButton.setVisibility(View.GONE);
+                    ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                    photo.compress(Bitmap.CompressFormat.PNG, 100, stream);
+                    byte[] img = stream.toByteArray();
+                    updatePoi(img);
+                    stream.close();
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+            } else if (resultCode == RESULT_CANCELED) {
+                // User cancelled the image capture
+            } else {
+                // Image capture failed, advise user
+            }
+        }
+    }
+
+
+
+    private File createImageFile() throws IOException {
+        // Create an image file name
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String imageFileName = "JPEG_" + timeStamp + "_";
+        File storageDir = Environment.getExternalStoragePublicDirectory(
+                Environment.DIRECTORY_PICTURES);
+        File image = File.createTempFile(
+                imageFileName,  // prefix
+                ".jpg",         // suffix
+                storageDir      // directory
+        );
+
+        // Save a file: path for use with ACTION_VIEW intents
+        mCurrentPhotoPath = "file:" + image.getAbsolutePath();
+        return image;
+    }
+
+
+}

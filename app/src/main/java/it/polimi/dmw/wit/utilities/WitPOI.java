@@ -39,13 +39,15 @@ public class WitPOI implements Parcelable{
         correct = "0";
     }
 
-    public WitPOI (int id, int wikimapiaId, String name, String description, String date, int woeid){
+    public WitPOI (int id, int wikimapiaId, String name, String description, String date, double lat, double lon, int woeid){
         poiId = id;
         this.wikimapiaId = wikimapiaId;
         poiName = name;
         this.description = description;
         this.date = date;
         this.woeid = woeid;
+        poiLat = lat;
+        poiLon = lon;
     }
 
     // Quando un oggetto viene inserito in una ListView

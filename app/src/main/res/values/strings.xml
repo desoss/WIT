@@ -8,6 +8,7 @@
     <string name="title_activity_Saved_POI">Details:</string>
     <string name="title_activity_Facebook_Login">Account</string>
     <string name="title_activity_Diary">Diary</string>
+    <string name="title_activity_Maps">Maps</string>
     <string name="title_activity_detail_journey">Journey</string>
     <string name="facebook_app_id">Facebook App ID</string> <string name="scan_button_text">Scan</string>
     <string name="scanning_button_text">Scanning...</string>
@@ -67,6 +68,7 @@
     <string name="title_Monuments">My Monuments</string>
     <string name="title_home">Wit</string>
     <string name="title_diary">Diary</string>
+    <string name="title_activity_wit_maps">Map</string>
 
 
 </resources>
