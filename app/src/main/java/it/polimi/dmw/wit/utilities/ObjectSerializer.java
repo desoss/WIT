@@ -1,6 +1,5 @@
 package it.polimi.dmw.wit.utilities;
 
-import android.util.Log;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

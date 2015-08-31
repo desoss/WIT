@@ -20,11 +20,8 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
-
 import com.pkmmte.view.CircularImageView;
-
 import java.util.ArrayList;
-
 import it.polimi.dmw.wit.R;
 import it.polimi.dmw.wit.database.DbAdapter;
 import it.polimi.dmw.wit.sliderMenu.FragmentDrawer;
@@ -102,7 +99,7 @@ public class WitDetailJourney extends ActionBarActivity implements FragmentDrawe
         for(int x=0;x<i;x++) {
             cursor = dbAdapter.fetchPOIsByID(journey.getPois().get(x).getPoiId());
             while(cursor.moveToNext()) {
-                imagesListPois[x] = cursor.getBlob(cursor.getColumnIndex(DbAdapter.KEY_IMAGE));
+                imagesListPois[x] = cursor.getBlob(cursor.getColumnIndex(DbAdapter.KEY_THUMBNAIL));
             }
         }
         i = journey.getCities().size();
@@ -210,6 +207,7 @@ public class WitDetailJourney extends ActionBarActivity implements FragmentDrawe
             holder.img=(CircularImageView) rowView.findViewById(R.id.img);
             holder.img.setBorderColor(getResources().getColor(R.color.colorPrimary));
             holder.img.setBorderWidth(4);
+            holder.img.setScaleType(ImageView.ScaleType.FIT_CENTER);
             // circularImageView.setSelectorColor(getResources().getColor(R.color.colorPrimary));
             //circularImageView.setSelectorStrokeColor(getResources().getColor(R.color.colorPrimaryDark));
             holder.img.setSelectorStrokeWidth(10);

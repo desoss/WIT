@@ -6,11 +6,9 @@ import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.support.v4.app.Fragment;
 import android.util.Log;
-
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.net.URL;
-
 import it.polimi.dmw.wit.activities.WitFacebookLogin;
 import it.polimi.dmw.wit.activities.WitFinalResult;
 import it.polimi.dmw.wit.activities.WitInfo;
@@ -20,6 +18,7 @@ public class WitDownloadImageTask extends AsyncTask<URL, Void, Bitmap> {
 
     private final static String LOG_TAG = "WitDownloadImageTask";
     private byte[] img=null;
+    private byte[] thumbnail = null;
     Activity activity;
     Fragment fragment;
     WitFacebookLogin facebookL;
@@ -53,11 +52,15 @@ public class WitDownloadImageTask extends AsyncTask<URL, Void, Bitmap> {
     protected void onPostExecute(Bitmap result) {
         ByteArrayOutputStream bos=new ByteArrayOutputStream();
         if(result!=null){
-        result.compress(Bitmap.CompressFormat.PNG, 100, bos);
-        img=bos.toByteArray();
+        result.compress(Bitmap.CompressFormat.JPEG, 60, bos);
+        img = bos.toByteArray();
+            bos=new ByteArrayOutputStream();
+        result.compress(Bitmap.CompressFormat.JPEG, 8, bos);
+        thumbnail = bos.toByteArray();
         }
         else{
             img = null;
+            thumbnail = null;
         }
 
         Log.d(LOG_TAG, "image downloaded");
@@ -68,11 +71,11 @@ public class WitDownloadImageTask extends AsyncTask<URL, Void, Bitmap> {
                 break;
             case POIDETAIL:
                 finalR = (WitFinalResult)activity;
-                finalR.setImage(result, img);
+                finalR.setImage(result, img, thumbnail);
                 break;
             case CITY:
                 info = (WitInfo) fragment;
-                info.setImageCity(result, img);
+                info.setImageCity(result, img, thumbnail);
                 break;
             case IMAGEPROFILE:
                 finalR = (WitFinalResult)activity;

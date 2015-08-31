@@ -2,8 +2,6 @@ package it.polimi.dmw.wit.activities;
 
 import android.app.AlertDialog;
 import android.content.Context;
-import android.app.Activity;
-
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -30,9 +28,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 import com.facebook.FacebookSdk;
 import com.google.android.gms.common.api.GoogleApiClient;
-import android.content.SharedPreferences;
-
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -50,9 +45,7 @@ import it.polimi.dmw.wit.utilities.WitOrientationProvider;
 import it.polimi.dmw.wit.utilities.WitPOI;
 import it.polimi.dmw.wit.utilities.WitTimeoutThread;
 import android.view.View.OnClickListener;
-
 import org.json.JSONException;
-import org.json.JSONObject;
 
 
 public class WitScan extends Fragment {

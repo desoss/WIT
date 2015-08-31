@@ -3,7 +3,6 @@ package it.polimi.dmw.wit.utilities;
 import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
-
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.GoogleApiClient.ConnectionCallbacks;

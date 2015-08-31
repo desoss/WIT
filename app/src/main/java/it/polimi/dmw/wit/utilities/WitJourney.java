@@ -3,7 +3,6 @@ package it.polimi.dmw.wit.utilities;
 
 import android.os.Parcel;
 import android.os.Parcelable;
-
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;

@@ -1,66 +1,30 @@
 package it.polimi.dmw.wit.activities;
 
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.hardware.SensorManager;
-import android.location.Location;
-import android.location.LocationManager;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
-import android.os.AsyncTask;
-import android.os.Handler;
-import android.os.Message;
-import android.provider.Settings;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.os.Bundle;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
-import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
-
-import com.facebook.FacebookSdk;
-import com.google.android.gms.common.api.GoogleApiClient;
-
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.json.JSONTokener;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.ProtocolException;
-import java.net.URL;
-import java.util.ArrayList;
-
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
-
 import it.polimi.dmw.wit.sliderMenu.FragmentDrawer;
 import it.polimi.dmw.wit.R;
 import it.polimi.dmw.wit.slidingTabs.SlidingTabLayout;
 import it.polimi.dmw.wit.slidingTabs.ViewPagerAdapter;
-import it.polimi.dmw.wit.utilities.WitDownloadTask;
-import it.polimi.dmw.wit.utilities.WitLocationAPI;
-import it.polimi.dmw.wit.utilities.WitLocationProvider;
-import it.polimi.dmw.wit.utilities.WitOrientationProvider;
-import it.polimi.dmw.wit.utilities.WitPOI;
-import it.polimi.dmw.wit.utilities.WitTimeoutThread;
 
 
 /**

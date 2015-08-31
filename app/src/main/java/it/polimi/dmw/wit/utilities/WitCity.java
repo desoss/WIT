@@ -3,9 +3,6 @@ package it.polimi.dmw.wit.utilities;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import java.util.ArrayList;
-import java.util.Date;
-
 /**
  * Created by Mattia on 12/08/2015.
  */

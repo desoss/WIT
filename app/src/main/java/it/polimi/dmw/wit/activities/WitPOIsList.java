@@ -5,15 +5,12 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.BitmapFactory;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -24,9 +21,6 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import com.pkmmte.view.CircularImageView;
-
-import java.util.ArrayList;
-
 import it.polimi.dmw.wit.sliderMenu.FragmentDrawer;
 import it.polimi.dmw.wit.R;
 import it.polimi.dmw.wit.database.DbAdapter;
@@ -94,7 +88,7 @@ public class WitPOIsList extends ActionBarActivity implements FragmentDrawer.Fra
           String date = cursor.getString(cursor.getColumnIndex(DbAdapter.KEY_DATE));
           double lat = cursor.getDouble(cursor.getColumnIndex(DbAdapter.KEY_LAT));
           double lon = cursor.getDouble(cursor.getColumnIndex(DbAdapter.KEY_LON));
-          byte[] img = cursor.getBlob(cursor.getColumnIndex(DbAdapter.KEY_IMAGE));
+          byte[] img = cursor.getBlob(cursor.getColumnIndex(DbAdapter.KEY_THUMBNAIL));
             imagesList [i] = img;
 
           WitPOI poi = new WitPOI(id, 0, name, description, date, lat, lon, 0);
@@ -226,6 +220,7 @@ public class WitPOIsList extends ActionBarActivity implements FragmentDrawer.Fra
             holder.img=(CircularImageView) rowView.findViewById(R.id.img);
             holder.img.setBorderColor(getResources().getColor(R.color.colorPrimary));
             holder.img.setBorderWidth(4);
+            holder.img.setScaleType(ImageView.ScaleType.FIT_CENTER);
             // circularImageView.setSelectorColor(getResources().getColor(R.color.colorPrimary));
             //circularImageView.setSelectorStrokeColor(getResources().getColor(R.color.colorPrimaryDark));
             holder.img.setSelectorStrokeWidth(10);

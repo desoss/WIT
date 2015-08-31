@@ -19,11 +19,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.GridView;
-import android.widget.ListView;
+import android.widget.ImageView;
 import android.widget.TextView;
-
 import com.pkmmte.view.CircularImageView;
-
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -116,7 +114,7 @@ public class WitDiary extends ActionBarActivity implements FragmentDrawer.Fragme
             String county = cursor.getString(cursor.getColumnIndex(DbAdapter.KEY_COUNTY));
             String state = cursor.getString(cursor.getColumnIndex(DbAdapter.KEY_STATE));
             String country = cursor.getString(cursor.getColumnIndex(DbAdapter.KEY_COUNTRY));
-            byte [] img = cursor.getBlob(cursor.getColumnIndex(DbAdapter.KEY_IMAGE));
+            byte [] img = cursor.getBlob(cursor.getColumnIndex(DbAdapter.KEY_THUMBNAIL));
             WitCity city = new WitCity(woeid, name, county, state, country, img);
             citieList.add(city);
         }
@@ -382,6 +380,7 @@ public class WitDiary extends ActionBarActivity implements FragmentDrawer.Fragme
             holder.img=(CircularImageView) rowView.findViewById(R.id.img);
             holder.img.setBorderColor(getResources().getColor(R.color.colorPrimary));
             holder.img.setBorderWidth(4);
+           // ((holder.img.setScaleType(ImageView.ScaleType.CENTER);
             // circularImageView.setSelectorColor(getResources().getColor(R.color.colorPrimary));
             //circularImageView.setSelectorStrokeColor(getResources().getColor(R.color.colorPrimaryDark));
             holder.img.setSelectorStrokeWidth(10);

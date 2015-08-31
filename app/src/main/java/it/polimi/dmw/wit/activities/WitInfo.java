@@ -33,22 +33,6 @@ import android.widget.Toast;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.pkmmte.view.CircularImageView;
 import com.pnikosis.materialishprogress.ProgressWheel;
-
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.OutputStreamWriter;
-import java.io.Serializable;
-import java.io.UnsupportedEncodingException;
-import java.io.Writer;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.ParseException;
@@ -57,10 +41,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.concurrent.TimeUnit;
-
 import it.polimi.dmw.wit.R;
 import it.polimi.dmw.wit.database.DbAdapter;
-import it.polimi.dmw.wit.utilities.ObjectSerializer;
 import it.polimi.dmw.wit.utilities.WitDownloadImageTask;
 import it.polimi.dmw.wit.utilities.WitDownloadTask;
 import it.polimi.dmw.wit.utilities.WitLocationAPI;
@@ -333,6 +315,10 @@ public class WitInfo extends Fragment {
 
 
     private void getBestFive(){
+        String city = this.city.replace(" ","%20");
+        String county = this.county.replace(" ","%20");
+        String state = this.state.replace(" ","%20");
+        String country = this.country.replace(" ","%20");
         final String u = "http://desoss.altervista.org/wit/android_best5pois_request.php?city="+city+"&county="+county+"&state="+state+"&country="+country;
         //final String u = "http://desoss.altervista.org/wit/android_best5pois_request.php?&city=2&county=3&state=3&country=234";
         Log.d(LOG_TAG, "SERVER URL: " + u);
@@ -588,13 +574,13 @@ public class WitInfo extends Fragment {
         }
     }
 
-    public void setImageCity(Bitmap result, byte[] img) {
+    public void setImageCity(Bitmap result, byte[] img, byte[] thumbnail) {
         //progressWheel.setVisibility(View.INVISIBLE);
         v.findViewById(R.id.progress_wheel).setVisibility(View.GONE);
         mainImage.setImageBitmap(result);
         titleText.setText(city);
         setImageWeather();
-        saveCityInfo(img);
+        saveCityInfo(img, thumbnail);
     }
 
     private void getWeather(){
@@ -646,13 +632,13 @@ public class WitInfo extends Fragment {
 
     }
 
-    private void saveCityInfo(byte[] img){
+    private void saveCityInfo(byte[] img, byte[] thumbnail){
         if(img!=null){
             Log.d(LOG_TAG,"NOT NULLLL");
         }
         dbAdapter = new DbAdapter(getActivity());
         dbAdapter.open();
-        dbAdapter.saveCityInfo(city, county, state, country, img);
+        dbAdapter.saveCityInfo(city, county, state, country, img, thumbnail);
         cursor = dbAdapter.fetchCityByCCSC(city, county, state, country);
         while (cursor.moveToNext()) {
             int woeid = cursor.getInt(cursor.getColumnIndex(DbAdapter.KEY_ID));

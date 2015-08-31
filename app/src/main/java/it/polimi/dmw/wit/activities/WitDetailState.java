@@ -19,49 +19,15 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
-import android.widget.ListView;
 import android.widget.TextView;
 import com.pkmmte.view.CircularImageView;
 import java.util.ArrayList;
-
 import it.polimi.dmw.wit.R;
 import it.polimi.dmw.wit.database.DbAdapter;
 import it.polimi.dmw.wit.sliderMenu.FragmentDrawer;
 import it.polimi.dmw.wit.utilities.WitCity;
 import it.polimi.dmw.wit.utilities.WitJourney;
-import it.polimi.dmw.wit.utilities.WitPOI;
 
-
-import android.app.Activity;
-import android.app.Fragment;
-import android.content.Context;
-import android.content.Intent;
-import android.database.Cursor;
-import android.graphics.BitmapFactory;
-import android.os.Bundle;
-import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.ActionBarActivity;
-import android.support.v7.widget.Toolbar;
-import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.BaseAdapter;
-import android.widget.ImageView;
-import android.widget.ListView;
-import android.widget.TextView;
-
-import com.pkmmte.view.CircularImageView;
-
-import java.util.ArrayList;
-
-import it.polimi.dmw.wit.R;
-import it.polimi.dmw.wit.database.DbAdapter;
-import it.polimi.dmw.wit.sliderMenu.FragmentDrawer;
-import it.polimi.dmw.wit.utilities.WitJourney;
-import it.polimi.dmw.wit.utilities.WitPOI;
 
 
 
@@ -132,7 +98,7 @@ public class WitDetailState extends ActionBarActivity implements FragmentDrawer.
             divideJourney(woeid, city);
             cursor = dbAdapter.fetchCityByID(woeid);
             while(cursor.moveToNext()) {
-                imagesListCities[x] = cursor.getBlob(cursor.getColumnIndex(DbAdapter.KEY_IMAGE));
+                imagesListCities[x] = cursor.getBlob(cursor.getColumnIndex(DbAdapter.KEY_THUMBNAIL));
             }
         }
         cursor.close();
@@ -237,6 +203,7 @@ public class WitDetailState extends ActionBarActivity implements FragmentDrawer.
             holder.img=(CircularImageView) rowView.findViewById(R.id.img);
             holder.img.setBorderColor(getResources().getColor(R.color.colorPrimary));
             holder.img.setBorderWidth(4);
+            holder.img.setScaleType(ImageView.ScaleType.FIT_CENTER);
             // circularImageView.setSelectorColor(getResources().getColor(R.color.colorPrimary));
             //circularImageView.setSelectorStrokeColor(getResources().getColor(R.color.colorPrimaryDark));
             holder.img.setSelectorStrokeWidth(10);

@@ -2,18 +2,14 @@ package it.polimi.dmw.wit.utilities;
 
 
 import android.app.Activity;
-import android.content.Intent;
 import android.os.AsyncTask;
 import android.support.v4.app.Fragment;
 import android.util.Log;
-
 import com.google.android.gms.maps.model.LatLng;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONTokener;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,7 +24,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-
 import it.polimi.dmw.wit.activities.WitFinalResult;
 import it.polimi.dmw.wit.activities.WitInfo;
 import it.polimi.dmw.wit.activities.WitMapsActivity;

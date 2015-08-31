@@ -8,9 +8,7 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.design.widget.FloatingActionButton;
@@ -31,7 +29,6 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
-
 import com.pkmmte.view.CircularImageView;
 import com.pnikosis.materialishprogress.ProgressWheel;
 import com.sromku.simple.fb.entities.Profile;
@@ -42,34 +39,16 @@ import com.sromku.simple.fb.entities.Story;
 import com.sromku.simple.fb.listeners.OnCreateStoryObject;
 import com.sromku.simple.fb.listeners.OnFriendsListener;
 import com.sromku.simple.fb.listeners.OnPublishListener;
-
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.json.JSONTokener;
-
-import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
-import java.net.ProtocolException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
-import java.util.Random;
-
 import it.polimi.dmw.wit.sliderMenu.FragmentDrawer;
 import it.polimi.dmw.wit.Polygon.Point;
 import it.polimi.dmw.wit.Polygon.Polygon;
@@ -78,10 +57,7 @@ import it.polimi.dmw.wit.utilities.WitDownloadImageTask;
 import it.polimi.dmw.wit.utilities.WitDownloadTask;
 import it.polimi.dmw.wit.utilities.WitPOI;
 import it.polimi.dmw.wit.database.DbAdapter;
-
 import com.sromku.simple.fb.entities.Profile.Properties;
-import com.sromku.simple.fb.utils.Utils;
-import android.support.v7.widget.RecyclerView;
 import android.widget.Toast;
 
 
@@ -94,7 +70,6 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
     private SimpleFacebook mSimpleFacebook;
     private WitDownloadTask witDownloadTask;
     private WitDownloadImageTask witDownloadImageTask;
-    private Profile profileFB;
     private String language;
 
     private final static String LOG_TAG = "WitFinalResult";
@@ -119,6 +94,7 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
 
     private URL photoURL;
     private byte[] img = null;
+    private byte[] thumbnail = null;
     private boolean imgExists = true;
 
     private boolean imgHandled = false;
@@ -136,11 +112,8 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
     private Bitmap image;
     private FloatingActionButton cameraButton;
     private static final int CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE = 100;
-    public static final int MEDIA_TYPE_IMAGE = 1;
-    public static final int MEDIA_TYPE_VIDEO = 2;
     public final static String EXTRA_LAT= "it.polimi.dmw.wit.LAT";
     public final static String EXTRA_LON= "it.polimi.dmw.wit.LON";
-    private Uri fileUri;
     private String mCurrentPhotoPath;
     private double lat, lon;
     private Button mapButton;
@@ -177,9 +150,10 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
     private Cursor cursor;
     private String wikiLink;
 
-    public void setImage(Bitmap result, byte[] img) {
+    public void setImage(Bitmap result, byte[] img,  byte[] t) {
         image = result;
         this.img = img;
+        thumbnail = t;
         imgHandled = true;
         conclude();
     }
@@ -515,18 +489,18 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
         dbAdapter.open();
         SharedPreferences sharedPrefs = getSharedPreferences("WIT", MODE_PRIVATE); //recupero dal database automatico il woeid corrente
         woeid = sharedPrefs.getInt("woeid", 0);
-        dbAdapter.savePOI(id, title, description, getCurrentDate(), woeid, lat, lon, img);
+        dbAdapter.savePOI(id, title, description, getCurrentDate(), woeid, lat, lon, img, thumbnail);
         dbAdapter.close();
         registerVisit();
         checkSettingFb();
 
     }
-    private void updatePoi(byte[] i){
+    private void updatePoi(byte[] i, byte[] t){
         dbAdapter = new DbAdapter(this);
         dbAdapter.open();
         SharedPreferences sharedPrefs = getSharedPreferences("WIT", MODE_PRIVATE); //recupero dal database automatico il woeid corrente
         woeid = sharedPrefs.getInt("woeid", 0);
-        dbAdapter.updatePOI(id, title, description, getCurrentDate(), woeid, lat, lon, i);
+        dbAdapter.updatePOI(id, title, description, getCurrentDate(), woeid, lat, lon, i,t);
         dbAdapter.close();
         Log.d(LOG_TAG,"updato il poi con la img scattata: " +i);
 
@@ -601,6 +575,10 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
             }
             cursor.close();
             dbAdapter.close();
+            city = city.replace(" ","%20");
+            county = county.replace(" ","%20");
+            state = state.replace(" ","%20");
+            country = country.replace(" ","%20");
             URL detailUrl = new URL(getString(R.string.register_visit_url) + "?poi=" + id + fbStringInUrl + "&city=" + city + "&county=" + county + "&state=" + state + "&country=" + country);
             Log.d(LOG_TAG, "SERVER URL: " + detailUrl);
             witDownloadTask = new WitDownloadTask(this, null, witDownloadTask.REGISTERVISIT);
@@ -923,7 +901,10 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
                     ByteArrayOutputStream stream = new ByteArrayOutputStream();
                     photo.compress(Bitmap.CompressFormat.PNG, 100, stream);
                     byte[] img = stream.toByteArray();
-                    updatePoi(img);
+                    stream = new ByteArrayOutputStream();
+                    photo.compress(Bitmap.CompressFormat.JPEG, 20, stream);
+                    byte[] thumbnail = stream.toByteArray();
+                    updatePoi(img,thumbnail);
                     stream.close();
 
                 } catch (IOException e) {

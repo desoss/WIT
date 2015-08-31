@@ -1,17 +1,13 @@
 package it.polimi.dmw.wit.utilities;
 
-import android.app.Activity;
 import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.Bundle;
 import android.os.ResultReceiver;
 import android.util.Log;
-
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;

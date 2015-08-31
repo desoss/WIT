@@ -33,6 +33,7 @@ public class DbAdapter {
     public static final String KEY_NAME = "name";
     public static final String KEY_SURNAME = "surname";
     public static final String KEY_IMAGE = "image";
+    public static final String KEY_THUMBNAIL = "thumbnail";
     public static final String KEY_FB = "fb";
     public static final String KEY_DESCRIPTION = "description";
     public static final String KEY_DATE = "date";
@@ -61,7 +62,7 @@ public class DbAdapter {
         dbHelper.close();
     }
 
-    private ContentValues createContentValuesPOI(int id, String name, String description, String date, int woeid, double lat, double lon, byte[] img) {
+    private ContentValues createContentValuesPOI(int id, String name, String description, String date, int woeid, double lat, double lon, byte[] img, byte[] thumbnail) {
         ContentValues values = new ContentValues();
         values.put(KEY_WIKIMAPIAID,id);
         values.put(KEY_NAME, name);
@@ -71,6 +72,7 @@ public class DbAdapter {
         values.put(KEY_LAT, lat);
         values.put(KEY_LON, lon);
         values.put(KEY_IMAGE, img);
+        values.put(KEY_THUMBNAIL, thumbnail);
 
 
         return values;
@@ -110,19 +112,20 @@ public class DbAdapter {
         return values;
     }
 
-    private ContentValues createContentValuesCITYINFO(String city, String county, String state, String country, byte[]img) {
+    private ContentValues createContentValuesCITYINFO(String city, String county, String state, String country, byte[]img, byte[] thumbnail) {
         ContentValues values = new ContentValues();
         values.put(KEY_CITY, city);
         values.put(KEY_COUNTY, county);
         values.put(KEY_STATE, state);
         values.put(KEY_COUNTRY, country);
         values.put(KEY_IMAGE, img);
+        values.put(KEY_THUMBNAIL, thumbnail);
 
         return values;
     }
 
-    public void savePOI(int id, String name, String description, String date, int woeid, double lat, double lon, byte[] img) {
-        ContentValues initialValues = createContentValuesPOI(id, name, description, date, woeid, lat, lon, img);
+    public void savePOI(int id, String name, String description, String date, int woeid, double lat, double lon, byte[] img, byte[] thumbnail) {
+        ContentValues initialValues = createContentValuesPOI(id, name, description, date, woeid, lat, lon, img, thumbnail);
          database.insertOrThrow(DATABASE_POI, null, initialValues);
     }
 
@@ -141,13 +144,13 @@ public class DbAdapter {
         database.insertOrThrow(DATABASE_SETTINGS, null, initialValues);
     }
 
-    public void saveCityInfo(String city, String county, String state, String country, byte[]img) {
-        ContentValues initialValues = createContentValuesCITYINFO(city, county, state, country, img);
+    public void saveCityInfo(String city, String county, String state, String country, byte[]img, byte[] thumbnail) {
+        ContentValues initialValues = createContentValuesCITYINFO(city, county, state, country, img, thumbnail);
         database.insertOrThrow(DATABASE_CITY_INFO, null, initialValues);
     }
 
-    public boolean updatePOI(int id, String name, String description, String date, int woeid, double lat, double lon, byte[] img) {
-        ContentValues updateValues = createContentValuesPOI(id, name, description, date, woeid, lat, lon, img);
+    public boolean updatePOI(int id, String name, String description, String date, int woeid, double lat, double lon, byte[] img, byte[] thumbnail) {
+        ContentValues updateValues = createContentValuesPOI(id, name, description, date, woeid, lat, lon, img, thumbnail);
         return database.update(DATABASE_POI, updateValues, KEY_WIKIMAPIAID + "=" + id, null) > 0;
     }
 
@@ -185,7 +188,7 @@ public class DbAdapter {
 
     //fetch all contacts
     public Cursor fetchAllPOIs() {
-        return database.query(DATABASE_POI, new String[]{KEY_ID,  KEY_WIKIMAPIAID,KEY_NAME, KEY_DESCRIPTION, KEY_DATE, KEY_WOEID, KEY_LAT, KEY_LON, KEY_IMAGE}, null, null, null, null, null);
+        return database.query(DATABASE_POI, new String[]{KEY_ID,  KEY_WIKIMAPIAID,KEY_NAME, KEY_DESCRIPTION, KEY_DATE, KEY_WOEID, KEY_LAT, KEY_LON, KEY_IMAGE, KEY_THUMBNAIL}, null, null, null, null, null);
     }
 
     public Cursor fetchBestFive() {
@@ -202,13 +205,13 @@ public class DbAdapter {
     }
 
     public Cursor fetchCITYINFO() {
-        return database.query(DATABASE_CITY_INFO, new String[]{KEY_ID, KEY_CITY, KEY_COUNTY, KEY_STATE, KEY_COUNTRY, KEY_IMAGE}, null, null, null, null, null,null);
+        return database.query(DATABASE_CITY_INFO, new String[]{KEY_ID, KEY_CITY, KEY_COUNTY, KEY_STATE, KEY_COUNTRY, KEY_IMAGE, KEY_THUMBNAIL}, null, null, null, null, null,null);
     }
 
     //fetch contacts filter by a string
     public Cursor fetchPOIsByID(int filter) {
         Cursor mCursor = database.query(true, DATABASE_POI, new String[]{
-                        KEY_ID, KEY_NAME, KEY_DESCRIPTION, KEY_DATE, KEY_WOEID, KEY_LAT, KEY_LON, KEY_IMAGE},
+                        KEY_ID, KEY_NAME, KEY_DESCRIPTION, KEY_DATE, KEY_WOEID, KEY_LAT, KEY_LON, KEY_IMAGE, KEY_THUMBNAIL},
                 KEY_ID + "=" + filter, null, null, null, null, null);
 
         return mCursor;
@@ -232,14 +235,14 @@ public class DbAdapter {
 
     public Cursor fetchCityByID(int filter){
         Cursor mCursor = database.query(true, DATABASE_CITY_INFO, new String[]{
-                        KEY_ID, KEY_CITY, KEY_COUNTY, KEY_STATE, KEY_COUNTRY, KEY_IMAGE},
+                        KEY_ID, KEY_CITY, KEY_COUNTY, KEY_STATE, KEY_COUNTRY, KEY_IMAGE, KEY_THUMBNAIL},
                 KEY_ID + "=" + filter, null, null, null, null, null);
 
         return mCursor;
     }
     public Cursor fetchCityByCCSC(String a, String b, String c, String d){
         Cursor mCursor = database.query(true, DATABASE_CITY_INFO, new String[]{
-                        KEY_ID, KEY_CITY, KEY_COUNTY, KEY_STATE, KEY_COUNTRY, KEY_IMAGE},
+                        KEY_ID, KEY_CITY, KEY_COUNTY, KEY_STATE, KEY_COUNTRY, KEY_IMAGE, KEY_THUMBNAIL},
                  KEY_CITY + "='" + a +"' AND "+ KEY_COUNTY + "='" + b+"' AND "+ KEY_STATE + "='" + c+"' AND "+ KEY_COUNTRY + "='" + d+"'",null, null, null, null, null);
 
         return mCursor;
@@ -247,7 +250,7 @@ public class DbAdapter {
 
     public Cursor fetchPOIByWoeid(int filter){
         Cursor mCursor = database.query(true, DATABASE_POI, new String[]{
-                        KEY_ID, KEY_WIKIMAPIAID, KEY_NAME, KEY_DESCRIPTION, KEY_DATE, KEY_WOEID,  KEY_LAT, KEY_LON,KEY_IMAGE},
+                        KEY_ID, KEY_WIKIMAPIAID, KEY_NAME, KEY_DESCRIPTION, KEY_DATE, KEY_WOEID,  KEY_LAT, KEY_LON,KEY_IMAGE, KEY_THUMBNAIL},
                 KEY_WOEID + "=" + filter, null, null, null, null, null, null);
 
         return mCursor;
