@@ -1,14 +1,17 @@
 package it.polimi.dmw.wit.activities;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Fragment;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.design.widget.FloatingActionButton;
@@ -18,6 +21,7 @@ import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Config;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -28,6 +32,7 @@ import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import com.pkmmte.view.CircularImageView;
 import com.pnikosis.materialishprogress.ProgressWheel;
@@ -43,6 +48,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -53,12 +59,23 @@ import it.polimi.dmw.wit.sliderMenu.FragmentDrawer;
 import it.polimi.dmw.wit.Polygon.Point;
 import it.polimi.dmw.wit.Polygon.Polygon;
 import it.polimi.dmw.wit.R;
+import it.polimi.dmw.wit.utilities.AndroidMultiPartEntity;
 import it.polimi.dmw.wit.utilities.WitDownloadImageTask;
 import it.polimi.dmw.wit.utilities.WitDownloadTask;
 import it.polimi.dmw.wit.utilities.WitPOI;
 import it.polimi.dmw.wit.database.DbAdapter;
 import com.sromku.simple.fb.entities.Profile.Properties;
 import android.widget.Toast;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.mime.content.FileBody;
+import org.apache.http.entity.mime.content.StringBody;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.util.EntityUtils;
 
 
 /**
@@ -114,9 +131,14 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
     private static final int CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE = 100;
     public final static String EXTRA_LAT= "it.polimi.dmw.wit.LAT";
     public final static String EXTRA_LON= "it.polimi.dmw.wit.LON";
-    private String mCurrentPhotoPath;
+    private Uri photoURI;
     private double lat, lon;
     private Button mapButton;
+
+    private ProgressBar progressBar;
+    private TextView txtPercentage;
+    private Button uploadButton;
+    long totalSize = 0;
 
 
 
@@ -154,7 +176,15 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
         image = result;
         this.img = img;
         thumbnail = t;
-        imgHandled = true;
+        if(result!=null) {
+            imgHandled = true;
+            imgExists = true;
+
+        }
+        else {
+            imgHandled = true;
+            imgExists = false;
+        }
         conclude();
     }
 
@@ -175,8 +205,18 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
             witDownloadImageTask = new WitDownloadImageTask(this, null, witDownloadImageTask.POIDETAIL);
             witDownloadImageTask.execute(imgURL);
         } else {
-            imgExists = false;
-            imgHandled = true;
+            String serverImage = getString(R.string.image_server_url)+i+".jpg";
+            try {
+                URL u = new URL(serverImage);
+                witDownloadImageTask = new WitDownloadImageTask(this, null, witDownloadImageTask.POIDETAIL);
+                witDownloadImageTask.execute(u);
+                //imgExists = false;
+                imgHandled = true;
+            }
+                catch (MalformedURLException e) {
+                    e.printStackTrace();
+                    textHandled = true;
+                }
         }
         if (wikiLink != null) {
             //scarico testo
@@ -203,6 +243,7 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
         if (textHandled && imgHandled) {
             stopWheel();
             titleText.setText(title);
+            Log.d(LOG_TAG,""+imgExists);
             if (!imgExists) {
                 Log.d(LOG_TAG, "Risultato senza immagine ");
               //  mainImage.setVisibility(View.GONE);
@@ -243,6 +284,10 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
         cameraButton = (FloatingActionButton) findViewById(R.id.cameraB);
         cameraButton.setBackgroundColor(getResources().getColor(R.color.colorPrimaryDark));
 
+        txtPercentage = (TextView) findViewById(R.id.txtPercentage);
+        uploadButton = (Button) findViewById(R.id.uploadB);
+        progressBar = (ProgressBar) findViewById(R.id.progressBar);
+
         cameraButton.setOnClickListener(new View.OnClickListener() {
 
             @Override
@@ -256,7 +301,17 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
 
             @Override
             public void onClick(View v) {
+
                 startMapActivity();
+            }
+        });
+
+        uploadButton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                // uploading the file to server
+                new UploadFileToServer().execute();
             }
         });
 
@@ -894,22 +949,22 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
-                try {
-                    Bitmap photo = MediaStore.Images.Media.getBitmap(this.getContentResolver(), Uri.parse(mCurrentPhotoPath));
+                   // Bitmap photo = MediaStore.Images.Media.getBitmap(this.getContentResolver(), Uri.parse(mCurrentPhotoPath));
+                    BitmapFactory.Options options = new BitmapFactory.Options();
+
+                    // down sizing image as it throws OutOfMemory Exception for larger
+                    // images
+                    options.inSampleSize = 8;
+
+                     Bitmap photo = BitmapFactory.decodeFile(photoURI.getPath(), options);
+
+                    Log.d(LOG_TAG,""+photoURI);
                     mainImage.setImageBitmap(photo);
                     cameraButton.setVisibility(View.GONE);
-                    ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                    photo.compress(Bitmap.CompressFormat.PNG, 100, stream);
-                    byte[] img = stream.toByteArray();
-                    stream = new ByteArrayOutputStream();
-                    photo.compress(Bitmap.CompressFormat.JPEG, 20, stream);
-                    byte[] thumbnail = stream.toByteArray();
-                    updatePoi(img,thumbnail);
-                    stream.close();
+                    uploadButton.setVisibility(View.VISIBLE);
+                   // savePhoto(photo);
 
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+
 
             } else if (resultCode == RESULT_CANCELED) {
                 // User cancelled the image capture
@@ -919,22 +974,36 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
         }
     }
 
+    private void savePhoto(Bitmap photo) throws IOException {
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        photo.compress(Bitmap.CompressFormat.PNG, 100, stream);
+        byte[] img = stream.toByteArray();
+        stream = new ByteArrayOutputStream();
+        photo.compress(Bitmap.CompressFormat.JPEG, 20, stream);
+        byte[] thumbnail = stream.toByteArray();
+        updatePoi(img,thumbnail);
+        stream.close();
+
+    }
+
 
 
     private File createImageFile() throws IOException {
-        // Create an image file name
-        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-        String imageFileName = "JPEG_" + timeStamp + "_";
-        File storageDir = Environment.getExternalStoragePublicDirectory(
-                Environment.DIRECTORY_PICTURES);
-        File image = File.createTempFile(
-                imageFileName,  // prefix
-                ".jpg",         // suffix
-                storageDir      // directory
-        );
+        String imageFileName =  Integer.toString(id);
+        File mediaStorageDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "Android File Upload");
+        // Create the storage directory if it does not exist
+        if (!mediaStorageDir.exists()) {
+            if (!mediaStorageDir.mkdirs()) {
+                Log.d(LOG_TAG, "Oops! Failed create photo file");
+                return null;
+            }
+        }
+        File image = new File(mediaStorageDir.getPath() + File.separator
+                +imageFileName+".jpg");
+
 
         // Save a file: path for use with ACTION_VIEW intents
-        mCurrentPhotoPath = "file:" + image.getAbsolutePath();
+        photoURI = Uri.fromFile(image);
         return image;
     }
 
@@ -944,6 +1013,112 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
         i.putExtra(EXTRA_LON,lon);
         startActivity(i);
     }
+
+    private class UploadFileToServer extends AsyncTask<Void, Integer, String> {
+        @Override
+        protected void onPreExecute() {
+            // setting progress bar to zero
+            progressBar.setProgress(0);
+            super.onPreExecute();
+        }
+
+        @Override
+        protected void onProgressUpdate(Integer... progress) {
+            // Making progress bar visible
+            progressBar.setVisibility(View.VISIBLE);
+
+            // updating progress bar value
+            progressBar.setProgress(progress[0]);
+
+            // updating percentage value
+            txtPercentage.setText(String.valueOf(progress[0]) + "%");
+        }
+
+        @Override
+        protected String doInBackground(Void... params) {
+            return uploadFile();
+        }
+
+        @SuppressWarnings("deprecation")
+        private String uploadFile() {
+            String responseString = null;
+
+            HttpClient httpclient = new DefaultHttpClient();
+            HttpPost httppost = new HttpPost("http://desoss.altervista.org/wit/fileUpload.php");
+
+            try {
+                AndroidMultiPartEntity entity = new AndroidMultiPartEntity(
+                        new AndroidMultiPartEntity.ProgressListener() {
+
+                            @Override
+                            public void transferred(long num) {
+                                publishProgress((int) ((num / (float) totalSize) * 100));
+                            }
+                        });
+
+                File sourceFile = new File(photoURI.getPath());
+
+                // Adding file data to http body
+                entity.addPart("image", new FileBody(sourceFile));
+
+
+                totalSize = entity.getContentLength();
+                httppost.setEntity(entity);
+
+                // Making server call
+                HttpResponse response = httpclient.execute(httppost);
+                HttpEntity r_entity = response.getEntity();
+
+                int statusCode = response.getStatusLine().getStatusCode();
+                if (statusCode == 200) {
+                    // Server response
+                    responseString = EntityUtils.toString(r_entity);
+                } else {
+                    responseString = "Error occurred! Http Status Code: "
+                            + statusCode;
+                }
+
+            } catch (ClientProtocolException e) {
+                responseString = e.toString();
+            } catch (IOException e) {
+                responseString = e.toString();
+            }
+
+            return responseString;
+
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            Log.d(LOG_TAG, "Response from server: " + result);
+
+            // showing the server response in an alert dialog
+            showAlert(getString(R.string.upload_success));
+            progressBar.setVisibility(View.GONE);
+
+            super.onPostExecute(result);
+        }
+
+    }
+
+    /**
+     * Method to show alert dialog
+     * */
+    private void showAlert(String message) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage(message).setTitle("Response from Servers")
+                .setCancelable(false)
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        // do nothing
+                    }
+                });
+        AlertDialog alert = builder.create();
+        alert.show();
+    }
+
+
+
 
 
 }

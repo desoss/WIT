@@ -92,6 +92,36 @@
                          android:src="@drawable/camera_button"
                          app:backgroundTint="@color/windowBackground"
                          android:visibility="gone" />
+
+                     <TextView
+                         android:id="@+id/txtPercentage"
+                         android:layout_width="wrap_content"
+                         android:layout_height="wrap_content"
+                         android:layout_gravity="center_horizontal"
+                         android:layout_marginBottom="15dp"
+                         android:layout_marginTop="15dp"
+                         android:textSize="30dp" />
+
+                     <ProgressBar
+                         android:id="@+id/progressBar"
+                         style="?android:attr/progressBarStyleHorizontal"
+                         android:layout_width="270dp"
+                         android:layout_height="20dp"
+                         android:layout_marginBottom="35dp"
+                         android:visibility="gone"
+                         android:layout_gravity="center_horizontal" />
+
+                     <Button
+                         android:id="@+id/uploadB"
+                         android:layout_width="wrap_content"
+                         android:layout_height="wrap_content"
+                         android:layout_gravity="center_horizontal"
+                         android:paddingLeft="20dp"
+                         android:paddingRight="20dp"
+                         android:text="Upload your picture"
+                         android:textColor="@color/white"
+                         android:layout_marginBottom="20dp"
+                         android:visibility="gone"/>
                  </LinearLayout>
 
 

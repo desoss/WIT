@@ -63,7 +63,7 @@ public class WitDownloadImageTask extends AsyncTask<URL, Void, Bitmap> {
             thumbnail = null;
         }
 
-        Log.d(LOG_TAG, "image downloaded");
+        Log.d(LOG_TAG, "image downloaded"+result);
         switch (c){
             case FACEBOOK:
                 facebookL = (WitFacebookLogin)activity;
