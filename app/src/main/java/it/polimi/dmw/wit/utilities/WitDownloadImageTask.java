@@ -55,7 +55,7 @@ public class WitDownloadImageTask extends AsyncTask<URL, Void, Bitmap> {
         result.compress(Bitmap.CompressFormat.JPEG, 60, bos);
         img = bos.toByteArray();
             bos=new ByteArrayOutputStream();
-        result.compress(Bitmap.CompressFormat.JPEG, 8, bos);
+        result.compress(Bitmap.CompressFormat.JPEG, 13, bos);
         thumbnail = bos.toByteArray();
         }
         else{

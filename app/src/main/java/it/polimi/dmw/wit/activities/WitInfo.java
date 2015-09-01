@@ -200,33 +200,7 @@ public class WitInfo extends Fragment {
 
     }
 
-    private void getSquarePosition(){
-        Activity a = getActivity();
-        SharedPreferences prefs = a.getSharedPreferences("bigSquareMonumentList", Context.MODE_PRIVATE);
-        //uso il metodo definito da me altrimenti avrei dovuto usare stringhe (prefs.getString("max_lat",""); )
-        latMax = getDouble(prefs, "max_lat");
-        latMin = getDouble(prefs, "min_lat");
-        lonMax = getDouble(prefs, "max_lon");
-        lonMin = getDouble(prefs, "min_lon");
-    }
 
-    double getDouble(final SharedPreferences prefs, final String key) {
-        if ( !prefs.contains(key))
-            BiggerSquareUsable = false;
-        return Double.longBitsToDouble(prefs.getLong(key, 0));
-    }
-
-    private boolean pointIntoInternalSquare(double lat, double lon){
-        if(!BiggerSquareUsable)
-            return false;
-
-        if(lat >= latMin && lat <= latMax){
-            if(lon >= lonMin && lon <= lonMax){
-                return true;
-            }
-        }
-        return false;
-    }
 
     private void getWoeid(String serverUrl) {
 
@@ -326,6 +300,8 @@ public class WitInfo extends Fragment {
             URL url = new URL(u);
             // WitDownloadTask � la classe che gestisce il download
             witDownloadTask = new WitDownloadTask(null, this, witDownloadTask.BESTFIVE);
+            witDownloadTask.setLat(currentLocation.getLatitude());
+            witDownloadTask.setLon(currentLocation.getLongitude());
             witDownloadTask.execute(url);
 
 
