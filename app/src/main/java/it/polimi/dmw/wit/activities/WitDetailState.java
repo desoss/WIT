@@ -83,9 +83,8 @@ public class WitDetailState extends ActionBarActivity implements FragmentDrawer.
         intent = getIntent();
         journey = intent.getParcelableExtra(WitDiary.EXTRA_JOURNEY);
 
-        Log.d(LOG_TAG,""+journey.getNameJourney());
+        Log.d(LOG_TAG,"Detail State: "+journey.getNameJourney());
         titleText.setText(journey.getNameJourney());
-        Log.d(LOG_TAG, journey.getNameJourney());
 
         dbAdapter = new DbAdapter(this);
         dbAdapter.open();

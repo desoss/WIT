@@ -54,6 +54,8 @@ public class WitDiary extends ActionBarActivity implements FragmentDrawer.Fragme
     private Intent intent;
     private Intent intent2;
     public final static String EXTRA_JOURNEY= "it.polimi.dmw.wit.JOURNEY";
+    private TextView titleText;
+
 
 
 
@@ -65,7 +67,7 @@ public class WitDiary extends ActionBarActivity implements FragmentDrawer.Fragme
         setContentView(R.layout.activity_wit_diary);
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
         gridview = (GridView) findViewById(R.id.gridview);
-
+        titleText = (TextView)findViewById(R.id.journey_name_text);
 
 
         setSupportActionBar(mToolbar);
@@ -84,7 +86,7 @@ public class WitDiary extends ActionBarActivity implements FragmentDrawer.Fragme
     @Override
     protected void onStart() {
         super.onStart();
-
+        titleText.setVisibility(View.GONE);
 
         loadFromDatabase();
         divideJourneysByDate();

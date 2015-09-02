@@ -32,8 +32,7 @@
             android:textSize="23sp"
             android:gravity="center"
             android:id="@+id/journey_name_text"
-            android:singleLine="false"
-            android:layout_weight="1"
+            android:singleLine="true"
             android:paddingBottom="10dp"
             android:textColor="#00796B"/>
 
