@@ -67,11 +67,6 @@ public class WitInfo extends Fragment {
     private ProgressWheel progressWheel;
     private DbAdapter dbAdapter;
     private Cursor cursor;
-    private Double latMax;
-    private Double lonMax;
-    private Double latMin;
-    private Double lonMin;
-    private boolean BiggerSquareUsable = true;
     private ArrayList<byte[]> imgList;
     private ArrayList<WitPOI> poisList;
     private ListView listView ;
@@ -79,7 +74,7 @@ public class WitInfo extends Fragment {
     public final static String EXTRA_POI= "it.polimi.dmw.wit.POI";
     public final static String EXTRA_B5= "it.polimi.dmw.wit.B5";
     private CustomAdapter adapter;
-    private double lat, lon;
+    private int b5Count = 0;
     ArrayList<Double> distList;
 
     @Override
@@ -312,19 +307,22 @@ public class WitInfo extends Fragment {
     }
 
     public void saveBestFive(ArrayList<WitPOI> l, ArrayList<Double> d){
-        String url = null;
+        String url;
         distList = d;
         for(int x=0;x<l.size();x++){
             poisList.add(l.get(x));
             url = poisList.get(x).getDate();
             if(url!=null){
-                downloadImagePoi(url);
+                Log.d(LOG_TAG,""+x+" "+url);
+                downloadImagePoi(url, x);
+                imgList.add(x, null);
             }
             else{
-                imgList.add(null);
+                imgList.add(x,null);
+                b5Count++;
             }
         }
-        if(imgList.size()==poisList.size()){
+        if(b5Count==5){
             adapter.notifyDataSetChanged();
             saveInDbBestFive();
 
@@ -451,11 +449,12 @@ public class WitInfo extends Fragment {
 */
 
 
-    private void downloadImagePoi(String u){
+    private void downloadImagePoi(String u, int p){
         Log.d(LOG_TAG, "SERVER URL: " + u);
         try {
             URL url = new URL(u);
             witDownloadImageTask = new WitDownloadImageTask(null, this, witDownloadImageTask.POIBEST);
+            witDownloadImageTask.setPosB5(p);
             witDownloadImageTask.execute(url);
 
         } catch (MalformedURLException e) {
@@ -464,9 +463,10 @@ public class WitInfo extends Fragment {
         }
     }
 
-    public void saveImagePoi(byte[] img){
-        imgList.add(img);
-        if(imgList.size()==poisList.size()){
+    public void saveImagePoi(byte[] img, int p){
+        imgList.add(p,img);
+        b5Count++;
+        if(b5Count==5){
             adapter.notifyDataSetChanged();
             saveInDbBestFive();
         }
