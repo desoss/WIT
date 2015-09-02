@@ -415,7 +415,7 @@ public class WitScan extends Fragment {
                 }
                else{
 
-                    final String url = getString(R.string.get_monuments_base_url)+"?lat=" + lat + "&lon=" + lon + "&json=true&side=1&max=100";
+                    final String url = getString(R.string.get_monuments_base_url)+"?lat=" + lat + "&lon=" + lon + "&json=true&side=1&max=100&language=en";
                     getMonumentsFromServer(url);
                     startBackgroundWorks(lat, lon);//<------------------------------ non sono sicuro di metterlo qui
                 }
@@ -424,7 +424,7 @@ public class WitScan extends Fragment {
             }
         }
         else{
-            final String url = getString(R.string.get_monuments_base_url)+"?lat=" + lat + "&lon=" + lon + "&json=true&side=1&max=100";
+            final String url = getString(R.string.get_monuments_base_url)+"?lat=" + lat + "&lon=" + lon + "&json=true&side=1&max=100&language=en";
             getMonumentsFromServer(url);
             startBackgroundWorks(lat, lon);//<------------------------------ non sono sicuro di metterlo qui
         }

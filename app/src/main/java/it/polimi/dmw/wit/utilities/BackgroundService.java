@@ -68,14 +68,14 @@ public class BackgroundService extends IntentService {
         String range = intent.getStringExtra("range"); //side of the square
         String max = intent.getStringExtra("max"); //max number of POIs huge value
 
-        String getParameters = "?lat="+lat+"&lon="+lon+"&side="+range+"&max="+max+"&json=true&cachejson=true";
+        String getParameters = "?lat="+lat+"&lon="+lon+"&side="+range+"&max="+max+"&json=true&cachejson=true&language=en";
 
         try {
             URL url = new URL(getString(R.string.get_monuments_base_url)+getParameters);
             // Crea la connessione HTTP
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setReadTimeout(20000 /* milliseconds */);
-            conn.setConnectTimeout(25000 /* milliseconds */);
+            conn.setReadTimeout(120000 /* milliseconds */);
+            conn.setConnectTimeout(130000 /* milliseconds */);
             conn.setRequestMethod("GET");
             conn.setDoInput(true);
             // Starts the query
@@ -123,8 +123,12 @@ public class BackgroundService extends IntentService {
             }
         }
         // Dallo string builder esce la string con il JSON
-        String val = sb.toString();
 
+        if(sb==null){
+            Log.d(LOG_TAG, "JSON not received (in time)!");
+            return;
+        }
+        String val = sb.toString();
         Log.d(LOG_TAG, "JSON received! Length = " + val.length());
 
         // Save the String in cache Internal Memory

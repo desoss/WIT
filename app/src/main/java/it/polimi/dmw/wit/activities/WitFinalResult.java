@@ -11,6 +11,7 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.TransitionDrawable;
+import android.media.Image;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Environment;
@@ -31,6 +32,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
@@ -128,13 +130,15 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
     private ArrayList<String> namesList;
     private ArrayList<byte[]> imagesList;
     private Bitmap image;
-    private FloatingActionButton cameraButton;
+    private ImageButton cameraButton;
+    private TextView alertText;
     private static final int CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE = 100;
     public final static String EXTRA_LAT= "it.polimi.dmw.wit.LAT";
     public final static String EXTRA_LON= "it.polimi.dmw.wit.LON";
     private Uri photoURI;
     private double lat, lon;
     private Button mapButton;
+    private Bitmap photo;
 
     private ProgressBar progressBar;
     private TextView txtPercentage;
@@ -249,7 +253,7 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
                 Log.d(LOG_TAG, "Risultato senza immagine ");
               //  mainImage.setVisibility(View.GONE);
                 cameraButton.setVisibility(View.VISIBLE);
-
+                alertText.setVisibility(View.VISIBLE);
             } else {
                 mainImage.setImageBitmap(image);
             }
@@ -274,16 +278,19 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_wit_detail);
-        this.language = "it";
+        this.language = "en";
 
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
         progressWheel = (ProgressWheel) findViewById(R.id.progress_wheel);
 
         mapButton = (Button) findViewById(R.id.mapButton);
+        mapButton.setVisibility(View.GONE);
 
 
-        cameraButton = (FloatingActionButton) findViewById(R.id.cameraB);
-        cameraButton.setBackgroundColor(getResources().getColor(R.color.colorPrimaryDark));
+        cameraButton = (ImageButton) findViewById(R.id.cameraB);
+
+        alertText = (TextView) findViewById(R.id.alertTextForCameraButton);
+
 
         txtPercentage = (TextView) findViewById(R.id.txtPercentage);
         uploadButton = (Button) findViewById(R.id.uploadB);
@@ -297,22 +304,21 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
                 takePicture();
             }
         });
-
+        /* non serve qui
         mapButton.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
-                TransitionDrawable transition = (TransitionDrawable) mapButton.getBackground();
-                transition.startTransition(1000);
                 startMapActivity();
             }
         });
-
+        */
         uploadButton.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
                 // uploading the file to server
+                txtPercentage.setVisibility(View.VISIBLE);
                 new UploadFileToServer().execute();
             }
         });
@@ -365,7 +371,7 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
         titleText = (TextView) findViewById(R.id.poi_name_text);
         descText = (TextView) findViewById(R.id.poi_desc_text);
 
-        Toast.makeText(this, "Orientation: " + userOrientation, Toast.LENGTH_LONG).show();
+       // Toast.makeText(this, "Orientation: " + userOrientation, Toast.LENGTH_LONG).show();
 
 
         // Applica l'algoritmo geometrico alla lista e ottieni la lista filtrata
@@ -398,7 +404,7 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
         } else {
             // image = BitmapFactory.decodeResource(getResources(), R.drawable.sadface);
             mainImage.setVisibility(View.GONE);
-            mapButton.setVisibility(View.GONE);
+            //mapButton.setVisibility(View.GONE);
             title = getString(R.string.not_found_title_text);
             description = getString(R.string.not_found_desc_text);
             textHandled = true;
@@ -958,11 +964,12 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
                     // images
                     options.inSampleSize = 8;
 
-                     Bitmap photo = BitmapFactory.decodeFile(photoURI.getPath(), options);
+                     photo = BitmapFactory.decodeFile(photoURI.getPath(), options);
 
                     Log.d(LOG_TAG,""+photoURI);
                     mainImage.setImageBitmap(photo);
                     cameraButton.setVisibility(View.GONE);
+                    alertText.setVisibility(View.GONE);
                     uploadButton.setVisibility(View.VISIBLE);
                    // savePhoto(photo);
 
@@ -976,7 +983,7 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
         }
     }
 
-    private void savePhoto(Bitmap photo) throws IOException {
+    private void savePhoto() throws IOException {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         photo.compress(Bitmap.CompressFormat.PNG, 100, stream);
         byte[] img = stream.toByteArray();
@@ -1096,8 +1103,14 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
 
             // showing the server response in an alert dialog
             showAlert(getString(R.string.upload_success));
+            try {
+                savePhoto();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             progressBar.setVisibility(View.GONE);
-
+            txtPercentage.setVisibility(View.GONE);
+            uploadButton.setVisibility(View.GONE);
             super.onPostExecute(result);
         }
 
