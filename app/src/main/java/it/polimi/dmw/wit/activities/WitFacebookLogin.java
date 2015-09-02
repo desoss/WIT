@@ -7,6 +7,7 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.media.Image;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.widget.DrawerLayout;
@@ -15,6 +16,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import com.facebook.AccessToken;
@@ -72,8 +74,8 @@ public class WitFacebookLogin extends ActionBarActivity implements FragmentDrawe
     private AccessToken token;
     private ProfileTracker mProfileTracker;
     private FacebookCallback<LoginResult> mFacebookCallback;
-    private FloatingActionButton loginB;
-    private FloatingActionButton logoutB;
+    private ImageButton loginB;
+    private ImageButton logoutB;
 
 
     @Override
@@ -98,9 +100,9 @@ public class WitFacebookLogin extends ActionBarActivity implements FragmentDrawe
         //  displayView(0);
 
         mButtonLogin = (LoginButton) findViewById(R.id.login_button);
-        loginB = (FloatingActionButton) findViewById(R.id.loginB);
+        loginB = (ImageButton) findViewById(R.id.loginB);
         loginB.setBackgroundColor(getResources().getColor(R.color.colorPrimaryDark));
-        logoutB = (FloatingActionButton) findViewById(R.id.logoutB);
+        logoutB = (ImageButton) findViewById(R.id.logoutB);
         logoutB.setBackgroundColor(getResources().getColor(R.color.colorPrimaryDark));
 
         mTextDetails = (TextView) findViewById(R.id.text_details);

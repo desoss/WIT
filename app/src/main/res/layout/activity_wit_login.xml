@@ -26,7 +26,8 @@
             android:id="@+id/container_body"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1" >
+            android:layout_weight="1"
+            android:layout_gravity="top">
 
             <TextView
                 android:id="@+id/text_details"
@@ -46,34 +47,32 @@
                 app:shadow="true"
                 android:layout_gravity="center_horizontal|top"
                 android:layout_marginTop="30dp" />
-
-
-            <android.support.design.widget.FloatingActionButton
+            <ImageButton
                 android:layout_width="160dp"
                 android:layout_height="160dp"
                 android:id="@+id/loginB"
                 android:layout_gravity="center"
-                android:layout_marginTop="40dp"
-                android:src="@drawable/fb"
-                app:backgroundTint="@color/white"
-                />
-
-
-            <android.support.design.widget.FloatingActionButton
+                android:layout_marginTop="60dp"
+                android:background="@android:color/white"
+                android:src="@drawable/loginfb2"
+                android:clickable="true"
+                android:scaleType="fitXY"
+                >
+            </ImageButton>
+            <ImageButton
                 android:layout_width="160dp"
                 android:layout_height="160dp"
                 android:id="@+id/logoutB"
                 android:layout_gravity="center"
+                android:layout_marginTop="60dp"
+                android:background="@android:color/white"
+                android:src="@drawable/logoutfb2"
                 android:visibility="gone"
-                android:layout_marginTop="40dp"
-                android:src="@drawable/logoutfb"
-                app:backgroundTint="@color/white"
-                />
-
-
-
+                android:clickable="true"
+                android:scaleType="fitXY"
+                >
+            </ImageButton>
         </FrameLayout>
-
 
     </LinearLayout>
 

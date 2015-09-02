@@ -10,6 +10,7 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.TransitionDrawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Environment;
@@ -301,7 +302,8 @@ public class WitFinalResult extends ActionBarActivity implements FragmentDrawer.
 
             @Override
             public void onClick(View v) {
-
+                TransitionDrawable transition = (TransitionDrawable) mapButton.getBackground();
+                transition.startTransition(1000);
                 startMapActivity();
             }
         });
