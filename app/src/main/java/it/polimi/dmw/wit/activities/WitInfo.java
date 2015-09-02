@@ -170,7 +170,7 @@ public class WitInfo extends Fragment {
 
     private void startDownloadInfo(){
 
-        Toast.makeText(getActivity(), "" + currentLocation.getLatitude() + " " + currentLocation.getLongitude(), Toast.LENGTH_LONG).show();
+     //   Toast.makeText(getActivity(), "" + currentLocation.getLatitude() + " " + currentLocation.getLongitude(), Toast.LENGTH_LONG).show();
             Log.d(LOG_TAG,"D si");
             progressWheel = new ProgressWheel(getActivity());
             progressWheel.spin();

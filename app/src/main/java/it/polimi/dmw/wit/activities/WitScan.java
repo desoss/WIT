@@ -406,7 +406,7 @@ public class WitScan extends Fragment {
             try {
                 String jsonString = readCache();
                 if (jsonString != null){
-                    Toast.makeText(getActivity(), "Ho usato il json della cache", Toast.LENGTH_LONG).show();
+                  //  Toast.makeText(getActivity(), "Ho usato il json della cache", Toast.LENGTH_LONG).show();
                     witDownloadTask.refreshPOIsList();
                     witDownloadTask.setLat(latDouble);
                     witDownloadTask.setLon(lonDouble);
