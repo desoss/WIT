@@ -26,6 +26,7 @@ public class WitDownloadImageTask extends AsyncTask<URL, Void, Bitmap> {
     WitInfo info;
     public static final int FACEBOOK = 0, POIDETAIL = 1, CITY = 2, IMAGEPROFILE = 4, POIBEST = 3;
     private int c;
+    private int posB5;
 
 
     public WitDownloadImageTask(Activity activity, Fragment fragment, int c){
@@ -83,12 +84,16 @@ public class WitDownloadImageTask extends AsyncTask<URL, Void, Bitmap> {
                 break;
             case POIBEST:
                 info = (WitInfo) fragment;
-                info.saveImagePoi(img);
+                info.saveImagePoi(img,posB5);
                 break;
 
 
         }
 
+    }
+
+    public void setPosB5(int p){
+        posB5 = p;
     }
 
 
