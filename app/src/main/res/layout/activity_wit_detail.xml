@@ -111,7 +111,7 @@
                          android:visibility="gone"
                          android:layout_gravity="center_horizontal" />
 
-                     <Button
+                     <ImageButton
                          android:id="@+id/uploadB"
                          android:layout_width="wrap_content"
                          android:layout_height="wrap_content"
@@ -121,7 +121,9 @@
                          android:text="Upload your picture"
                          android:textColor="@color/white"
                          android:layout_marginBottom="20dp"
-                         android:visibility="gone"/>
+                         android:visibility="gone"
+                         android:clickable="true"
+                         android:scaleType="fitXY"/>
                  </LinearLayout>
 
 
