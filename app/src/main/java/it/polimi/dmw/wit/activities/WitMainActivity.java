@@ -119,7 +119,7 @@ public class WitMainActivity extends ActionBarActivity implements FragmentDrawer
         drawerFragment.setUp(R.id.fragment_navigation_drawer, (DrawerLayout) findViewById(R.id.drawer_layout), mToolbar);
         drawerFragment.setDrawerListener(this);
       //  displayView(0);
-
+    /*
         SharedPreferences prefs = getSharedPreferences("bigSquareMonumentList", Context.MODE_PRIVATE);
         //uso il metodo definito da me altrimenti avrei dovuto usare stringhe (prefs.getString("max_lat",""); )
         latMax = getDouble(prefs,"max_lat");
@@ -127,11 +127,13 @@ public class WitMainActivity extends ActionBarActivity implements FragmentDrawer
         lonMax = getDouble(prefs,"max_lon");
         lonMin = getDouble(prefs, "min_lon");
 
-        TextView text =  (TextView) findViewById(R.id.jsonText);
+       TextView text =  (TextView) findViewById(R.id.jsonText);
         text.append("latMin: "+latMin+"\n");
         text.append("latMax: "+latMax+"\n");
         text.append("lonMin: "+lonMin+"\n");
         text.append("lonMax: "+lonMax+"\n");
+
+
 
         try {
                 JSONObject jsonObject = readCache();
@@ -144,8 +146,9 @@ public class WitMainActivity extends ActionBarActivity implements FragmentDrawer
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-
+    */
     }
+
     private JSONObject readCache() throws IOException, JSONException {
         InputStreamReader in;
         JSONObject jsonObject = null;
